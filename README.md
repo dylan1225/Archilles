@@ -105,6 +105,31 @@ examples. The eval needs `eval/labels.csv` and `eval/images/`.
 
 ## Update log
 
+### 2026-11-14 — Uncertainty handling
+Defences against a confident failure story the photo does not support
+(`uncertainty.py`, plus schema and prompt changes in `diagnose.py`).
+- **Self-consistency:** each photo is diagnosed 3 times in parallel at
+  temperature 0.7 (`diagnose(image, n_samples=3)`). The majority answer is
+  returned with a `consistency` block (`runs`, `agreement`, `modes_seen`,
+  `consistent`, `failed_runs`). Any disagreement, or fewer than 2 completed
+  runs, drops confidence to low and is shown on the page. A three-way split
+  declines rather than picking a failure. Results are cached by image hash.
+- **Null detection:** `is_failure_analysis_applicable` is false for an intact
+  part, something that is not a part, or anything that is not a fracture. The
+  prompt states that diagnosing a failure in something unbroken is the worst
+  error the system can make. The page then says plainly what it sees and that
+  there is nothing to analyse, with no mode, cause or fixes.
+- **Rejected alternative:** the model must name the second most likely mode and
+  the observed feature that rules it out. Code rejects (and retries) a missing,
+  vague or unobserved citation. Shown as "Considered and rejected".
+- **Geometry cross-check:** a stress-raiser mode (`fatigue_metal`, see
+  `STRESS_CONCENTRATION_MODES`) or a fillet fix with no hole, notch or sharp
+  corner in `geometric_features` is flagged as an internal inconsistency and
+  confidence drops to low.
+- **Eval:** accuracy by stated confidence, and a null-specimen table. Label a
+  null specimen `true_mode = not_applicable`; the run exits 1 unless every null
+  specimen was declined. The eval now shares the app's diagnosis cache.
+
 ### 2026-11-14 — Calculated before/after for geometry fixes
 - Fixes that add or enlarge a fillet, increase a radius or soften a corner now
   carry a `geometry` block (current radius, proposed radius, section depth). The

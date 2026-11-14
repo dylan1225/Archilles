@@ -47,12 +47,15 @@ def eval_set(tmp_path):
 
 @pytest.fixture
 def fake_model(monkeypatch):
-    """a: right. b: wrong mode. c: insufficient image. d: API error."""
+    """a: right (high). b: wrong mode (high). c: insufficient image. d: API error.
+    Null specimens: shade 160 declined, shade 200 wrongly diagnosed."""
     calls: list[int] = []
     answers = {
-        0: ("fatigue_metal", False),
-        40: ("bending_overload_wood", False),
-        80: ("undetermined", True),
+        0: ("fatigue_metal", False, "high"),
+        40: ("bending_overload_wood", False, "high"),
+        80: ("undetermined", True, "low"),
+        160: ("not_applicable", False, "high"),
+        200: ("fatigue_metal", False, "medium"),
     }
 
     def fake(image_bytes, context=None, client=None):
@@ -60,17 +63,21 @@ def fake_model(monkeypatch):
         calls.append(shade)
         if shade not in answers:
             raise diagnose.DiagnosisError("Rate limited by the Gemini API.")
-        mode, insufficient = answers[shade]
+        mode, insufficient, confidence = answers[shade]
+        declined = mode == "not_applicable"
         result = SimpleNamespace(
             primary_mode=mode,
             material="metal",
-            confidence="medium",
+            confidence=confidence,
             insufficient_image=insufficient,
             insufficient_reason="Out of focus." if insufficient else None,
+            is_failure_analysis_applicable=not declined,
+            not_applicable_reason="An intact bolt; nothing is broken." if declined else None,
+            consistency=SimpleNamespace(agreement=1.0),
         )
-        return result, SimpleNamespace(latency_s=10.0 + shade / 10, cost_usd=0.02)
+        return result, SimpleNamespace(latency_s=10.0 + shade / 10, cost_usd=0.02), False
 
-    monkeypatch.setattr(diagnose, "diagnose_with_meta", fake)
+    monkeypatch.setattr(diagnose, "diagnose_cached", fake)
     monkeypatch.setattr(diagnose, "config_fingerprint", lambda: "fingerprint-1")
     return calls
 
@@ -198,3 +205,67 @@ def test_confusion_matrix_counts_true_against_predicted(eval_set, fake_model):
 
     fatigue_row = next(line for line in matrix.splitlines() if line.strip().startswith("fatigue_metal"))
     assert fatigue_row.split()[1:] == [".", "1", "1", "."]
+
+
+# --- calibration and null specimens ------------------------------------------
+
+
+@pytest.fixture
+def with_nulls(eval_set):
+    """Adds two null specimens: one declined (shade 160), one wrongly diagnosed (200)."""
+    write_image(eval_set.images / "bolt.png", 160)
+    write_image(eval_set.images / "bar.png", 200)
+    with eval_set.labels.open("a", encoding="utf-8") as handle:
+        handle.write("bolt.png,not_applicable,metal,clean intact bolt,easy\n")
+        handle.write("bar.png,not_applicable,fdm_print,intact printed bar,easy\n")
+    return eval_set
+
+
+def test_null_specimens_are_kept_out_of_failure_accuracy(with_nulls, fake_model):
+    records, new_calls = run(with_nulls)
+
+    report = run_eval.format_report(records, new_calls)
+
+    assert "4 failure specimens, 2 null specimens" in report
+    assert "overall" in report and "1/4" in report
+    assert "NULL SPECIMENS: correctly declined 1 of 2" in report
+    assert "bolt.png -> An intact bolt; nothing is broken." in report
+
+
+def test_null_table_names_a_diagnosed_null_as_the_worst_error(with_nulls, fake_model):
+    records, _ = run(with_nulls)
+
+    table = "\n".join(run_eval.null_table([r for r in records if r["true_mode"] == "not_applicable"]))
+
+    assert "declined" in table.splitlines()[2]
+    assert "DIAGNOSED A FAILURE" in table.splitlines()[3]
+
+
+def test_null_assertion_fails_when_any_null_specimen_is_diagnosed(with_nulls, fake_model):
+    records, _ = run(with_nulls)
+    nulls = [r for r in records if r["true_mode"] == "not_applicable"]
+
+    passed, message = run_eval.null_assertion(nulls)
+
+    assert passed is False
+    assert "ASSERT FAILED" in message and "bar.png" in message
+    assert run_eval.null_assertion(nulls[:1]) == (
+        True, "ASSERT PASSED: is_failure_analysis_applicable is false for all 1 null specimens")
+
+
+def test_calibration_table_groups_accuracy_by_stated_confidence(with_nulls, fake_model):
+    records, _ = run(with_nulls)
+
+    lines = run_eval.calibration_table(records)
+    rows = {line.split()[0]: line.split()[1:] for line in lines[2:]}
+
+    assert rows["high"][:3] == ["3", "2", "67%"]  # a right, b wrong, bolt declined
+    assert rows["medium"][:3] == ["1", "0", "0%"]  # bar wrongly diagnosed
+    assert rows["low"][:3] == ["1", "0", "0%"]  # c insufficient
+    assert rows["(error)"][:3] == ["1", "0", "0%"]  # d failed
+
+
+def test_null_mode_is_not_reported_as_unknown(with_nulls):
+    rows = run_eval.load_labels(with_nulls.labels, with_nulls.images)
+
+    assert "not_applicable" not in run_eval.unknown_true_modes(rows, ["fatigue_metal"])

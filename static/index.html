@@ -98,6 +98,21 @@
   .banner .label { color: var(--bad); margin-bottom: 6px; display: block; }
   .banner.insufficient { border-color: var(--warn); background: #fbf1df; }
   .banner.insufficient .label { color: var(--warn); }
+  .banner.nothing { border-color: var(--ink); background: var(--card); }
+  .banner.nothing .label { color: var(--ink); }
+  .banner.nothing .headline { font: 600 22px/1.3 var(--serif); margin-bottom: 6px; }
+  .banner.checks { border-color: var(--warn); background: #fbf1df; }
+  .banner.checks .label { color: var(--warn); }
+  .banner.checks ul { margin-top: 4px; }
+  .banner.checks li + li { margin-top: 6px; }
+
+  /* --- Uncertainty checks -------------------------------------------------- */
+  .runs { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+  .runs .agree { font: 600 17px/1.3 var(--serif); }
+  .runs .agree.ok { color: var(--good); } .runs .agree.split { color: var(--bad); }
+  .rejected .mode { font: 600 16px/1.3 var(--serif); text-decoration: line-through; text-decoration-color: var(--bad); }
+  .rejected .because { margin-top: 8px; }
+  .rejected .because b { font: 600 11.5px/1.2 var(--serif); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 2px; }
 
   /* --- Summary strip ------------------------------------------------------ */
   .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
@@ -448,10 +463,12 @@ function renderSummary(d, meta, roundTripSeconds) {
   const latencyNote = !meta || !meta.cached ? model
     : meta.source === "example" ? `pre-computed example · ${model}`
     : `cached · same photo as before · ${model}`;
+  const c = d.consistency;
+  const runsNote = c ? `${Math.round(c.agreement * c.runs)} of ${c.runs} runs agreed` : null;
   strip.append(
     summaryCell("Material", MATERIAL_NAMES[d.material] || d.material),
     summaryCell("Failure mode", humanise(d.primary_mode), d.primary_mode),
-    summaryCell("Confidence", badge),
+    summaryCell("Confidence", badge, runsNote),
     summaryCell(meta && meta.cached ? "Original analysis time" : "Analysis time", latency, latencyNote),
   );
   return panel(null, strip);
@@ -470,8 +487,22 @@ function renderEvidence(d) {
   return panel("Visual evidence · observed in this photo", body(content));
 }
 
+function renderRejected(r) {
+  const box = el("div", "rejected");
+  const because = el("div", "because");
+  because.append(el("b", "", "Ruled out by what the photo shows"), el("div", "", r.visual_feature));
+  const why = el("div", "because");
+  why.append(el("b", "", "Why"), el("div", "", r.reason));
+  box.append(el("div", "mode", humanise(r.mode)), because, why);
+  return panel("Considered and rejected", body(box));
+}
+
 function renderCause(d) {
   const parts = [panel("Probable cause", body(el("p", "", d.probable_cause || "Not determined.")))];
+  if (d.rejected_alternative) parts.push(renderRejected(d.rejected_alternative));
+  if (d.geometric_features && d.geometric_features.length) {
+    parts.push(panel("Stress raisers seen", body(renderList(d.geometric_features, "bullets"))));
+  }
   if (d.alternative_modes.length) {
     const list = el("ul", "alts");
     d.alternative_modes.forEach(([mode, why]) => {
@@ -479,7 +510,7 @@ function renderCause(d) {
       item.append(el("code", "", mode), el("div", "muted", why));
       list.append(item);
     });
-    parts.push(panel("Alternatives considered", body(list)));
+    parts.push(panel("Other modes not ruled out", body(list)));
   }
   const column = el("div", "stack");
   column.append(...parts);
@@ -674,6 +705,41 @@ function renderInsufficient(d) {
   return box;
 }
 
+/** Plain statement that there is nothing to analyse. No mode, cause or fixes. */
+function renderNothing(d) {
+  const box = el("div", "banner nothing");
+  box.setAttribute("role", "status");
+  box.append(el("span", "label", "No failure to analyse"),
+    el("div", "headline", "Nothing in this photo is broken, so there is nothing to diagnose."),
+    el("div", "", d.not_applicable_reason || "The photo does not show a crack, break or fracture surface."));
+  return box;
+}
+
+/** Self-consistency result and any warnings the checks raised. */
+function renderChecks(d) {
+  const parts = [];
+  const c = d.consistency;
+  if (c) {
+    const agreed = Math.round(c.agreement * c.runs);
+    const seen = Object.entries(c.modes_seen).map(([mode, n]) => `${humanise(mode)} ×${n}`).join(" · ");
+    const line = el("div", "runs");
+    const headline = c.runs < 2 ? `Not checked: only ${c.runs} of ${c.runs + c.failed_runs} runs completed`
+      : c.consistent ? `All ${c.runs} independent runs agreed`
+      : `Runs disagreed: ${agreed} of ${c.runs} agreed`;
+    line.append(
+      el("span", c.consistent ? "agree ok" : "agree split", headline),
+      el("span", "muted", seen + (c.failed_runs ? ` · ${c.failed_runs} run(s) failed` : "")));
+    parts.push(panel("Self-consistency check", body(line)));
+  }
+  if (d.warnings && d.warnings.length) {
+    const box = el("div", "banner checks");
+    box.setAttribute("role", "alert");
+    box.append(el("span", "label", "Treat this result with caution"), renderList(d.warnings, ""));
+    parts.unshift(box);
+  }
+  return parts;
+}
+
 // --- The exhibit: 3D vitrine + placard ------------------------------------
 
 function placardAsFound(d) {
@@ -808,13 +874,18 @@ function renderExhibit(d) {
 function showDiagnosis(d, meta, roundTripSeconds) {
   clearInterval(timer);
   const parts = [];
-  if (d.insufficient_image) {
-    parts.push(renderInsufficient(d), renderSummary(d, meta, roundTripSeconds), renderEvidence(d));
+  if (d.is_failure_analysis_applicable === false) {
+    const seen = panel("What the photo shows", body(d.visual_evidence.length
+      ? renderList(d.visual_evidence, "bullets") : el("p", "muted", "No description given.")));
+    parts.push(renderNothing(d), ...renderChecks(d), seen);
+    setStatus("done", "NOTHING TO ANALYSE");
+  } else if (d.insufficient_image) {
+    parts.push(renderInsufficient(d), renderSummary(d, meta, roundTripSeconds), ...renderChecks(d), renderEvidence(d));
     setStatus("done", "INSUFFICIENT IMAGE");
   } else {
     const columns = el("div", "two");
     columns.append(renderEvidence(d), renderCause(d));
-    parts.push(renderSummary(d, meta, roundTripSeconds));
+    parts.push(renderSummary(d, meta, roundTripSeconds), ...renderChecks(d));
     const exhibit = d.specimen && d.solutions.length;
     if (exhibit) parts.push(renderExhibit(d));
     parts.push(columns);

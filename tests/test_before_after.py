@@ -67,12 +67,21 @@ def _model_answer(geometry):
     plain = {**solution, "title": "Thicker wall", "geometry": None, "addresses_root_cause": False}
     return {
         "visual_evidence": ["Beach marks at the inside corner"],
+        "is_failure_analysis_applicable": True,
+        "not_applicable_reason": None,
         "insufficient_image": False,
         "insufficient_reason": None,
+        "geometric_features": ["Sharp inside corner where the beach marks start"],
         "material": "metal",
         "primary_mode": "fatigue_metal",
         "confidence": "medium",
         "probable_cause": "Cyclic bending at a sharp corner.",
+        "rejected_alternative": {
+            "mode": "brittle overload",
+            "visual_feature": "Beach marks at the inside corner",
+            "reason": "A single brittle overload would leave one uniform granular "
+                      "surface, not beach marks growing from the corner.",
+        },
         "specimen": None,
         "alternative_modes": [],
         "solutions": [solution, plain, plain],
@@ -91,7 +100,7 @@ def _diagnose(body, monkeypatch):
     import io
     buffer = io.BytesIO()
     Image.new("RGB", (8, 8)).save(buffer, format="JPEG")
-    result, _ = diagnose.diagnose_with_meta(buffer.getvalue(), client=fake)
+    result, _ = diagnose.diagnose_with_meta(buffer.getvalue(), client=fake, n_samples=1)
     return result
 
 

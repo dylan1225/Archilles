@@ -12,6 +12,10 @@ measure how well it reads the note, not the fracture surface.
 
 Never evaluates on the few-shot images in knowledge/examples/: if any eval
 image is byte-identical to one of them, the run aborts.
+
+Null specimens are photos with nothing to diagnose (an intact part, something
+that is not a part). Label them true_mode = not_applicable. The run asserts the
+model declined every one of them and exits with status 1 if it did not.
 """
 
 import csv
@@ -34,6 +38,8 @@ IMAGES_DIR = EVAL_DIR / "images"
 RESULTS_PATH = EVAL_DIR / "results.json"
 REQUIRED_COLUMNS = ("filename", "true_mode", "material", "how_it_broke", "difficulty")
 PREDICTED_ERROR = "ERROR"
+NULL_MODE = diagnose.MODE_NOT_APPLICABLE
+CONFIDENCE_LEVELS = ("high", "medium", "low")
 
 
 class EvalError(Exception):
@@ -83,7 +89,7 @@ def check_no_leakage(rows: list[dict[str, str]], images_dir: Path, examples_dir:
 
 
 def unknown_true_modes(rows: list[dict[str, str]], allowed: list[str]) -> list[str]:
-    return sorted({row["true_mode"] for row in rows} - set(allowed))
+    return sorted({row["true_mode"] for row in rows} - set(allowed) - {NULL_MODE})
 
 
 def load_cache(path: Path) -> dict[str, dict[str, Any]]:
@@ -100,18 +106,25 @@ def save_cache(path: Path, entries: dict[str, dict[str, Any]]) -> None:
 
 
 def run_one(image_path: Path) -> dict[str, Any]:
-    """One billed call. A failure is recorded, never swallowed."""
+    """One diagnosis (all its runs), exactly as the app does it. Shares the
+    app's cache, so a photo already analysed there is not billed again.
+    A failure is recorded, never swallowed."""
     try:
-        result, meta = diagnose.diagnose_with_meta(image_path.read_bytes(), None)
+        result, meta, _ = diagnose.diagnose_cached(image_path.read_bytes(), None)
     except diagnose.DiagnosisError as exc:
         return {"error": str(exc), "predicted_mode": PREDICTED_ERROR, "predicted_material": None,
                 "insufficient_image": False, "insufficient_reason": None, "confidence": None,
+                "applicable": None, "seen": None, "agreement": None,
                 "latency_s": None, "cost_usd": 0.0}
+    consistency = result.consistency
     return {"error": None, "predicted_mode": result.primary_mode,
             "predicted_material": result.material,
             "insufficient_image": result.insufficient_image,
             "insufficient_reason": result.insufficient_reason,
             "confidence": result.confidence,
+            "applicable": result.is_failure_analysis_applicable,
+            "seen": result.not_applicable_reason,
+            "agreement": consistency.agreement if consistency else None,
             "latency_s": meta.latency_s, "cost_usd": meta.cost_usd}
 
 
@@ -166,24 +179,94 @@ def confusion_matrix(records: list[dict[str, Any]]) -> list[str]:
     return lines
 
 
+def table(headers: list[str], rows: list[list[str]]) -> list[str]:
+    """A plain-text table with a header rule, columns sized to fit."""
+    widths = [max(len(str(cell)) for cell in column) for column in zip(headers, *rows)]
+
+    def line(cells: list[Any]) -> str:
+        return "  " + "  ".join(f"{str(cell):<{width}}" for cell, width in zip(cells, widths))
+
+    return [line(headers), "  " + "  ".join("-" * width for width in widths), *map(line, rows)]
+
+
+def calibration_table(records: list[dict[str, Any]]) -> list[str]:
+    """Accuracy by the confidence the model stated. Well calibrated means
+    'high' is right more often than 'medium', and 'medium' more than 'low'."""
+    rows = []
+    for level in (*CONFIDENCE_LEVELS, None):
+        group = [r for r in records if r["confidence"] == level]
+        if not group:
+            continue
+        correct = sum(r["correct"] for r in group)
+        rows.append([level or "(error)", len(group), correct,
+                     f"{100 * correct / len(group):.0f}%",
+                     f"{100 * len(group) / len(records):.0f}%"])
+    return table(["stated confidence", "specimens", "correct", "accuracy", "share"], rows)
+
+
+def null_table(nulls: list[dict[str, Any]]) -> list[str]:
+    rows = []
+    for r in nulls:
+        verdict = ("ERROR" if r["error"] else
+                   "declined" if r["applicable"] is False else "DIAGNOSED A FAILURE")
+        agreement = "-" if r["agreement"] is None else f"{r['agreement']:.2f}"
+        rows.append([r["filename"], r["how_it_broke"] or "-", verdict,
+                     r["predicted_mode"], r["confidence"] or "-", agreement])
+    return table(["file", "what it is", "result", "predicted", "confidence", "agreement"], rows)
+
+
+def null_assertion(nulls: list[dict[str, Any]]) -> tuple[bool, str]:
+    """is_failure_analysis_applicable must be false for every null specimen."""
+    failed = [r["filename"] for r in nulls if r["applicable"] is not False]
+    if not nulls:
+        return True, "ASSERT skipped: no null specimens (true_mode = not_applicable) in labels.csv"
+    if failed:
+        return False, (f"ASSERT FAILED: is_failure_analysis_applicable was not false for "
+                       f"{len(failed)} of {len(nulls)} null specimens: {', '.join(failed)}")
+    return True, (f"ASSERT PASSED: is_failure_analysis_applicable is false for all "
+                  f"{len(nulls)} null specimens")
+
+
+def _failure_sections(failures: list[dict[str, Any]]) -> list[str]:
+    abstained = [r for r in failures if r["insufficient_image"]]
+    declined = [r for r in failures if r["applicable"] is False]
+    answered = [r for r in failures if not r["insufficient_image"] and r["applicable"]]
+    lines = ["TOP-1 ACCURACY ON FAILURE SPECIMENS (insufficient-image, declines and errors count as wrong)",
+             _accuracy_line("overall", failures)]
+    if answered and len(answered) != len(failures):
+        lines.append(_accuracy_line("when it gave an answer", answered))
+    lines += ["", "CONFUSION MATRIX (rows = true mode)", *confusion_matrix(failures)]
+    lines += ["", "ACCURACY BY MATERIAL", *_grouped(failures, "material")]
+    lines += ["", "ACCURACY BY DIFFICULTY", *_grouped(failures, "difficulty")]
+    lines += ["", f"INSUFFICIENT IMAGE fired on {len(abstained)} of {len(failures)}"]
+    lines += [f"  {r['filename']}: {r['insufficient_reason']}" for r in abstained]
+    lines += ["", f"WRONGLY DECLINED (said nothing was broken) on {len(declined)} of {len(failures)}"]
+    lines += [f"  {r['filename']}: {r['seen']}" for r in declined]
+    return lines
+
+
 def format_report(records: list[dict[str, Any]], new_calls: int) -> str:
-    abstained = [r for r in records if r["insufficient_image"]]
+    failures = [r for r in records if r["true_mode"] != NULL_MODE]
+    nulls = [r for r in records if r["true_mode"] == NULL_MODE]
     errored = [r for r in records if r["error"]]
-    answered = [r for r in records if not r["insufficient_image"] and not r["error"]]
     latencies = [r["latency_s"] for r in records if r["latency_s"] is not None]
     total_cost = sum(r["cost_usd"] for r in records)
     median = f"{statistics.median(latencies):.1f} s" if latencies else "n/a"
 
-    lines = ["", "=" * 64, f"POSTMORTEM EVAL   {len(records)} held-out specimens", "=" * 64, ""]
-    lines.append("TOP-1 ACCURACY (insufficient-image and errors count as wrong)")
-    lines.append(_accuracy_line("overall", records))
-    if answered and len(answered) != len(records):
-        lines.append(_accuracy_line("when it gave an answer", answered))
-    lines += ["", "CONFUSION MATRIX (rows = true mode)", *confusion_matrix(records)]
-    lines += ["", "ACCURACY BY MATERIAL", *_grouped(records, "material")]
-    lines += ["", "ACCURACY BY DIFFICULTY", *_grouped(records, "difficulty")]
-    lines += ["", f"INSUFFICIENT IMAGE fired on {len(abstained)} of {len(records)}"]
-    lines += [f"  {r['filename']}: {r['insufficient_reason']}" for r in abstained]
+    lines = ["", "=" * 72,
+             f"POSTMORTEM EVAL   {len(failures)} failure specimens, {len(nulls)} null specimens",
+             "=" * 72, ""]
+    if failures:
+        lines += _failure_sections(failures)
+    else:
+        lines.append("No failure specimens in labels.csv yet.")
+    lines += ["", "CALIBRATION: ACCURACY BY STATED CONFIDENCE (all specimens; a null "
+                  "specimen counts as correct when declined)", *calibration_table(records)]
+    if nulls:
+        declined = sum(r["applicable"] is False for r in nulls)
+        lines += ["", f"NULL SPECIMENS: correctly declined {declined} of {len(nulls)}",
+                  *null_table(nulls)]
+        lines += [f"  {r['filename']} -> {r['seen']}" for r in nulls if r["seen"]]
     if errored:
         lines += ["", f"ERRORS on {len(errored)} of {len(records)} (will be retried next run)"]
         lines += [f"  {r['filename']}: {r['error']}" for r in errored]
@@ -191,6 +274,7 @@ def format_report(records: list[dict[str, Any]], new_calls: int) -> str:
               f"TOTAL COST      ${total_cost:.4f} for all {len(records)} specimens",
               f"THIS RUN        {new_calls} new model call(s), "
               f"{len(records) - new_calls} served from {RESULTS_PATH.name}", ""]
+    lines += [null_assertion(nulls)[1], ""]
     return "\n".join(lines)
 
 
@@ -208,7 +292,8 @@ def main() -> int:
         print(f"EVAL ABORTED: {exc}", file=sys.stderr)
         return 2
     print(format_report(records, new_calls))
-    return 0
+    passed, _ = null_assertion([r for r in records if r["true_mode"] == NULL_MODE])
+    return 0 if passed else 1
 
 
 if __name__ == "__main__":
