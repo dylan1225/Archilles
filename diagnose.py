@@ -82,6 +82,11 @@ SpecimenShape = Literal["round_rod", "rect_bar", "flat_plate", "l_bracket"]
 SpecimenFeature = Literal["none", "hole", "notch", "sharp_corner"]
 LoadCase = Literal["bending_span", "cantilever", "tension", "unknown"]
 DimensionsSource = Literal["user_context", "estimated_from_image"]
+# "user_measured" is never produced by the model: it marks numbers recomputed
+# from values the user typed in on the result card.
+GeometrySource = Literal["user_context", "estimated_from_image", "unknown"]
+GEOMETRY_FIELDS = ("current_radius_mm", "proposed_radius_mm", "section_depth_mm")
+USER_MEASURED = "user_measured"
 VisualKind = Literal[
     "add_support",
     "move_load",
@@ -135,6 +140,7 @@ class Solution(BaseModel):
     addresses_root_cause: bool
     computed: dict | None
     visual: Visual | None = None
+    geometry: dict | None = None
 
 
 class Diagnosis(BaseModel):
@@ -173,11 +179,15 @@ class Example:
 # Field order is generation order: observations come before any conclusion.
 
 
-class _FilletChange(BaseModel):
-    current_radius_mm: float = Field(description="0 for a sharp corner.")
-    proposed_radius_mm: float
-    section_depth_mm: float = Field(description="Depth of the section at the notch.")
-    dimensions_source: DimensionsSource
+class _Geometry(BaseModel):
+    current_radius_mm: float | None = Field(
+        description="0 for a sharp corner; null if it cannot be estimated."
+    )
+    proposed_radius_mm: float | None = Field(description="null if it cannot be estimated.")
+    section_depth_mm: float | None = Field(
+        description="Depth of the section at the notch; null if it cannot be estimated."
+    )
+    dimensions_source: GeometrySource
 
 
 class _Specimen(BaseModel):
@@ -205,8 +215,11 @@ class _ModelSolution(BaseModel):
     cons: list[str]
     effort: Literal["trivial", "moderate", "significant"]
     addresses_root_cause: bool
-    fillet: _FilletChange | None = Field(
-        description="Only when this solution adds or enlarges a fillet; else null."
+    geometry: _Geometry | None = Field(
+        description=(
+            "Only when this solution adds or enlarges a fillet, increases a radius "
+            "or softens a corner; else null."
+        )
     )
     visual: _Visual
 
@@ -280,13 +293,16 @@ cons must be real consequences for this part: weight, cost, print or machining \
 time, complexity, lead time, changes to mating parts. Do not invent a con for \
 balance.
 
-6. When a solution adds or enlarges a fillet at a corner or notch, fill its \
-fillet field: current radius (0 for a sharp corner), proposed radius, and the \
-depth of the section at the notch, in millimetres. Take dimensions from the \
-user's note when it gives them (dimensions_source "user_context"); otherwise \
-estimate them from the photo ("estimated_from_image"). Otherwise fillet is \
+6. When a solution adds or enlarges a fillet, increases a radius or softens a \
+corner at a corner or notch, fill its geometry field: current radius (0 for a \
+sharp corner), proposed radius, and the depth of the section at the notch, in \
+millimetres. Take dimensions from the user's note when it gives them \
+(dimensions_source "user_context"); otherwise estimate them from the photo \
+("estimated_from_image"). If a value cannot be estimated from the photo or the \
+note, set it to null and dimensions_source to "unknown": never invent a number. \
+For every other solution, including a thicker wall or section, geometry is \
 null. Never state a stress concentration factor or a percentage stress \
-reduction yourself. The system calculates those from the fillet field.
+reduction yourself. The system calculates those from the geometry field.
 
 7. For a schematic 3D sketch, fill specimen: the closest simple shape \
 (round_rod, rect_bar, flat_plate or l_bracket), the intact part's length, width \
@@ -550,18 +566,57 @@ def _check_rules(raw: _ModelDiagnosis, allowed_modes: list[str]) -> None:
         raise _InvalidOutput("no solution addresses the root cause")
 
 
-def _fillet_computed(fillet: _FilletChange) -> dict[str, Any]:
-    """Numbers for a fillet change. Calculated by mechanics.py, never by the model."""
-    inputs = fillet.model_dump()
+def fillet_computed(
+    current_radius_mm: float | None,
+    proposed_radius_mm: float | None,
+    section_depth_mm: float | None,
+    dimensions_source: str,
+) -> dict[str, Any]:
+    """Before/after numbers for a fillet change. Calculated by mechanics.py,
+    never by the model.
+
+    Missing dimensions are not guessed: the result says which ones are needed
+    (`needs_input`) so the user can type them in. Impossible dimensions are
+    reported in `error` rather than hidden.
+    """
+    inputs = {
+        "current_radius_mm": current_radius_mm,
+        "proposed_radius_mm": proposed_radius_mm,
+        "section_depth_mm": section_depth_mm,
+        "dimensions_source": dimensions_source,
+    }
     base = {"type": "fillet_improvement", "calculated_by": "mechanics.py", "inputs": inputs}
+    missing = [name for name in GEOMETRY_FIELDS if inputs[name] is None]
+    if missing:
+        return {**base, "needs_input": missing}
     try:
         result = mechanics.fillet_improvement(
-            fillet.current_radius_mm, fillet.proposed_radius_mm, fillet.section_depth_mm
+            current_radius_mm, proposed_radius_mm, section_depth_mm
         )
     except ValueError as exc:
-        logger.warning("Fillet calculation rejected its inputs: %s", exc)
+        logger.info("Fillet calculation rejected its inputs: %s", exc)
         return {**base, "error": f"Not calculated: {exc}"}
-    return {**base, "geometry": mechanics.SUPPORTED_GEOMETRY, **result}
+    return {
+        **base,
+        "geometry": mechanics.SUPPORTED_GEOMETRY,
+        "kt_before": result["kt_current"],
+        "kt_after": result["kt_proposed"],
+        "r_over_d_before": result["r_over_d_current"],
+        "r_over_d_after": result["r_over_d_proposed"],
+        "stress_reduction_pct": result["peak_stress_reduction_pct"],
+        "reduction_is_lower_bound": result["reduction_is_lower_bound"],
+        "is_extrapolated": result["is_extrapolated"],
+        "is_capped": result["is_capped"],
+        "basis": result["basis"],
+    }
+
+
+def _geometry_computed(geometry: _Geometry) -> dict[str, Any]:
+    source = geometry.dimensions_source
+    values = [getattr(geometry, name) for name in GEOMETRY_FIELDS]
+    if any(value is None for value in values):
+        source = "unknown"
+    return fillet_computed(*values, dimensions_source=source)
 
 
 def _clamp(value: float, low: float, high: float, fallback: float) -> float:
@@ -597,11 +652,12 @@ def _to_visual(raw: _Visual) -> Visual:
 
 
 def _to_solution(raw: _ModelSolution) -> Solution:
-    computed = _fillet_computed(raw.fillet) if raw.fillet else None
+    geometry = raw.geometry
     return Solution(
-        **raw.model_dump(exclude={"fillet", "visual"}),
-        computed=computed,
+        **raw.model_dump(exclude={"geometry", "visual"}),
+        computed=_geometry_computed(geometry) if geometry else None,
         visual=_to_visual(raw.visual),
+        geometry=geometry.model_dump() if geometry else None,
     )
 
 

@@ -69,7 +69,7 @@ photo + note ─► diagnose.py   one Gemini call with the knowledge base, a str
 
 | Path | What it does |
 |---|---|
-| `main.py` | FastAPI app: `/`, `POST /diagnose`, `GET /examples/{n}`. Errors are always JSON. |
+| `main.py` | FastAPI app: `/`, `POST /diagnose`, `GET /examples/{n}`, `GET /mechanics/fillet` (recompute from typed measurements). Errors are always JSON. |
 | `diagnose.py` | Image prep (HEIC/EXIF), prompt, Gemini call with a time limit, validation, cache. |
 | `mechanics.py` | Stress concentration lookup, fillet improvement, FDM wall check. No model calls. |
 | `knowledge/failure_modes.md` | Failure-mode knowledge base, inserted into the prompt verbatim. |
@@ -98,11 +98,26 @@ venv/bin/python -m pytest
 venv/bin/python eval/run_eval.py
 ```
 
-108 offline tests with a fake model client cover the mechanics tables, schema and
+117 offline tests with a fake model client cover the mechanics tables, schema and
 rule enforcement, retries and timeouts, the cache, the 3D fields and the bundled
 examples. The eval needs `eval/labels.csv` and `eval/images/`.
 
 ## Update log
+
+### 2026-11-14 — Calculated before/after for geometry fixes
+- Fixes that add or enlarge a fillet, increase a radius or soften a corner now
+  carry a `geometry` block (current radius, proposed radius, section depth). The
+  model must leave a value null rather than invent it.
+- `mechanics.fillet_improvement()` turns that into `computed`: `kt_before`,
+  `kt_after`, `stress_reduction_pct`, `basis`, `is_extrapolated`, `is_capped`.
+- New card, visibly separate from the model's text: green *Calculated* band,
+  large monospace figures, e.g. *Sharp corner, r ≈ 0 · Kt ≈ 3.3 → add a 3 mm
+  fillet · Kt ≈ 1.45 · Peak stress drops ≥ 56%*, the method underneath, and an
+  "estimated, outside tabulated range" note when a value is extrapolated.
+- "Try your own measurements": type the measured radius and section depth and the
+  numbers recompute live through `GET /mechanics/fillet`.
+- Fixes with no geometry show no card at all. Thicker walls or sections are not
+  calculated: `mechanics.py` has no model for them yet.
 
 ### 2026-11-14 — 3D exhibit and new UI (`655b3d8`)
 - Interactive three.js exhibit: the part *as found* (broken) or with solution 1, 2

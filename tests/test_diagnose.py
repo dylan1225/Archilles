@@ -48,7 +48,7 @@ def solution(**overrides) -> dict:
         "cons": ["Mating part needs a chamfer"],
         "effort": "trivial",
         "addresses_root_cause": True,
-        "fillet": None,
+        "geometry": None,
         "visual": {"kind": "add_fillet", "label": "Round the inside corner"},
     }
     return {**base, **overrides}
@@ -83,7 +83,7 @@ def payload(**overrides) -> dict:
         ],
         "solutions": [
             solution(
-                fillet={
+                geometry={
                     "current_radius_mm": 0.0,
                     "proposed_radius_mm": 2.0,
                     "section_depth_mm": 10.0,
@@ -239,9 +239,9 @@ def test_fillet_solution_gets_numbers_from_mechanics_not_the_model():
     computed = result.solutions[0].computed
     expected = mechanics.fillet_improvement(0.0, 2.0, 10.0)
     assert computed["type"] == "fillet_improvement"
-    assert computed["kt_current"] == expected["kt_current"]
-    assert computed["kt_proposed"] == expected["kt_proposed"]
-    assert computed["peak_stress_reduction_pct"] == expected["peak_stress_reduction_pct"]
+    assert computed["kt_before"] == expected["kt_current"]
+    assert computed["kt_after"] == expected["kt_proposed"]
+    assert computed["stress_reduction_pct"] == expected["peak_stress_reduction_pct"]
     assert computed["inputs"]["dimensions_source"] == "estimated_from_image"
     assert result.solutions[1].computed is None
 
@@ -253,7 +253,7 @@ def test_impossible_fillet_dimensions_are_reported_not_hidden():
         "section_depth_mm": 0.0,
         "dimensions_source": "estimated_from_image",
     }
-    body = payload(solutions=[solution(fillet=bad_fillet), solution(), solution()])
+    body = payload(solutions=[solution(geometry=bad_fillet), solution(), solution()])
 
     result, _ = run(FakeClient(response(body)))
 
@@ -356,7 +356,7 @@ def test_results_saved_before_the_3d_fields_still_load():
         **{k: v for k, v in old.items() if k not in ("specimen", "solutions", "alternative_modes")},
         "alternative_modes": [["other", "why"]],
         "solutions": [
-            {k: v for k, v in solution().items() if k not in ("fillet", "visual")} | {"computed": None}
+            {k: v for k, v in solution().items() if k not in ("geometry", "visual")} | {"computed": None}
         ],
     }
 

@@ -196,18 +196,50 @@
   .solution-body { padding: 14px 16px 16px 0; }
   .solution h3 { font: 600 17px/1.3 var(--serif); }
 
-  .calc { margin-top: 14px; border: 1px solid var(--calc-line); border-radius: 2px; background: var(--calc-bg); }
-  .calc-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--calc-line); }
-  .calc-head .mark { font: 700 10.5px/1 var(--mono); letter-spacing: .14em; color: #fff; background: var(--calc); padding: 4px 6px; border-radius: 2px; }
-  .calc-head .src { font: 11px/1 var(--mono); color: var(--calc); }
-  .calc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
-  .calc-grid > div { padding: 9px 10px; border-right: 1px solid var(--calc-line); }
-  .calc-grid > div:last-child { border-right: 0; }
-  .calc-grid .label { color: var(--calc); }
-  .calc-grid .num { font: 600 19px/1.1 var(--mono); margin-top: 6px; }
-  .calc-grid .unit { font: 11px/1.2 var(--mono); color: var(--muted); margin-top: 3px; }
-  .calc-foot { padding: 7px 10px; border-top: 1px solid var(--calc-line); font: 11px/1.45 var(--mono); color: var(--muted); }
-  .calc-foot .flag { color: var(--warn); }
+  /* --- Calculated before/after: deliberately unlike the model's prose ----- */
+  .calc { margin-top: 16px; border: 2px solid var(--calc); border-radius: 3px; background: var(--calc-bg); color: #10241c;
+    container: calc / inline-size; }
+  .calc-body { display: grid; }
+  @container calc (min-width: 760px) {
+    .calc-body { grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr); }
+    .calc-figures { padding: 18px 22px 16px; }
+    .calc-try { border-top: 0; border-left: 1px solid var(--calc-line); align-content: start; padding: 18px 20px; }
+  }
+  .exhibit-calc { padding: 0 16px 18px; border-top: 1px solid var(--line); }
+  @container calc (max-width: 520px) {
+    .calc-row .what { font-size: 15px; }
+    .calc-row .kt { font-size: 26px; }
+    .calc-result { font-size: 21px; }
+  }
+  .calc-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 8px 14px;
+    background: var(--calc); color: #f2f7f3; }
+  .calc-head .mark { font: 700 12px/1 var(--mono); letter-spacing: .16em; background: #f2f7f3; color: var(--calc);
+    padding: 5px 7px; border-radius: 2px; }
+  .calc-head .src { font: 12px/1.2 var(--mono); }
+  .calc-figures { padding: 14px 14px 10px; }
+  .calc-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 4px 16px;
+    padding: 8px 0; border-bottom: 1px dashed var(--calc-line); }
+  .calc-row .what { font: 600 18px/1.25 var(--mono); }
+  .calc-row .what small { display: block; margin-top: 3px; font: 12px/1.3 var(--mono); color: #4a5d54; }
+  .calc-row .kt { font: 700 30px/1 var(--mono); white-space: nowrap; }
+  .calc-row.after .what, .calc-row.after .kt { color: var(--calc); }
+  .calc-result { margin-top: 12px; padding: 10px 12px; background: #fff; border-left: 5px solid var(--calc);
+    font: 700 24px/1.2 var(--mono); }
+  .calc-result.worse { border-left-color: var(--bad); color: var(--bad); }
+  .calc-note { margin-top: 10px; padding: 8px 10px; border: 1px solid #d9b56f; background: #fbf1df; color: #6b4200;
+    font: 600 13px/1.4 var(--sans); }
+  .calc-basis { margin-top: 10px; font: 12px/1.45 var(--sans); color: #4a5d54; }
+  .calc-error { font: 600 14px/1.4 var(--sans); color: var(--bad); }
+  .calc-ask { font: 15px/1.45 var(--sans); }
+  .calc-try { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; padding: 12px 14px 14px;
+    border-top: 1px solid var(--calc-line); background: #f6f9f6; }
+  .calc-try .try-title { flex-basis: 100%; font: 600 11.5px/1.2 var(--serif); letter-spacing: .14em; text-transform: uppercase; color: var(--calc); }
+  .calc-try label { display: grid; gap: 4px; font: 12px/1.2 var(--sans); color: #4a5d54; }
+  .calc-try input { width: 104px; min-height: 38px; padding: 6px 8px; border: 1px solid var(--calc-line); border-radius: 2px;
+    background: #fff; font: 600 16px/1 var(--mono); }
+  .calc-try input:focus-visible { outline: 2px solid var(--calc); outline-offset: 1px; }
+  .calc-try .reset { min-height: 38px; font-size: 13px; }
+  .calc-try .source { flex-basis: 100%; font: 12px/1.3 var(--mono); color: #4a5d54; }
 </style>
 </head>
 <body>
@@ -279,9 +311,17 @@ const PROGRESS_STEPS = [
 ];
 const MATERIAL_NAMES = { fdm_print: "FDM print", metal: "Metal", wood: "Wood", other: "Other", unclear: "Unclear" };
 const DIMENSION_SOURCES = {
-  user_context: "dimensions from your note",
-  estimated_from_image: "dimensions ESTIMATED from the photo",
+  user_context: "Inputs: from your note",
+  estimated_from_image: "Inputs: ESTIMATED from the photo. Measure the part and type the real values above.",
+  unknown: "Inputs: the photo does not show these dimensions.",
+  user_measured: "Inputs: your measurements",
 };
+const GEOMETRY_INPUTS = [
+  ["current_radius_mm", "Radius now (mm)"],
+  ["proposed_radius_mm", "Proposed radius (mm)"],
+  ["section_depth_mm", "Section depth (mm)"],
+];
+const RECOMPUTE_DELAY_MS = 250;
 const EXHIBIT_SOLUTIONS = 3;
 const EVIDENCE_ON_PLACARD = 3;
 
@@ -329,10 +369,6 @@ function setBusy(value) {
 function humanise(id) {
   const words = String(id).replace(/_/g, " ");
   return words.charAt(0).toUpperCase() + words.slice(1);
-}
-
-function formatNumber(value, digits) {
-  return typeof value === "number" && Number.isFinite(value) ? value.toFixed(digits) : "n/a";
 }
 
 /** Replace the results area, releasing the 3D viewer first. */
@@ -450,49 +486,137 @@ function renderCause(d) {
   return column;
 }
 
-function calcCell(label, number, unit) {
-  const cell = el("div");
-  cell.append(el("div", "label", label), el("div", "num", number));
-  if (unit) cell.append(el("div", "unit", unit));
-  return cell;
+/** A number without trailing zeros: 3.30 -> "3.3", 1.45 -> "1.45", 3.0 -> "3". */
+function plain(value, digits = 2) {
+  return String(Number(value.toFixed(digits)));
 }
 
-function renderComputed(computed) {
-  const box = el("div", "calc");
-  const head = el("div", "calc-head");
-  head.append(el("span", "mark", "CALCULATED"),
-    el("span", "src", `${computed.calculated_by || "mechanics.py"} · not model-generated`));
-  box.append(head);
+function beforeText(radius) {
+  return radius === 0 ? "Sharp corner, r ≈ 0" : `Fillet, r ≈ ${plain(radius, 1)} mm`;
+}
 
-  const inputs = computed.inputs || {};
+function afterText(before, after) {
+  if (after === before) return "→ radius unchanged";
+  if (after < before) return `→ reduce to r ≈ ${plain(after, 1)} mm`;
+  return before === 0 ? `→ add a ${plain(after, 1)} mm fillet` : `→ enlarge to r ≈ ${plain(after, 1)} mm`;
+}
+
+function calcRow(className, what, detail, kt) {
+  const row = el("div", `calc-row ${className}`);
+  const label = el("div", "what", what);
+  label.append(el("small", "", detail));
+  row.append(label, el("div", "kt", `Kt ≈ ${plain(kt)}`));
+  return row;
+}
+
+/** The numbers part of the card: before, after, the drop, and its limits. */
+function calcFigures(computed) {
+  const box = el("div", "calc-figures");
   if (computed.error) {
-    const foot = el("div", "calc-foot");
-    foot.append(el("span", "flag", computed.error));
-    box.append(foot);
+    box.append(el("div", "calc-error", computed.error));
     return box;
   }
-
-  const prefix = computed.reduction_is_lower_bound ? "≥ " : "";
-  const grid = el("div", "calc-grid");
-  grid.append(
-    calcCell("Kt now", formatNumber(computed.kt_current, 2),
-      `r ${formatNumber(inputs.current_radius_mm, 1)} mm · r/d ${formatNumber(computed.r_over_d_current, 3)}`),
-    calcCell("Kt proposed", formatNumber(computed.kt_proposed, 2),
-      `r ${formatNumber(inputs.proposed_radius_mm, 1)} mm · r/d ${formatNumber(computed.r_over_d_proposed, 3)}`),
-    calcCell("Peak stress", `${prefix}${formatNumber(computed.peak_stress_reduction_pct, 1)} %`,
-      computed.reduction_is_lower_bound ? "lower, at least" : "lower"),
-    calcCell("Section depth d", formatNumber(inputs.section_depth_mm, 1), "mm"),
+  if (computed.needs_input) {
+    box.append(el("p", "calc-ask", computed.prompt
+      || "The photo does not show the dimensions this needs, so nothing is estimated. Measure the part and enter them below."));
+    return box;
+  }
+  const inputs = computed.inputs;
+  const depth = `d = ${plain(inputs.section_depth_mm, 1)} mm`;
+  box.append(
+    calcRow("before", beforeText(inputs.current_radius_mm), `${depth} · r/d ${plain(computed.r_over_d_before, 3)}`, computed.kt_before),
+    calcRow("after", afterText(inputs.current_radius_mm, inputs.proposed_radius_mm),
+      `${depth} · r/d ${plain(computed.r_over_d_after, 3)}`, computed.kt_after),
   );
-  box.append(grid);
+  const pct = computed.stress_reduction_pct;
+  const result = el("div", pct < 0 ? "calc-result worse" : "calc-result");
+  result.textContent = pct > 0
+    ? `Peak stress drops ${computed.reduction_is_lower_bound ? "≥ " : "~"}${Math.round(pct)}%`
+    : pct < 0 ? `Peak stress rises ~${Math.round(-pct)}%` : "No change in peak stress";
+  box.append(result);
+  if (computed.is_capped) {
+    box.append(el("div", "calc-note",
+      `⚠ Estimated, outside the tabulated range: a sharp corner has no finite Kt, so ${plain(computed.kt_before)} is a capped lower bound. The real drop is at least this.`));
+  } else if (computed.is_extrapolated) {
+    box.append(el("div", "calc-note",
+      "⚠ Estimated, outside the tabulated range (r/d 0.05 to 0.30): Kt is extrapolated, not read from the chart."));
+  }
+  if (computed.basis) box.append(el("p", "calc-basis", computed.basis));
+  return box;
+}
 
-  const foot = el("div", "calc-foot");
-  const flags = [];
-  if (inputs.dimensions_source) flags.push(DIMENSION_SOURCES[inputs.dimensions_source] || inputs.dimensions_source);
-  if (computed.is_capped) flags.push("sharp corner: Kt capped, true value is higher");
-  if (computed.is_extrapolated) flags.push("extrapolated beyond chart range");
-  if (flags.length) foot.append(el("div", "flag", `Inputs and limits: ${flags.join(" · ")}`));
-  if (computed.basis) foot.append(el("div", "", computed.basis));
-  box.append(foot);
+/**
+ * Before/after card for a geometry fix. The numbers come from mechanics.py,
+ * never the model; typed-in measurements are recomputed by the server.
+ */
+function renderComputed(computed) {
+  const box = el("div", "calc");
+  box.setAttribute("role", "group");
+  box.setAttribute("aria-label", "Calculated stress change, not model-generated");
+  const head = el("div", "calc-head");
+  head.append(el("span", "mark", "CALCULATED"),
+    el("span", "src", `${computed.calculated_by || "mechanics.py"} · Peterson charts · not model-generated`));
+  let figures = calcFigures(computed);
+  const calcBody = el("div", "calc-body");
+  calcBody.append(figures);
+  box.append(head, calcBody);
+
+  const original = computed.inputs || {};
+  const tryBox = el("div", "calc-try");
+  tryBox.append(el("div", "try-title", "Try your own measurements"));
+  const fields = GEOMETRY_INPUTS.map(([name, text]) => {
+    const label = el("label", "", text);
+    const input = el("input");
+    input.type = "number";
+    input.inputMode = "decimal";
+    input.min = "0";
+    input.step = "0.1";
+    input.value = original[name] ?? "";
+    label.append(input);
+    tryBox.append(label);
+    return [name, input];
+  });
+  const reset = el("button", "btn reset", "Reset");
+  reset.type = "button";
+  const source = el("div", "source", DIMENSION_SOURCES[original.dimensions_source] || "");
+  source.setAttribute("aria-live", "polite");
+  tryBox.append(reset, source);
+  calcBody.append(tryBox);
+
+  function show(next, sourceKey) {
+    const replacement = calcFigures(next);
+    figures.replaceWith(replacement);
+    figures = replacement;
+    source.textContent = DIMENSION_SOURCES[sourceKey] || "";
+  }
+
+  let pending = null;
+  let requestId = 0;
+  async function recompute() {
+    const values = Object.fromEntries(fields.map(([name, input]) => [name, input.value.trim()]));
+    if (Object.values(values).some((value) => value === "" || !Number.isFinite(Number(value)))) {
+      show({ needs_input: true, prompt: "Enter all three measurements, in millimetres, to calculate." }, "user_measured");
+      return;
+    }
+    const id = ++requestId;
+    try {
+      const response = await fetch(`/mechanics/fillet?${new URLSearchParams(values)}`);
+      if (id !== requestId) return; // a newer edit has already been sent
+      show(response.ok ? await response.json() : { error: await readError(response) }, "user_measured");
+    } catch (error) {
+      if (id === requestId) show({ error: `Could not recalculate: ${error.message}` }, "user_measured");
+    }
+  }
+  fields.forEach(([, input]) => input.addEventListener("input", () => {
+    clearTimeout(pending);
+    pending = setTimeout(recompute, RECOMPUTE_DELAY_MS);
+  }));
+  reset.addEventListener("click", () => {
+    clearTimeout(pending);
+    requestId++;
+    fields.forEach(([name, input]) => { input.value = original[name] ?? ""; });
+    show(computed, original.dimensions_source);
+  });
   return box;
 }
 
@@ -576,7 +700,9 @@ function placardSolution(solution, index, total) {
     el("p", "", solution.description),
     prosAndCons(solution),
   ];
-  if (solution.computed) parts.push(renderComputed(solution.computed));
+  if (solution.computed) {
+    parts.push(el("p", "muted section-label", "The calculated before/after for this fix is shown below the model."));
+  }
   return parts;
 }
 
@@ -630,7 +756,9 @@ function renderExhibit(d) {
   const placard = el("aside", "placard");
   placard.setAttribute("aria-live", "polite");
   exhibitBody.append(figure, placard);
-  section.append(head, exhibitBody);
+  // Full-width band for the calculated before/after, filled only for fixes that have one.
+  const calcSlot = el("div", "exhibit-calc");
+  section.append(head, exhibitBody, calcSlot);
 
   let active = null;
   function choose(index, focus = false) {
@@ -643,6 +771,9 @@ function renderExhibit(d) {
     });
     placard.dataset.state = index === null ? "found" : "solution";
     placard.replaceChildren(...(index === null ? placardAsFound(d) : placardSolution(shown[index], index, shown.length)));
+    const computed = index === null ? null : shown[index].computed;
+    calcSlot.replaceChildren(...(computed ? [renderComputed(computed)] : []));
+    calcSlot.hidden = !computed;
     if (viewer) viewer.select(index);
   }
   buttons.forEach((button, i) => {
