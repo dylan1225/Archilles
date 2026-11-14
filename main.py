@@ -110,7 +110,7 @@ def get_example(n: int) -> JSONResponse:
         return _error(404, f"Example {n} has not been bundled yet ({path.name} is missing).")
     try:
         stored = json.loads(path.read_text(encoding="utf-8"))
-        result = diagnose.Diagnosis.model_validate(stored["diagnosis"])
+        result = diagnose.with_mode_info(diagnose.Diagnosis.model_validate(stored["diagnosis"]))
     except (OSError, ValueError, KeyError, ValidationError) as exc:
         logger.exception("Bundled example %d is unreadable", n)
         return _error(500, f"Bundled example {n} is corrupt: {type(exc).__name__}.")

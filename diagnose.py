@@ -154,6 +154,10 @@ class Diagnosis(BaseModel):
     insufficient_image: bool
     insufficient_reason: str | None
     specimen: Specimen | None = None
+    # Copied from the knowledge base by code, never written by the model.
+    mode_name: str | None = None
+    mode_source: str | None = None
+    mode_status: str | None = None
 
 
 @dataclass(frozen=True)
@@ -330,6 +334,45 @@ def mode_ids(knowledge_base: str) -> list[str]:
     """Ids of the filled-in modes. TODO placeholders are not valid answers."""
     ids = re.findall(r"^## Mode:\s*(\S+)\s*$", knowledge_base, flags=re.MULTILINE)
     return [mode for mode in ids if not mode.upper().startswith("TODO")]
+
+
+MODE_NAMES_BUILT_IN = {
+    MODE_OTHER: "Not in the knowledge base",
+    MODE_UNDETERMINED: "Undetermined",
+}
+
+
+def mode_info(knowledge_base: str) -> dict[str, dict[str, str | None]]:
+    """Name, Material, Source and Status of each filled-in mode, by id.
+
+    Read from the `- **Field:** value` lines under each `## Mode:` heading.
+    A missing field is None, never guessed.
+    """
+    info: dict[str, dict[str, str | None]] = {}
+    blocks = re.split(r"^## Mode:\s*", knowledge_base, flags=re.MULTILINE)[1:]
+    for block in blocks:
+        mode_id = block.split(None, 1)[0].strip()
+        if mode_id.upper().startswith("TODO"):
+            continue
+        fields = dict(re.findall(r"^- \*\*(\w+):\*\*\s*(.+?)\s*$", block, flags=re.MULTILINE))
+        info[mode_id] = {
+            key: fields.get(key.capitalize()) for key in ("name", "material", "source", "status")
+        }
+    return info
+
+
+def with_mode_info(diagnosis: Diagnosis, knowledge_base: str | None = None) -> Diagnosis:
+    """Attach the mode's name, source and review status from the knowledge base."""
+    info = mode_info(knowledge_base if knowledge_base is not None else load_knowledge_base())
+    entry = info.get(diagnosis.primary_mode, {})
+    name = entry.get("name") or MODE_NAMES_BUILT_IN.get(diagnosis.primary_mode)
+    return diagnosis.model_copy(
+        update={
+            "mode_name": name,
+            "mode_source": entry.get("source"),
+            "mode_status": entry.get("status"),
+        }
+    )
 
 
 def load_examples(directory: Path = EXAMPLES_DIR) -> list[Example]:
@@ -758,7 +801,7 @@ def diagnose_with_meta(
             cost_usd=_cost_usd(usage),
             **usage,
         )
-        return _to_diagnosis(raw), meta
+        return with_mode_info(_to_diagnosis(raw)), meta
     raise DiagnosisError(
         f"The model returned an unusable answer {MAX_ATTEMPTS} times ({problem}). "
         "Try again, or try a different photo."

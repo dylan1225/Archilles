@@ -52,6 +52,10 @@
   .panel-body { padding: 14px 16px 16px; }
   .stack > * + * { margin-top: 16px; }
   .muted { color: var(--muted); }
+  .reference { margin-top: 12px; padding-top: 10px; border-top: 1px dotted var(--line-strong);
+    font: italic 14px/1.45 var(--serif); color: var(--muted); }
+  .reference b { font-style: normal; font-weight: 600; color: var(--ink); }
+  .reference .draft { font: 600 13px/1.4 var(--sans); font-style: normal; color: var(--warn); }
   [hidden] { display: none !important; }
 
   /* --- Specimen form ------------------------------------------------------ */
@@ -450,7 +454,7 @@ function renderSummary(d, meta, roundTripSeconds) {
     : `cached · same photo as before · ${model}`;
   strip.append(
     summaryCell("Material", MATERIAL_NAMES[d.material] || d.material),
-    summaryCell("Failure mode", humanise(d.primary_mode), d.primary_mode),
+    summaryCell("Failure mode", modeName(d), d.primary_mode),
     summaryCell("Confidence", badge),
     summaryCell(meta && meta.cached ? "Original analysis time" : "Analysis time", latency, latencyNote),
   );
@@ -470,8 +474,24 @@ function renderEvidence(d) {
   return panel("Visual evidence · observed in this photo", body(content));
 }
 
+function modeName(d) {
+  return d.mode_name || humanise(d.primary_mode);
+}
+
+/** "Reference: …" for the diagnosed mode, copied from the knowledge base by the server. */
+function referenceNote(d) {
+  if (!d.mode_source) return null;
+  const note = el("p", "reference");
+  note.append(el("b", "", "Reference: "), d.mode_source);
+  if (d.mode_status !== "reviewed") note.append(el("span", "draft", " · draft, not yet checked against this source"));
+  return note;
+}
+
 function renderCause(d) {
-  const parts = [panel("Probable cause", body(el("p", "", d.probable_cause || "Not determined.")))];
+  const causeBody = body(el("p", "", d.probable_cause || "Not determined."));
+  const reference = referenceNote(d);
+  if (reference) causeBody.append(reference);
+  const parts = [panel("Probable cause", causeBody)];
   if (d.alternative_modes.length) {
     const list = el("ul", "alts");
     d.alternative_modes.forEach(([mode, why]) => {
@@ -679,10 +699,12 @@ function renderInsufficient(d) {
 function placardAsFound(d) {
   const parts = [
     el("div", "kicker", "As found · before any change"),
-    el("h3", "", humanise(d.primary_mode)),
+    el("h3", "", modeName(d)),
     el("div", "rule"),
     el("p", "", d.probable_cause || "Not determined."),
   ];
+  const reference = referenceNote(d);
+  if (reference) parts.push(reference);
   if (d.visual_evidence.length) {
     parts.push(el("div", "label section-label", "Key evidence"),
       renderList(d.visual_evidence.slice(0, EVIDENCE_ON_PLACARD), "bullets"));
