@@ -100,11 +100,24 @@ venv/bin/python -m pytest
 venv/bin/python eval/run_eval.py
 ```
 
-161 offline tests with a fake model client cover the mechanics tables, schema and
+167 offline tests with a fake model client cover the mechanics tables, schema and
 rule enforcement, retries and timeouts, the cache, the 3D fields and the bundled
 examples. The eval needs `eval/labels.csv` and `eval/images/`.
 
 ## Update log
+
+### 2026-11-14 — Readability redesign (branch `ui-and-ai-assistant-dev`)
+- Results lead with a **verdict card**: the failure mode, a one-sentence summary
+  (new `summary` field), confidence and material.
+- Everything else sits in **drop-down rows** that open in place, each showing a
+  count or preview while closed: what the photo shows, why it broke, other causes,
+  also considered, reference, analysis details.
+- **Glossary**: 38 hand-written terms in `knowledge/glossary.json`. Terms in the
+  results are coloured; hover (or tap, or keyboard focus) shows a definition and
+  a short explanation.
+- One type scale, base 16 px, nothing smaller than 13 px.
+- Fix buttons are labelled ("1 · Add support") and scroll sideways on phones.
+- The left column folds away once a result is showing.
 
 ### 2026-11-14 — Knowledge base and materials (branch `ui-and-ai-assistant-dev`)
 - All 11 failure modes written, each with a cited source; the page shows the

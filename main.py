@@ -149,6 +149,15 @@ def get_section(
     return JSONResponse(computed)
 
 
+GLOSSARY_PATH = PROJECT_DIR / "knowledge" / "glossary.json"
+
+
+@app.get("/glossary")
+def get_glossary() -> FileResponse:
+    """Hand-written term definitions for the hover pop-ups. Never generated."""
+    return FileResponse(GLOSSARY_PATH, media_type="application/json")
+
+
 @app.get("/materials")
 def get_materials() -> JSONResponse:
     """The reference materials table, for the material picker and the cards."""

@@ -165,7 +165,7 @@ def _answer(**solution_overrides):
     return {
         "visual_evidence": ["Long splinter on the tension side"], "insufficient_image": False,
         "insufficient_reason": None, "material": "wood", "primary_mode": "bending_overload_wood",
-        "confidence": "high", "probable_cause": "x", "specimen": None, "alternative_modes": [],
+        "confidence": "high", "probable_cause": "x", "summary": "It snapped in bending.", "specimen": None, "alternative_modes": [],
         "solutions": [{**solution, **solution_overrides}, root, root],
     }
 

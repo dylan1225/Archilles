@@ -79,6 +79,7 @@ def payload(**overrides) -> dict:
         "primary_mode": "fatigue_metal",
         "confidence": "medium",
         "probable_cause": "Cyclic bending at a sharp corner.",
+        "summary": "Repeated bending cracked it at a sharp corner.",
         "specimen": specimen(),
         "alternative_modes": [
             {"mode": "other", "why_less_likely": "Two distinct zones are visible."}
@@ -350,6 +351,14 @@ def test_missing_specimen_still_gives_a_diagnosis():
     assert meta.attempts == 1
     assert result.specimen is None
     assert result.primary_mode == "fatigue_metal"
+
+
+def test_summary_is_tidied_to_one_line():
+    body = payload(summary="  It   broke\nat the corner.  ")
+
+    result, _ = run(FakeClient(response(body)))
+
+    assert result.summary == "It broke at the corner."
 
 
 def test_results_saved_before_the_3d_fields_still_load():

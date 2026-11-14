@@ -163,6 +163,8 @@ class Diagnosis(BaseModel):
     mode_name: str | None = None
     mode_source: str | None = None
     mode_status: str | None = None
+    # One plain sentence: what broke and why. None in results saved before it existed.
+    summary: str | None = None
     # The material the user said the part is made of, and its reference data.
     material_id: str | None = None
     material_facts: dict | None = None
@@ -276,6 +278,12 @@ class _ModelDiagnosis(BaseModel):
     primary_mode: str
     confidence: Literal["high", "medium", "low"]
     probable_cause: str
+    summary: str = Field(
+        description=(
+            "One plain sentence for a high-school robotics student: what broke and "
+            "why. Under 30 words."
+        )
+    )
     specimen: _Specimen | None = Field(
         description="Simplified shape of the part for a 3D sketch; null if the image is insufficient."
     )
@@ -319,6 +327,10 @@ surface and say so in probable_cause. primary_mode must be exactly one of the \
 allowed ids listed below. Use "other" when the surface is clear but no mode in \
 the knowledge base fits. Confidence is "high" only when the features that set \
 this mode apart from its most-confused neighbour are visible.
+
+   Then write summary: one plain sentence a high-school robotics student \
+would understand, saying what broke and why. Keep technical terms where they \
+are the right word; the page explains them.
 
 4. alternative_modes lists the other modes the evidence does not rule out, each \
 with the reason it is less likely. Use mode ids.
@@ -842,6 +854,15 @@ def with_material(diagnosis: Diagnosis, material_id: str | None) -> Diagnosis:
     )
 
 
+SUMMARY_MAX_CHARS = 240
+
+
+def _one_line(text: str) -> str | None:
+    """The summary as one tidy line, capped; None if empty."""
+    line = " ".join(text.split())[:SUMMARY_MAX_CHARS]
+    return line or None
+
+
 def _to_diagnosis(raw: _ModelDiagnosis) -> Diagnosis:
     if raw.insufficient_image:
         return Diagnosis(
@@ -850,6 +871,7 @@ def _to_diagnosis(raw: _ModelDiagnosis) -> Diagnosis:
             confidence="low",
             visual_evidence=raw.visual_evidence,
             probable_cause=raw.probable_cause,
+        summary=_one_line(raw.summary),
             alternative_modes=[],
             solutions=[],
             insufficient_image=True,
@@ -861,6 +883,7 @@ def _to_diagnosis(raw: _ModelDiagnosis) -> Diagnosis:
         confidence=raw.confidence,
         visual_evidence=raw.visual_evidence,
         probable_cause=raw.probable_cause,
+        summary=_one_line(raw.summary),
         alternative_modes=[(alt.mode, alt.why_less_likely) for alt in raw.alternative_modes],
         solutions=[_to_solution(s) for s in raw.solutions[:MAX_SOLUTIONS]],
         insufficient_image=False,

@@ -75,6 +75,7 @@ def _model_answer(geometry):
         "primary_mode": "fatigue_metal",
         "confidence": "medium",
         "probable_cause": "Cyclic bending at a sharp corner.",
+        "summary": "Repeated bending cracked it at a sharp corner.",
         "specimen": None,
         "alternative_modes": [],
         "solutions": [solution, plain, plain],

@@ -24,11 +24,12 @@ shows its definition and explanation. A fuller teaching mode comes later.
 it from `postmortem` (at `7fd796b`), which stays unchanged. All parts are
 committed there.
 
-Status (2026-11-14): Parts 1 and 2 built. Part 1: 11 failure modes drafted with
-sources and shown on the page. Part 2: materials table (12 rows), material picker,
-Reference data card, material comparison, and the weight and strength card for
-thicker sections. Every mode and every material row is `draft` until a team member
-or mentor checks it against its source. Parts 3–5 not started.
+Status (2026-11-14): Parts 1, 2 and 5 built. Part 1: 11 failure modes with sources.
+Part 2: materials table, material picker, Reference data card, material comparison,
+weight and strength card. Part 5: glossary (38 terms) with coloured, hoverable
+terms; one type scale with nothing under 13 px; verdict card plus drop-down rows;
+labelled fix buttons. Every mode, material row and glossary entry is `draft` until
+a team member or mentor checks it. Parts 3 and 4 wait on photos.
 
 ## Who does what
 
