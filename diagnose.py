@@ -235,7 +235,7 @@ class _Specimen(BaseModel):
 
 class _Visual(BaseModel):
     kind: VisualKind = Field(description="The change this solution makes to the part.")
-    label: str = Field(description="Caption of at most 6 words for the 3D callout.")
+    label: str = Field(description="Caption of at most 4 short words for the 3D callout.")
 
 
 class _ModelSolution(BaseModel):
@@ -360,7 +360,7 @@ broke (0 to 1), what feature sits at the break, and how it was loaded. Take \
 dimensions from the user's note when given, otherwise estimate them from the \
 photo and say so in dimensions_source. For every solution, set visual.kind to \
 the change that best shows it on the part ("other" if none fits) and \
-visual.label to a caption of at most six words. When the image is \
+visual.label to a caption of at most four short words. When the image is \
 insufficient, specimen is null.
 
 8. When a solution makes the section thicker, wider or larger in diameter, fill \
