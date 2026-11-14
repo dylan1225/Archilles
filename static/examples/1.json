@@ -4,89 +4,116 @@
   "primary_mode": "bending_overload_wood",
   "confidence": "high",
   "visual_evidence": [
-   "A light-colored cylindrical wooden dowel lies diagonally across a wooden workbench and is broken into two pieces in the lower-middle of the frame.",
-   "A long, sharp splinter protrudes downward along the longitudinal grain from the left side of the upper broken end.",
-   "The matching left side of the lower piece shows an elongated groove along the grain where the splinter pulled out.",
-   "The opposite (right) side of both broken ends shows a stepped, slightly jagged fracture running across the grain.",
-   "No knots, holes, notches, or dark rot discolouration are visible at the break; the wood grain runs nearly parallel to the dowel axis."
+   "Cylindrical light-tan wooden dowel with straight longitudinal grain visible along the entire shaft.",
+   "Long, tapered splinter extending downwards along the grain from the left side of the upper piece's fracture surface (center of frame).",
+   "Matching longitudinal recessed groove along the left side of the lower piece where the splinter pulled out.",
+   "Relatively flat, jagged transverse break across the right half of the cross-section on both mating ends.",
+   "No knots, holes, notches, or discolouration visible at or near the fracture site."
   ],
-  "probable_cause": "A single bending load exceeded the flexural strength of the dowel. Tension on one side pulled out a long splinter along the grain while the opposite compression side broke across the grain in a stepped fracture, typical of sound wood overloaded in bending.",
+  "probable_cause": "Single-event bending overload exceeded the flexural capacity of the dowel. Tension-side wood fibres split and pulled out as a long splinter along the straight grain, while the opposite compression side snapped transversely.",
   "alternative_modes": [
    [
     "other",
-    "A brash (brittle) wood failure from decay or severe cross-grain defect would produce an abrupt, flat break across the grain with very short or no splinters, whereas this fracture has a long splinter along straight grain. Metal and FDM modes do not apply because the part is clearly solid wood."
+    "Brash (brittle) wood failure produces an abrupt, flat fracture across the entire section with very short or no splinters and often shows decay or severe cross-grain; here the wood looks sound with a long longitudinal splinter."
    ]
   ],
   "solutions": [
    {
-    "title": "Shorten the unsupported span or add a central support",
-    "description": "Move the supports closer together or place an intermediate support near the point of load application to reduce the peak bending moment on the dowel.",
+    "title": "Shorten the unsupported span or add a mid-span support",
+    "description": "Reduce the distance between supports or place an additional support near the point of maximum bending to directly cut the bending moment carried by the dowel.",
     "pros": [
-     "Directly reduces the bending stress without changing the dowel diameter",
-     "Keeps existing mating holes and hardware unchanged"
+     "Directly lowers the bending stress without changing the dowel diameter",
+     "Increases stiffness dramatically across the span"
     ],
     "cons": [
-     "Requires adding or relocating a support feature in the assembly",
-     "May obstruct clearance along the span"
+     "Requires modifying the supporting structure or clearances",
+     "Adds a support component and assembly step"
     ],
     "effort": "moderate",
     "addresses_root_cause": true,
-    "computed": null
+    "computed": null,
+    "visual": {
+     "kind": "add_support",
+     "label": "Add intermediate support under span"
+    }
    },
    {
-    "title": "Reposition the applied load closer to a support",
-    "description": "Shift the point where force is applied toward the supported ends rather than mid-span, lowering the lever arm creating the bending moment.",
+    "title": "Relocate the load closer to a support",
+    "description": "Move the point of load application closer to the nearest support or distribute the load over a wider bearing area to reduce peak bending moment.",
     "pros": [
-     "Lowers peak bending moment proportionally to the reduced lever arm",
-     "Requires no extra material or heavier dowel"
+     "Reduces peak bending stress with no change to the dowel itself",
+     "Can eliminate point-load crushing on the wood surface"
     ],
     "cons": [
-     "Changes load geometry and may require modifying mating parts"
+     "May require altering how mating parts engage the dowel"
     ],
     "effort": "moderate",
     "addresses_root_cause": true,
-    "computed": null
+    "computed": null,
+    "visual": {
+     "kind": "move_load",
+     "label": "Shift load closer to support"
+    }
    },
    {
-    "title": "Increase the dowel diameter or use a deeper section",
-    "description": "Replace the dowel with a larger-diameter rod or orient a rectangular section with greater depth in the bending direction.",
+    "title": "Increase the dowel diameter",
+    "description": "Replace the dowel with a thicker diameter (for example from ~12 mm up to 16 mm or 19 mm), since bending strength scales with diameter cubed for a round section.",
     "pros": [
-     "Bending strength increases rapidly with section depth (cubed for a circular diameter)"
+     "Large gain in bending strength and stiffness from a modest diameter increase",
+     "Readily available in standard off-the-shelf dowel sizes"
     ],
     "cons": [
-     "Increases weight and material cost",
-     "Requires enlarging mating holes or brackets"
+     "Requires enlarging matching holes or clamps in mating parts",
+     "Increases weight slightly"
     ],
     "effort": "moderate",
     "addresses_root_cause": false,
-    "computed": null
+    "computed": null,
+    "visual": {
+     "kind": "thicken_section",
+     "label": "Increase dowel diameter"
+    }
    },
    {
-    "title": "Switch to a higher-strength straight-grained hardwood or composite rod",
-    "description": "Use a tougher, higher-modulus species such as hickory or ash with verified straight grain, or substitute a fiberglass or metal rod if geometry cannot change.",
+    "title": "Switch to a higher-strength hardwood or metal rod",
+    "description": "Substitute a straight-grained, high-modulus hardwood (such as ash or hickory) if wood is required, or a steel or aluminium rod if metallic parts are acceptable.",
     "pros": [
-     "Drop-in replacement with identical outer dimensions",
-     "No changes needed to mating holes or supports"
+     "Keeps the existing diameter and mating hole dimensions",
+     "Substantially raises failure load"
     ],
     "cons": [
-     "Higher material cost and potentially longer sourcing time",
-     "Does not reduce the applied bending moment"
+     "Higher material cost",
+     "Metal rods increase weight and change surface friction and appearance"
     ],
     "effort": "trivial",
     "addresses_root_cause": false,
-    "computed": null
+    "computed": null,
+    "visual": {
+     "kind": "change_material",
+     "label": "Use stronger hardwood or metal"
+    }
    }
   ],
   "insufficient_image": false,
-  "insufficient_reason": null
+  "insufficient_reason": null,
+  "specimen": {
+   "shape": "round_rod",
+   "length_mm": 220.0,
+   "width_mm": 12.0,
+   "thickness_mm": 12.0,
+   "break_position": 0.3,
+   "feature": "none",
+   "load_case": "unknown",
+   "dimensions_source": "estimated_from_image"
+  }
  },
  "meta": {
   "model": "gemini-4-hydrogen",
-  "latency_s": 39.32,
+  "latency_s": 39.75,
   "attempts": 1,
-  "input_tokens": 4649,
-  "output_tokens": 687,
-  "thinking_tokens": 890,
-  "cost_usd": 0.018801
+  "input_tokens": 5461,
+  "output_tokens": 1154,
+  "thinking_tokens": 1276,
+  "cost_usd": 0.026416
  }
 }

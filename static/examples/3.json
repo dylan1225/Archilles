@@ -4,25 +4,25 @@
   "primary_mode": "undetermined",
   "confidence": "low",
   "visual_evidence": [
-   "A thin, light-coloured wooden craft stick with a rounded tip is held by fingers in the lower-left to centre of the frame over a darker varnished wood surface.",
-   "A narrow, dark longitudinal split runs straight along the centre of the stick parallel to its length and grain, extending from the fingers to the rounded end.",
-   "The two sides of the split remain pressed together so the fracture surface is closed and hidden from view.",
-   "The wooden stick in the foreground is slightly out of focus compared with the sharper wood table surface behind it.",
-   "A faint transverse mark crosses the flat face of the stick near the rounded tip."
+   "A light-coloured flat wooden craft stick with a rounded end is held in the lower-centre of the frame.",
+   "A thin dark crack runs straight along the centreline of the stick parallel to its length and grain, starting at the rounded tip and extending toward the fingers.",
+   "The stick is slightly out of focus compared with the varnished wood table in the background.",
+   "The split remains closed so the internal fracture surface cannot be seen."
   ],
-  "probable_cause": "Cannot be determined from this photo because the fracture surface is hidden inside a closed split and the foreground part is slightly out of focus.",
+  "probable_cause": "Cannot be determined from this photograph because the fracture surface is not exposed and the part is out of focus.",
   "alternative_modes": [],
   "solutions": [],
   "insufficient_image": true,
-  "insufficient_reason": "The crack is closed, so the fracture surface is hidden inside the split and cannot be seen, and the stick itself is slightly out of focus. Separate the split pieces (or open the crack enough to expose the interior faces) and take a sharp, close-up, well-lit photo looking directly at the fracture surface, along with a clear view of the full stick showing where load or fasteners were applied."
+  "insufficient_reason": "The wooden stick is slightly out of focus and the longitudinal split is closed, so the internal fracture surface is completely hidden from view. To diagnose the failure, separate the two halves (if fully fractured) or open the split slightly, tilt the fracture surface toward the camera, and take a sharp, close-up, well-lit photo focused directly on the exposed wood fibres.",
+  "specimen": null
  },
  "meta": {
   "model": "gemini-4-hydrogen",
-  "latency_s": 74.37,
+  "latency_s": 61.41,
   "attempts": 1,
-  "input_tokens": 4649,
-  "output_tokens": 343,
-  "thinking_tokens": 1102,
-  "cost_usd": 0.017811
+  "input_tokens": 5461,
+  "output_tokens": 245,
+  "thinking_tokens": 1201,
+  "cost_usd": 0.019037
  }
 }

@@ -3,9 +3,9 @@
 import base64
 import io
 import json
-from types import SimpleNamespace
-
+import threading
 import time
+from types import SimpleNamespace
 
 import pytest
 from PIL import Image
@@ -48,7 +48,34 @@ def solution(**overrides) -> dict:
         "cons": ["Mating part needs a chamfer"],
         "effort": "trivial",
         "addresses_root_cause": True,
-        "fillet": None,
+        "geometry": None,
+        "visual": {"kind": "add_fillet", "label": "Round the inside corner"},
+    }
+    return {**base, **overrides}
+
+
+def specimen(**overrides) -> dict:
+    base = {
+        "shape": "l_bracket",
+        "length_mm": 40.0,
+        "width_mm": 12.0,
+        "thickness_mm": 4.0,
+        "break_position": 0.5,
+        "feature": "sharp_corner",
+        "load_case": "cantilever",
+        "dimensions_source": "estimated_from_image",
+    }
+    return {**base, **overrides}
+
+
+def rejected(**overrides) -> dict:
+    base = {
+        "mode": "brittle overload",
+        "visual_feature": "Beach marks radiating from the lower left corner",
+        "reason": (
+            "A single brittle overload leaves one uniform granular texture with "
+            "chevrons, not curved beach marks growing from one origin."
+        ),
     }
     return {**base, **overrides}
 
@@ -56,18 +83,23 @@ def solution(**overrides) -> dict:
 def payload(**overrides) -> dict:
     base = {
         "visual_evidence": ["Beach marks radiating from the lower left corner"],
+        "is_failure_analysis_applicable": True,
+        "not_applicable_reason": None,
         "insufficient_image": False,
         "insufficient_reason": None,
+        "geometric_features": ["Sharp inside corner at the lower left, where the marks start"],
         "material": "metal",
         "primary_mode": "fatigue_metal",
         "confidence": "medium",
         "probable_cause": "Cyclic bending at a sharp corner.",
+        "rejected_alternative": rejected(),
+        "specimen": specimen(),
         "alternative_modes": [
             {"mode": "other", "why_less_likely": "Two distinct zones are visible."}
         ],
         "solutions": [
             solution(
-                fillet={
+                geometry={
                     "current_radius_mm": 0.0,
                     "proposed_radius_mm": 2.0,
                     "section_depth_mm": 10.0,
@@ -101,16 +133,21 @@ class ApiStatusError(Exception):
 
 
 class FakeClient:
+    """Hands out queued responses in order. Runs are parallel, so with several
+    runs the order in which runs receive them is not fixed."""
+
     def __init__(self, *queued, delay_s: float = 0.0):
         self._queued = list(queued)
         self._delay_s = delay_s
+        self._lock = threading.Lock()
         self.requests: list[dict] = []
         self.interactions = SimpleNamespace(create=self._create)
 
     def _create(self, **request):
-        self.requests.append(request)
+        with self._lock:
+            self.requests.append(request)
+            item = self._queued.pop(0)
         time.sleep(self._delay_s)
-        item = self._queued.pop(0)
         if isinstance(item, Exception):
             raise item
         return item
@@ -122,8 +159,9 @@ def isolated_knowledge(monkeypatch):
     monkeypatch.setattr(diagnose, "load_examples", lambda: [])
 
 
-def run(client: FakeClient, context: str | None = None):
-    return diagnose.diagnose_with_meta(image_bytes(), context, client=client)
+def run(client: FakeClient, context: str | None = None, n_samples: int = 1):
+    """One run by default; the self-consistency tests ask for more."""
+    return diagnose.diagnose_with_meta(image_bytes(), context, client=client, n_samples=n_samples)
 
 
 # --- prepare_image ----------------------------------------------------------
@@ -223,9 +261,9 @@ def test_fillet_solution_gets_numbers_from_mechanics_not_the_model():
     computed = result.solutions[0].computed
     expected = mechanics.fillet_improvement(0.0, 2.0, 10.0)
     assert computed["type"] == "fillet_improvement"
-    assert computed["kt_current"] == expected["kt_current"]
-    assert computed["kt_proposed"] == expected["kt_proposed"]
-    assert computed["peak_stress_reduction_pct"] == expected["peak_stress_reduction_pct"]
+    assert computed["kt_before"] == expected["kt_current"]
+    assert computed["kt_after"] == expected["kt_proposed"]
+    assert computed["stress_reduction_pct"] == expected["peak_stress_reduction_pct"]
     assert computed["inputs"]["dimensions_source"] == "estimated_from_image"
     assert result.solutions[1].computed is None
 
@@ -237,7 +275,7 @@ def test_impossible_fillet_dimensions_are_reported_not_hidden():
         "section_depth_mm": 0.0,
         "dimensions_source": "estimated_from_image",
     }
-    body = payload(solutions=[solution(fillet=bad_fillet), solution(), solution()])
+    body = payload(solutions=[solution(geometry=bad_fillet), solution(), solution()])
 
     result, _ = run(FakeClient(response(body)))
 
@@ -273,6 +311,81 @@ def test_insufficient_image_never_carries_a_mode_or_solutions():
     assert result.confidence == "low"
     assert result.solutions == []
     assert result.alternative_modes == []
+    assert result.specimen is None
+
+
+# --- 3D exhibit fields ------------------------------------------------------
+
+
+def test_specimen_and_solution_visuals_pass_through():
+    result, _ = run(FakeClient(response(payload())))
+
+    assert result.specimen.shape == "l_bracket"
+    assert result.specimen.length_mm == 40.0
+    assert result.specimen.feature == "sharp_corner"
+    assert result.specimen.dimensions_source == "estimated_from_image"
+    assert result.solutions[0].visual.kind == "add_fillet"
+    assert result.solutions[0].visual.label == "Round the inside corner"
+
+
+def test_out_of_range_specimen_values_are_clamped_not_rejected():
+    body = payload(
+        specimen=specimen(
+            length_mm=1e9, width_mm=-3.0, thickness_mm=0.0, break_position=1.7
+        )
+    )
+    client = FakeClient(response(body))
+
+    result, meta = run(client)
+
+    assert meta.attempts == 1  # a bad 3D hint never costs a retry
+    assert result.specimen.length_mm == diagnose.SPECIMEN_MAX_MM
+    assert result.specimen.width_mm == diagnose.SPECIMEN_MIN_MM
+    assert result.specimen.thickness_mm == diagnose.SPECIMEN_MIN_MM
+    assert result.specimen.break_position == diagnose.BREAK_POSITION_MAX
+
+
+def test_round_rod_thickness_follows_its_diameter():
+    body = payload(specimen=specimen(shape="round_rod", width_mm=8.0, thickness_mm=30.0))
+
+    result, _ = run(FakeClient(response(body)))
+
+    assert result.specimen.thickness_mm == 8.0
+
+
+def test_visual_label_is_tidied_and_capped():
+    long_label = "  Add   a\nrib " + "x" * 200
+    body = payload(solutions=[solution(visual={"kind": "add_rib", "label": long_label})] * 3)
+
+    result, _ = run(FakeClient(response(body)))
+
+    label = result.solutions[0].visual.label
+    assert label.startswith("Add a rib x")
+    assert len(label) == diagnose.VISUAL_LABEL_MAX_CHARS
+
+
+def test_missing_specimen_still_gives_a_diagnosis():
+    result, meta = run(FakeClient(response(payload(specimen=None))))
+
+    assert meta.attempts == 1
+    assert result.specimen is None
+    assert result.primary_mode == "fatigue_metal"
+
+
+def test_results_saved_before_the_3d_fields_still_load():
+    old = payload()
+    stored = {
+        **{k: v for k, v in old.items() if k not in ("specimen", "solutions", "alternative_modes")},
+        "alternative_modes": [["other", "why"]],
+        "solutions": [
+            {k: v for k, v in solution().items() if k not in ("geometry", "visual")} | {"computed": None}
+        ],
+    }
+
+    result = Diagnosis.model_validate(stored)
+
+    assert result.specimen is None
+    assert result.solutions[0].visual is None
 
 
 def test_malformed_answer_is_retried_once_then_succeeds():
@@ -304,6 +417,13 @@ def test_two_malformed_answers_fail_with_a_clear_message():
         payload(solutions=[solution(), solution()]),
         payload(solutions=[solution(addresses_root_cause=False)] * 3),
         payload(insufficient_image=True, insufficient_reason=None),
+        payload(is_failure_analysis_applicable=False, not_applicable_reason=" "),
+        payload(primary_mode="not_applicable"),
+        payload(rejected_alternative=None),
+        payload(rejected_alternative=rejected(mode="fatigue_metal")),
+        payload(rejected_alternative=rejected(visual_feature="the surface")),
+        payload(rejected_alternative=rejected(visual_feature="a dent on the rim")),
+        payload(rejected_alternative=rejected(reason="Less likely given the evidence.")),
     ],
     ids=[
         "no-evidence",
@@ -312,6 +432,13 @@ def test_two_malformed_answers_fail_with_a_clear_message():
         "too-few-solutions",
         "no-root-cause-solution",
         "insufficient-without-reason",
+        "not-applicable-without-saying-what-it-sees",
+        "not-applicable-mode-on-an-applicable-photo",
+        "no-rejected-alternative",
+        "rejected-alternative-is-the-primary-mode",
+        "rejected-feature-too-vague",
+        "rejected-feature-never-observed",
+        "rejected-reason-is-a-stock-phrase",
     ],
 )
 def test_rule_breaking_answers_are_rejected_and_retried(broken):
@@ -383,8 +510,8 @@ def test_same_photo_is_only_sent_to_the_model_once(cache_dir):
     client = FakeClient(response(payload()))
     photo = image_bytes()
 
-    first, _, first_cached = diagnose.diagnose_cached(photo, None, client=client)
-    second, meta, second_cached = diagnose.diagnose_cached(photo, None, client=client)
+    first, _, first_cached = diagnose.diagnose_cached(photo, None, client=client, n_samples=1)
+    second, meta, second_cached = diagnose.diagnose_cached(photo, None, client=client, n_samples=1)
 
     assert (first_cached, second_cached) == (False, True)
     assert second == first
@@ -392,14 +519,26 @@ def test_same_photo_is_only_sent_to_the_model_once(cache_dir):
     assert len(client.requests) == 1
 
 
+def test_three_run_result_is_cached_so_the_demo_pays_once(cache_dir):
+    client = FakeClient(*[response(payload())] * 3)
+    photo = image_bytes()
+
+    first, _, _ = diagnose.diagnose_cached(photo, None, client=client)
+    second, _, cached = diagnose.diagnose_cached(photo, None, client=client)
+
+    assert cached is True
+    assert second.consistency == first.consistency
+    assert len(client.requests) == 3
+
+
 def test_different_note_or_knowledge_base_is_not_served_from_cache(cache_dir, monkeypatch):
     client = FakeClient(response(payload()), response(payload()), response(payload()))
     photo = image_bytes()
 
-    diagnose.diagnose_cached(photo, None, client=client)
-    diagnose.diagnose_cached(photo, "it was bent", client=client)
+    diagnose.diagnose_cached(photo, None, client=client, n_samples=1)
+    diagnose.diagnose_cached(photo, "it was bent", client=client, n_samples=1)
     monkeypatch.setattr(diagnose, "load_knowledge_base", lambda: TEST_KB + "\nedited")
-    diagnose.diagnose_cached(photo, None, client=client)
+    diagnose.diagnose_cached(photo, None, client=client, n_samples=1)
 
     assert len(client.requests) == 3
 
@@ -409,8 +548,8 @@ def test_failures_are_never_cached(cache_dir):
     photo = image_bytes()
 
     with pytest.raises(DiagnosisError):
-        diagnose.diagnose_cached(photo, None, client=client)
-    _, _, cached = diagnose.diagnose_cached(photo, None, client=client)
+        diagnose.diagnose_cached(photo, None, client=client, n_samples=1)
+    _, _, cached = diagnose.diagnose_cached(photo, None, client=client, n_samples=1)
 
     assert cached is False
 
@@ -418,10 +557,10 @@ def test_failures_are_never_cached(cache_dir):
 def test_corrupt_cache_file_is_ignored_and_replaced(cache_dir):
     client = FakeClient(response(payload()), response(payload()))
     photo = image_bytes()
-    diagnose.diagnose_cached(photo, None, client=client)
+    diagnose.diagnose_cached(photo, None, client=client, n_samples=1)
     next(cache_dir.glob("*.json")).write_text("{broken", encoding="utf-8")
 
-    result, _, cached = diagnose.diagnose_cached(photo, None, client=client)
+    result, _, cached = diagnose.diagnose_cached(photo, None, client=client, n_samples=1)
 
     assert cached is False
     assert result.primary_mode == "fatigue_metal"

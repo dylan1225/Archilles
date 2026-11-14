@@ -84,6 +84,22 @@ def post_diagnose(
     )
 
 
+@app.get("/mechanics/fillet")
+def get_fillet(
+    current_radius_mm: float, proposed_radius_mm: float, section_depth_mm: float
+) -> JSONResponse:
+    """Recompute a fillet change from measurements the user typed on the card.
+
+    Same calculation as the diagnosis uses (mechanics.py). No model call.
+    """
+    computed = diagnose.fillet_computed(
+        current_radius_mm, proposed_radius_mm, section_depth_mm, diagnose.USER_MEASURED
+    )
+    if "error" in computed:
+        return _error(400, computed["error"])
+    return JSONResponse(computed)
+
+
 @app.get("/examples/{n}")
 def get_example(n: int) -> JSONResponse:
     """Pre-computed diagnosis for bundled demo photo n. Needs no network."""

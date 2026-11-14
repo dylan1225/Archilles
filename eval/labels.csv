@@ -1,0 +1,4 @@
+filename,true_mode,material,how_it_broke,difficulty
+null_intact_bar.jpg,not_applicable,fdm_print,intact printed bar (null specimen),easy
+null_clean_bolt.jpg,not_applicable,metal,clean intact bolt (null specimen),easy
+null_not_a_part.jpg,not_applicable,other,not a part at all (null specimen),easy
