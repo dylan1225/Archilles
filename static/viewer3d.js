@@ -29,7 +29,9 @@ const STONE = 0xe2dac8;
 const MATERIAL_LOOKS = {
   wood: { color: 0xc9a576, roughness: 0.78, metalness: 0.0 },
   fdm_print: { color: 0x7b8794, roughness: 0.55, metalness: 0.0 },
-  metal: { color: 0xa7abb1, roughness: 0.32, metalness: 0.85 },
+  // Moderate metalness: the scene has no environment map, so a fully metallic
+  // surface has nothing to reflect and renders near-black.
+  metal: { color: 0xbcc1c8, roughness: 0.38, metalness: 0.45 },
   other: { color: 0xb8b0a0, roughness: 0.6, metalness: 0.05 },
   unclear: { color: 0xb8b0a0, roughness: 0.6, metalness: 0.05 },
 };
@@ -671,7 +673,7 @@ function buildSolution(lay, look, solution) {
       break;
     }
     case "change_material": {
-      partLook = { color: new THREE.Color(look.color).lerp(new THREE.Color(ORANGE), 0.5).getHex(), roughness: 0.3, metalness: 0.55 };
+      partLook = { color: new THREE.Color(look.color).lerp(new THREE.Color(ORANGE), 0.5).getHex(), roughness: 0.35, metalness: 0.35 };
       break;
     }
     case "add_fillet": {
