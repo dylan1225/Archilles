@@ -1,7 +1,7 @@
 fastapi
 uvicorn
 pydantic
-anthropic
+google-genai
 python-multipart
 pillow
 pillow-heif

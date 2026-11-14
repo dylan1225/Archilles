@@ -59,7 +59,7 @@ def fake_model(monkeypatch):
         shade = Image.open(io.BytesIO(image_bytes)).getpixel((0, 0))[0]
         calls.append(shade)
         if shade not in answers:
-            raise diagnose.DiagnosisError("Rate limited by the Anthropic API.")
+            raise diagnose.DiagnosisError("Rate limited by the Gemini API.")
         mode, insufficient = answers[shade]
         result = SimpleNamespace(
             primary_mode=mode,

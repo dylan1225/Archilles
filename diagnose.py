@@ -8,6 +8,7 @@ from mechanics.py and are attached to a solution's `computed` field afterwards.
 
 import argparse
 import base64
+import concurrent.futures
 import hashlib
 import io
 import json
@@ -20,9 +21,9 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Literal
 
-import anthropic
 import pillow_heif
 from dotenv import load_dotenv
+from google import genai
 from PIL import Image, ImageOps, UnidentifiedImageError
 from pydantic import BaseModel, Field, ValidationError
 
@@ -36,13 +37,15 @@ KNOWLEDGE_PATH = PROJECT_DIR / "knowledge" / "failure_modes.md"
 EXAMPLES_DIR = PROJECT_DIR / "knowledge" / "examples"
 EXAMPLE_IMAGE_SUFFIXES = (".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp")
 
-MODEL = "claude-opus-5-5"
-EFFORT = "medium"
-MAX_TOKENS = 16000
-MODEL_TIMEOUT_S = 90.0
+MODEL = "gemini-4-hydrogen"
+API_KEY_VARIABLES = ("GEMINI_API_KEY", "GOOGLE_API_KEY")
+MAX_OUTPUT_TOKENS = 16000
+# Wall-clock budget for one diagnosis, including the SDK's own retries and our
+# retry on a malformed answer. Enforced here, not left to the SDK.
+MODEL_TIMEOUT_S = 120.0
 MAX_ATTEMPTS = 2  # one call, plus one retry on malformed output
-# If the model declines a request, the API re-runs it on a fallback model.
-FALLBACK_BETA = "server-side-fallback-2026-07-01"
+STATUS_COMPLETED = "completed"
+STATUS_INCOMPLETE = "incomplete"
 
 MAX_LONG_EDGE_PX = 2000
 JPEG_QUALITY = 90
@@ -52,11 +55,14 @@ MODE_UNDETERMINED = "undetermined"
 MIN_SOLUTIONS = 3
 MAX_SOLUTIONS = 4
 
-# USD per million tokens for MODEL. Used only to report cost.
-PRICE_INPUT = 4.00
-PRICE_OUTPUT = 20.00
-PRICE_CACHE_READ = 0.20
-PRICE_CACHE_WRITE = 5.00
+# Paid-tier list price in USD per million tokens for MODEL. Used only to report
+# cost; on the free tier the real charge is zero. Thinking tokens bill as output.
+PRICE_INPUT = 1.50
+PRICE_OUTPUT = 7.50
+
+_CALL_POOL = concurrent.futures.ThreadPoolExecutor(
+    max_workers=4, thread_name_prefix="model-call"
+)
 
 
 class DiagnosisError(Exception):
@@ -99,8 +105,7 @@ class RunMeta:
     attempts: int
     input_tokens: int
     output_tokens: int
-    cache_read_tokens: int
-    cache_write_tokens: int
+    thinking_tokens: int
     cost_usd: float
 
 
@@ -274,8 +279,7 @@ def prepare_image(image_bytes: bytes) -> tuple[str, str]:
 
 
 def _image_block(image_b64: str, media_type: str) -> dict[str, Any]:
-    source = {"type": "base64", "media_type": media_type, "data": image_b64}
-    return {"type": "image", "source": source}
+    return {"type": "image", "data": image_b64, "mime_type": media_type}
 
 
 def _text_block(text: str) -> dict[str, Any]:
@@ -307,7 +311,6 @@ def _user_content(
             content.append(_text_block(f"Example {number} photo:"))
             content.append(_image_block(example.image_b64, example.media_type))
             content.append(_text_block(f"Example {number} label:\n{example.label}"))
-        content[-1] = {**content[-1], "cache_control": {"type": "ephemeral"}}
     content.append(_text_block("Photo to diagnose:"))
     content.append(_image_block(image_b64, media_type))
     note = (user_context or "").strip()
@@ -319,7 +322,7 @@ def _user_content(
 
 def output_schema(allowed_modes: list[str]) -> dict[str, Any]:
     """JSON schema the API enforces. primary_mode is restricted to known ids."""
-    schema = anthropic.transform_schema(_ModelDiagnosis)
+    schema = _ModelDiagnosis.model_json_schema()
     properties = {
         **schema["properties"],
         "primary_mode": {"type": "string", "enum": allowed_modes},
@@ -334,7 +337,7 @@ def config_fingerprint() -> str:
     rules or the model invalidates old results instead of silently reusing them.
     """
     hasher = hashlib.sha256()
-    for part in (MODEL, EFFORT, SYSTEM_RULES, load_knowledge_base()):
+    for part in (MODEL, SYSTEM_RULES, load_knowledge_base()):
         hasher.update(part.encode("utf-8") + b"\0")
     for example in load_examples():
         hasher.update(example.image_b64.encode("ascii") + b"\0")
@@ -347,7 +350,7 @@ def _has_credentials() -> bool:
     if env_path.is_dir():
         raise DiagnosisError(
             f"{env_path} is a folder, not a file. Replace it with a text file "
-            "containing ANTHROPIC_API_KEY=...",
+            f"containing {API_KEY_VARIABLES[0]}=...",
             status_code=503,
         )
     try:
@@ -356,53 +359,87 @@ def _has_credentials() -> bool:
         raise DiagnosisError(
             f"{env_path} exists but could not be read ({exc}).", status_code=503
         ) from exc
-    return bool(os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN"))
+    return any(os.environ.get(name) for name in API_KEY_VARIABLES)
 
 
-def make_client() -> anthropic.Anthropic:
+def make_client() -> genai.Client:
     if not _has_credentials():
         raise DiagnosisError(
-            "ANTHROPIC_API_KEY is not set. Add it to the .env file in the project "
-            "folder and restart.",
+            f"{API_KEY_VARIABLES[0]} is not set. Add it to the .env file in the "
+            "project folder and restart.",
             status_code=503,
         )
-    return anthropic.Anthropic(timeout=MODEL_TIMEOUT_S, max_retries=0)
+    api_key = next(os.environ[name] for name in API_KEY_VARIABLES if os.environ.get(name))
+    return genai.Client(api_key=api_key)
 
 
 # --- Calling the model ------------------------------------------------------
 
 
-def _call_model(client: Any, request: dict[str, Any]) -> Any:
-    """One API call. Every SDK failure becomes a DiagnosisError with a clear cause."""
+def _timeout_error() -> DiagnosisError:
+    return DiagnosisError(
+        f"The model did not answer within {MODEL_TIMEOUT_S:.0f} s. The Gemini API "
+        "may be overloaded. Try again.",
+        status_code=504,
+    )
+
+
+def _api_error(exc: Exception) -> DiagnosisError:
+    """Turn any SDK failure into a message that names the cause."""
+    name = type(exc).__name__
+    status = getattr(exc, "status_code", None) or getattr(exc, "code", None)
+    detail = str(getattr(exc, "message", "") or exc)[:300]
+    if "Timeout" in name:
+        return _timeout_error()
+    if "Connection" in name:
+        return DiagnosisError(
+            f"Could not reach the Gemini API ({exc.__cause__ or exc}). Check the network."
+        )
+    if status in (401, 403):
+        return DiagnosisError(f"The Gemini API key was rejected ({status}). Check .env.")
+    if status == 429:
+        return DiagnosisError(
+            "The Gemini API rate limit or free-tier quota was hit (429). Wait a "
+            "minute and retry."
+        )
+    if isinstance(status, int) and status >= 500:
+        return DiagnosisError(
+            f"The Gemini API is unavailable or overloaded ({status}). Try again."
+        )
+    return DiagnosisError(f"Gemini API error ({name}, status {status}): {detail}")
+
+
+def _call_model(client: Any, request: dict[str, Any], budget_s: float) -> Any:
+    """One API call with a hard wall-clock limit.
+
+    The SDK retries 503s on its own, slowly. The call runs on a worker thread so
+    the limit holds whatever the SDK does. Every failure becomes a DiagnosisError.
+    """
+    if budget_s <= 0:
+        raise _timeout_error()
+    future = _CALL_POOL.submit(client.interactions.create, **request, timeout=budget_s)
     try:
-        return client.beta.messages.create(**request)
-    except anthropic.APITimeoutError as exc:
-        raise DiagnosisError(
-            f"The model did not answer within {MODEL_TIMEOUT_S:.0f} s. Try again."
-        ) from exc
-    except anthropic.APIConnectionError as exc:
-        raise DiagnosisError(
-            f"Could not reach the Anthropic API ({exc.__cause__ or exc}). "
-            "Check the network connection."
-        ) from exc
-    except anthropic.AuthenticationError as exc:
-        raise DiagnosisError("The Anthropic API key was rejected. Check .env.") from exc
-    except anthropic.PermissionDeniedError as exc:
-        raise DiagnosisError(f"The API key lacks permission: {exc.message}") from exc
-    except anthropic.RateLimitError as exc:
-        raise DiagnosisError("Rate limited by the Anthropic API. Wait and retry.") from exc
-    except anthropic.APIStatusError as exc:
-        raise DiagnosisError(
-            f"Anthropic API error {exc.status_code}: {exc.message}"
-        ) from exc
+        return future.result(timeout=budget_s)
+    except concurrent.futures.TimeoutError as exc:
+        future.cancel()
+        raise _timeout_error() from exc
+    except Exception as exc:  # noqa: BLE001 - converted to a visible error, never swallowed
+        logger.warning("Model call failed: %s: %s", type(exc).__name__, exc)
+        raise _api_error(exc) from exc
 
 
 def _parse_response(response: Any) -> _ModelDiagnosis:
-    if response.stop_reason == "refusal":
-        raise DiagnosisError("The model declined to analyse this image.")
-    if response.stop_reason == "max_tokens":
+    status = getattr(response, "status", None)
+    if status == STATUS_INCOMPLETE:
         raise _InvalidOutput("the answer was cut off before it finished")
-    text = next((block.text for block in response.content if block.type == "text"), None)
+    if status != STATUS_COMPLETED:
+        errors = getattr(response, "errors", None)
+        raise DiagnosisError(
+            f"The model did not complete the analysis (status: {status}"
+            + (f", {errors}" if errors else "")
+            + "). It may have declined this image."
+        )
+    text = getattr(response, "output_text", None)
     if not text:
         raise _InvalidOutput("the answer contained no text")
     try:
@@ -479,20 +516,16 @@ def _usage_totals(responses: list[Any]) -> dict[str, int]:
         return sum(getattr(r.usage, field, 0) or 0 for r in responses)
 
     return {
-        "input_tokens": total("input_tokens"),
-        "output_tokens": total("output_tokens"),
-        "cache_read_tokens": total("cache_read_input_tokens"),
-        "cache_write_tokens": total("cache_creation_input_tokens"),
+        "input_tokens": total("total_input_tokens"),
+        "output_tokens": total("total_output_tokens"),
+        "thinking_tokens": total("total_thought_tokens"),
     }
 
 
 def _cost_usd(usage: dict[str, int]) -> float:
-    per_million = (
-        usage["input_tokens"] * PRICE_INPUT
-        + usage["output_tokens"] * PRICE_OUTPUT
-        + usage["cache_read_tokens"] * PRICE_CACHE_READ
-        + usage["cache_write_tokens"] * PRICE_CACHE_WRITE
-    )
+    per_million = usage["input_tokens"] * PRICE_INPUT + (
+        usage["output_tokens"] + usage["thinking_tokens"]
+    ) * PRICE_OUTPUT
     return round(per_million / 1_000_000, 6)
 
 
@@ -500,33 +533,24 @@ def _build_request(image_bytes: bytes, user_context: str | None) -> tuple[dict, 
     knowledge_base = load_knowledge_base()
     allowed_modes = [*mode_ids(knowledge_base), MODE_OTHER, MODE_UNDETERMINED]
     image_b64, media_type = prepare_image(image_bytes)
-    system = _text_block(_system_text(knowledge_base, allowed_modes))
     request = {
         "model": MODEL,
-        "max_tokens": MAX_TOKENS,
-        "betas": [FALLBACK_BETA],
-        "fallbacks": "default",
-        "system": [{**system, "cache_control": {"type": "ephemeral"}}],
-        "messages": [
-            {
-                "role": "user",
-                "content": _user_content(load_examples(), image_b64, media_type, user_context),
-            }
-        ],
-        "output_config": {
-            "effort": EFFORT,
-            "format": {"type": "json_schema", "schema": output_schema(allowed_modes)},
+        "system_instruction": _system_text(knowledge_base, allowed_modes),
+        "input": _user_content(load_examples(), image_b64, media_type, user_context),
+        "response_format": {
+            "type": "text",
+            "mime_type": "application/json",
+            "schema": output_schema(allowed_modes),
         },
+        "generation_config": {"max_output_tokens": MAX_OUTPUT_TOKENS},
     }
     return request, allowed_modes
 
 
 def _with_correction(request: dict[str, Any], problem: str) -> dict[str, Any]:
     """Same request with a note appended saying why the last answer was rejected."""
-    user_message = request["messages"][0]
     note = _text_block(f"Your previous answer was rejected: {problem}. Answer again.")
-    corrected = {**user_message, "content": [*user_message["content"], note]}
-    return {**request, "messages": [corrected]}
+    return {**request, "input": [*request["input"], note]}
 
 
 def diagnose_with_meta(
@@ -538,7 +562,8 @@ def diagnose_with_meta(
     responses: list[Any] = []
     problem = ""
     for attempt in range(1, MAX_ATTEMPTS + 1):
-        response = _call_model(client, request)
+        remaining = MODEL_TIMEOUT_S - (time.perf_counter() - started)
+        response = _call_model(client, request, remaining)
         responses.append(response)
         try:
             raw = _parse_response(response)

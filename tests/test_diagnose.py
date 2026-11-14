@@ -5,8 +5,8 @@ import io
 import json
 from types import SimpleNamespace
 
-import anthropic
-import httpx2
+import time
+
 import pytest
 from PIL import Image
 
@@ -81,29 +81,35 @@ def payload(**overrides) -> dict:
     return {**base, **overrides}
 
 
-def response(body, stop_reason: str = "end_turn") -> SimpleNamespace:
+def response(body, status: str = "completed") -> SimpleNamespace:
     text = body if isinstance(body, str) else json.dumps(body)
     return SimpleNamespace(
-        stop_reason=stop_reason,
+        status=status,
         model="fake-model",
-        content=[SimpleNamespace(type="text", text=text)],
+        output_text=text,
+        errors=None,
         usage=SimpleNamespace(
-            input_tokens=1000,
-            output_tokens=500,
-            cache_read_input_tokens=0,
-            cache_creation_input_tokens=0,
+            total_input_tokens=1000, total_output_tokens=400, total_thought_tokens=100
         ),
     )
 
 
+class ApiStatusError(Exception):
+    def __init__(self, status_code: int):
+        super().__init__(f"HTTP {status_code}")
+        self.status_code = status_code
+
+
 class FakeClient:
-    def __init__(self, *queued):
+    def __init__(self, *queued, delay_s: float = 0.0):
         self._queued = list(queued)
+        self._delay_s = delay_s
         self.requests: list[dict] = []
-        self.beta = SimpleNamespace(messages=SimpleNamespace(create=self._create))
+        self.interactions = SimpleNamespace(create=self._create)
 
     def _create(self, **request):
         self.requests.append(request)
+        time.sleep(self._delay_s)
         item = self._queued.pop(0)
         if isinstance(item, Exception):
             raise item
@@ -207,7 +213,8 @@ def test_valid_answer_becomes_a_diagnosis():
     assert result.alternative_modes == [("other", "Two distinct zones are visible.")]
     assert len(result.solutions) == 3
     assert meta.attempts == 1
-    assert meta.cost_usd == pytest.approx(0.014)
+    assert meta.thinking_tokens == 100
+    assert meta.cost_usd == pytest.approx(0.00525)  # 1000 in, 400 out + 100 thinking
 
 
 def test_fillet_solution_gets_numbers_from_mechanics_not_the_model():
@@ -243,14 +250,16 @@ def test_request_carries_rules_knowledge_base_and_the_photo_last():
     run(client, context="snapped after a month of use")
 
     request = client.requests[0]
-    system = request["system"][0]["text"]
-    content = request["messages"][0]["content"]
+    system = request["system_instruction"]
+    content = request["input"]
     assert request["model"] == diagnose.MODEL
     assert "Beach marks." in system
     assert "Do not guess." in system
     assert content[-2]["type"] == "image"
-    assert content[-2]["source"]["media_type"] == "image/jpeg"
+    assert content[-2]["mime_type"] == "image/jpeg"
     assert "snapped after a month of use" in content[-1]["text"]
+    assert request["response_format"]["mime_type"] == "application/json"
+    assert list(request["response_format"]["schema"]["properties"])[0] == "visual_evidence"
 
 
 def test_insufficient_image_never_carries_a_mode_or_solutions():
@@ -274,7 +283,7 @@ def test_malformed_answer_is_retried_once_then_succeeds():
     assert result.primary_mode == "fatigue_metal"
     assert meta.attempts == 2
     assert meta.input_tokens == 2000
-    retry_note = client.requests[1]["messages"][0]["content"][-1]["text"]
+    retry_note = client.requests[1]["input"][-1]["text"]
     assert "previous answer was rejected" in retry_note
 
 
@@ -314,7 +323,7 @@ def test_rule_breaking_answers_are_rejected_and_retried(broken):
 
 
 def test_cut_off_answer_is_retried():
-    client = FakeClient(response(payload(), stop_reason="max_tokens"), response(payload()))
+    client = FakeClient(response(payload(), status="incomplete"), response(payload()))
 
     _, meta = run(client)
 
@@ -329,25 +338,38 @@ def test_more_than_four_solutions_are_trimmed_to_four():
     assert [s.title for s in result.solutions] == ["s0", "s1", "s2", "s3"]
 
 
-def test_refusal_fails_immediately_without_retry():
-    client = FakeClient(response("", stop_reason="refusal"))
+def test_uncompleted_response_fails_immediately_without_retry():
+    client = FakeClient(response("", status="failed"))
 
-    with pytest.raises(DiagnosisError, match="declined"):
+    with pytest.raises(DiagnosisError, match="did not complete"):
         run(client)
     assert len(client.requests) == 1
 
 
-def test_timeout_becomes_a_clear_error():
-    timeout = anthropic.APITimeoutError(request=httpx2.Request("POST", "https://x"))
+def test_slow_model_is_cut_off_at_the_wall_clock_limit(monkeypatch):
+    monkeypatch.setattr(diagnose, "MODEL_TIMEOUT_S", 0.2)
+    started = time.perf_counter()
 
-    with pytest.raises(DiagnosisError, match="did not answer within"):
-        run(FakeClient(timeout))
+    with pytest.raises(DiagnosisError, match="did not answer within") as raised:
+        run(FakeClient(response(payload()), delay_s=1.5))
+
+    assert time.perf_counter() - started < 1.0
+    assert raised.value.status_code == 504
+
+
+@pytest.mark.parametrize(
+    ("status_code", "expected"),
+    [(503, "overloaded"), (429, "rate limit"), (401, "key was rejected"), (400, "Gemini API error")],
+)
+def test_api_failures_name_their_cause(status_code, expected):
+    with pytest.raises(DiagnosisError, match=expected):
+        run(FakeClient(ApiStatusError(status_code)))
 
 
 def test_missing_api_key_is_reported_before_any_call(monkeypatch):
     monkeypatch.setattr(diagnose, "_has_credentials", lambda: False)
 
-    with pytest.raises(DiagnosisError, match="ANTHROPIC_API_KEY is not set"):
+    with pytest.raises(DiagnosisError, match="GEMINI_API_KEY is not set"):
         diagnose.make_client()
 
 
