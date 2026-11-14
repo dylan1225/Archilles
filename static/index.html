@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Postmortem — fracture surface analysis</title>
+<style>
+  :root {
+    --bg: #0e1216; --panel: #161b21; --panel-2: #1c232b; --line: #2b343f;
+    --text: #d9dfe6; --muted: #8492a2; --faint: #5d6977;
+    --calc: #4fc3d9; --calc-bg: #0f2228; --calc-line: #1f5563;
+    --good: #3fb27f; --warn: #e2a33b; --bad: #de6450;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 var(--sans); }
+  button, textarea, input { font: inherit; color: inherit; }
+  h1, h2, h3, p, ul, ol { margin: 0; padding: 0; }
+  ul, ol { list-style: none; }
+
+  header { display: flex; align-items: center; gap: 14px; padding: 10px 16px;
+    border-bottom: 1px solid var(--line); background: var(--panel); }
+  .wordmark { font: 700 15px/1 var(--mono); letter-spacing: .22em; }
+  .tagline { color: var(--muted); font-size: 12px; }
+  .status { margin-left: auto; font: 11px/1 var(--mono); letter-spacing: .08em;
+    padding: 5px 8px; border: 1px solid var(--line); border-radius: 3px; color: var(--muted); }
+  .status[data-state="busy"] { color: var(--warn); border-color: var(--warn); }
+  .status[data-state="done"] { color: var(--good); border-color: var(--good); }
+  .status[data-state="error"] { color: var(--bad); border-color: var(--bad); }
+
+  main { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 16px;
+    padding: 16px; max-width: 1400px; margin: 0 auto; align-items: start; }
+  @media (max-width: 900px) { main { grid-template-columns: minmax(0, 1fr); } }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; }
+  .panel > h2, .label { font: 600 10.5px/1 var(--mono); letter-spacing: .14em;
+    text-transform: uppercase; color: var(--muted); }
+  .panel > h2 { padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .panel-body { padding: 12px; }
+  .stack > * + * { margin-top: 12px; }
+
+  .drop { display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; min-height: 190px; padding: 14px; text-align: center; cursor: pointer;
+    border: 1.5px dashed var(--faint); border-radius: 4px; background: var(--panel-2); }
+  .drop:hover, .drop:focus-visible, .drop.over { border-color: var(--calc); outline: none; }
+  .drop strong { font-size: 15px; }
+  .drop small { color: var(--muted); }
+  .drop img { max-width: 100%; max-height: 220px; border-radius: 3px; display: block; }
+  .file-name { font: 12px/1.3 var(--mono); color: var(--muted); word-break: break-all; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap; }
+
+  textarea { width: 100%; min-height: 70px; resize: vertical; padding: 8px;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 3px; }
+  textarea:focus-visible { outline: 1px solid var(--calc); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 12px; border: 1px solid var(--line); border-radius: 3px;
+    background: var(--panel-2); cursor: pointer; }
+  .btn:hover:not(:disabled) { border-color: var(--muted); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.primary { width: 100%; padding: 11px; font-weight: 600; background: #d9dfe6;
+    color: #0e1216; border-color: #d9dfe6; }
+  .btn.primary:hover:not(:disabled) { background: #fff; }
+  .row { display: flex; gap: 8px; }
+  .row > * { flex: 1; }
+
+  .empty, .loading { padding: 56px 20px; text-align: center; color: var(--muted); }
+  .empty strong, .loading strong { display: block; color: var(--text); font-size: 16px; margin-bottom: 6px; }
+  .bar { height: 3px; margin: 18px auto 0; max-width: 320px; background: var(--line);
+    border-radius: 2px; overflow: hidden; }
+  .bar::after { content: ""; display: block; height: 100%; width: 35%; background: var(--calc);
+    animation: slide 1.3s ease-in-out infinite; }
+  @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(290%); } }
+  @media (prefers-reduced-motion: reduce) { .bar::after { animation: none; width: 100%; opacity: .5; } }
+  .elapsed { font: 12px/1 var(--mono); margin-top: 10px; }
+
+  .banner { padding: 12px 14px; border: 1px solid var(--bad); border-left-width: 4px;
+    border-radius: 4px; background: #2a1613; }
+  .banner .label { color: var(--bad); margin-bottom: 6px; display: block; }
+  .banner.insufficient { border-color: var(--warn); background: #2a2110; }
+  .banner.insufficient .label { color: var(--warn); }
+
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .summary > div { padding: 12px; border-right: 1px solid var(--line); }
+  .summary > div:last-child { border-right: 0; }
+  .summary .value { margin-top: 7px; font-size: 17px; font-weight: 600; }
+  .summary .sub { font: 11px/1.3 var(--mono); color: var(--muted); margin-top: 3px; overflow-wrap: anywhere; }
+  .badge { display: inline-block; font: 600 11px/1 var(--mono); letter-spacing: .1em;
+    text-transform: uppercase; padding: 5px 8px; border-radius: 3px; border: 1px solid; }
+  .badge.high { color: var(--good); } .badge.medium { color: var(--warn); } .badge.low { color: var(--bad); }
+
+  .two { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; }
+  @media (max-width: 1100px) { .two { grid-template-columns: minmax(0, 1fr); } }
+  .bullets li { position: relative; padding: 5px 0 5px 16px; border-bottom: 1px solid var(--line); }
+  .bullets li:last-child { border-bottom: 0; }
+  .bullets li::before { content: ""; position: absolute; left: 2px; top: 13px; width: 5px; height: 5px;
+    background: var(--muted); }
+  .alts li { padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .alts li:last-child { border-bottom: 0; }
+  .alts code, code { font: 12px/1.3 var(--mono); color: var(--text); }
+
+  .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font: 11px/1 var(--mono); color: var(--muted);
+    padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .swatch { display: inline-block; width: 9px; height: 9px; margin-right: 6px; vertical-align: -1px;
+    background: var(--muted); }
+  .swatch.calc { background: var(--calc); }
+
+  .solution { display: grid; grid-template-columns: 44px minmax(0, 1fr); border-bottom: 1px solid var(--line); }
+  .solution:last-child { border-bottom: 0; }
+  .rank { font: 700 20px/1 var(--mono); color: var(--faint); padding: 14px 0 0 12px; }
+  .solution-body { padding: 12px 12px 14px 0; }
+  .solution h3 { font-size: 15px; font-weight: 600; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 7px 0 8px; }
+  .tag { font: 600 10px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase;
+    padding: 4px 6px; border: 1px solid var(--line); border-radius: 2px; color: var(--muted); }
+  .tag.root { color: var(--good); border-color: var(--good); }
+  .proscons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+  @media (max-width: 600px) { .proscons { grid-template-columns: 1fr; } }
+  .proscons li { padding: 3px 0 3px 16px; position: relative; }
+  .proscons li::before { position: absolute; left: 0; font: 700 13px/1.45 var(--mono); }
+  .pros li::before { content: "+"; color: var(--good); }
+  .cons li::before { content: "\2212"; color: var(--bad); }
+
+  .calc { margin-top: 12px; border: 1px solid var(--calc-line); border-radius: 3px; background: var(--calc-bg); }
+  .calc-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 7px 10px;
+    border-bottom: 1px solid var(--calc-line); }
+  .calc-head .mark { font: 700 10.5px/1 var(--mono); letter-spacing: .14em; color: #06171b;
+    background: var(--calc); padding: 4px 6px; border-radius: 2px; }
+  .calc-head .src { font: 11px/1 var(--mono); color: var(--calc); }
+  .calc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+  .calc-grid > div { padding: 9px 10px; border-right: 1px solid var(--calc-line); }
+  .calc-grid > div:last-child { border-right: 0; }
+  .calc-grid .label { color: var(--calc); opacity: .8; }
+  .calc-grid .num { font: 600 19px/1.1 var(--mono); margin-top: 6px; }
+  .calc-grid .unit { font: 11px/1.2 var(--mono); color: var(--muted); margin-top: 3px; }
+  .calc-foot { padding: 7px 10px; border-top: 1px solid var(--calc-line); font: 11px/1.45 var(--mono);
+    color: var(--muted); }
+  .calc-foot .flag { color: var(--warn); }
+  .muted { color: var(--muted); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <span class="wordmark">POSTMORTEM</span>
+  <span class="tagline">Fracture surface analysis</span>
+  <span class="status" id="status" data-state="idle" role="status">READY</span>
+</header>
+
+<main>
+  <section class="stack" aria-label="Specimen">
+    <div class="panel">
+      <h2>Specimen photo</h2>
+      <div class="panel-body stack">
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose or drop a photo">
+          <strong>Drop a photo of the fracture surface</strong>
+          <small>or click to choose a file · JPEG, PNG, HEIC</small>
+        </div>
+        <input class="visually-hidden" type="file" id="file-any" accept="image/*,.heic,.heif" tabindex="-1">
+        <input class="visually-hidden" type="file" id="file-camera" accept="image/*" capture="environment" tabindex="-1">
+        <button class="btn" id="camera" type="button" style="width:100%">Take a photo with the camera</button>
+        <div>
+          <label class="label" for="context">Context (optional)</label>
+          <textarea id="context" style="margin-top:7px"
+            placeholder="How it broke, dimensions, material. e.g. PETG bracket, 3 mm wall, sharp inside corner, snapped after two weeks of vibration."></textarea>
+        </div>
+        <button class="btn primary" id="analyse" type="button" disabled>Analyse</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Try an example</h2>
+      <div class="panel-body row">
+        <button class="btn" type="button" data-example="1">Example 1</button>
+        <button class="btn" type="button" data-example="2">Example 2</button>
+        <button class="btn" type="button" data-example="3">Example 3</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="stack" id="output" aria-live="polite" aria-label="Diagnosis"></section>
+</main>
+
+<script>
+"use strict";
+
+const META_HEADER = "X-Postmortem-Meta";
+const PROGRESS_STEPS = [
+  [0, "Uploading photo"],
+  [2, "Reading the fracture surface"],
+  [8, "Comparing against known failure modes"],
+  [16, "Ranking fixes and calculating stress numbers"],
+  [30, "Still working. Detailed photos take longer"],
+  [60, "Still waiting on the model"],
+];
+const MATERIAL_NAMES = { fdm_print: "FDM print", metal: "Metal", wood: "Wood", other: "Other", unclear: "Unclear" };
+const DIMENSION_SOURCES = {
+  user_context: "dimensions from your note",
+  estimated_from_image: "dimensions ESTIMATED from the photo",
+};
+
+const $ = (id) => document.getElementById(id);
+const output = $("output");
+const statusChip = $("status");
+let selectedFile = null;
+let busy = false;
+let timer = null;
+
+/** Build an element. Text always goes in via textContent, never as HTML. */
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined && text !== null) node.textContent = String(text);
+  return node;
+}
+
+function panel(title, ...children) {
+  const box = el("div", "panel");
+  if (title) box.append(el("h2", "", title));
+  box.append(...children);
+  return box;
+}
+
+function body(...children) {
+  const box = el("div", "panel-body");
+  box.append(...children);
+  return box;
+}
+
+function setStatus(state, text) {
+  statusChip.dataset.state = state;
+  statusChip.textContent = text;
+}
+
+function setBusy(value) {
+  busy = value;
+  $("analyse").disabled = value || !selectedFile;
+  document.querySelectorAll("[data-example]").forEach((button) => { button.disabled = value; });
+}
+
+function humanise(id) {
+  const words = String(id).replace(/_/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+function formatNumber(value, digits) {
+  return typeof value === "number" && Number.isFinite(value) ? value.toFixed(digits) : "n/a";
+}
+
+// --- States ---------------------------------------------------------------
+
+function showEmpty() {
+  const box = el("div", "empty");
+  box.append(el("strong", "", "No specimen loaded"),
+    el("span", "", "Add a close, sharp, well-lit photo of the broken surface, then press Analyse."));
+  output.replaceChildren(panel("Diagnosis", box));
+}
+
+function showLoading() {
+  const started = Date.now();
+  const title = el("strong", "", PROGRESS_STEPS[0][1]);
+  const elapsed = el("div", "elapsed", "0 s");
+  const box = el("div", "loading");
+  box.append(title, el("span", "", "Do not close this page."), el("div", "bar"), elapsed);
+  output.replaceChildren(panel("Diagnosis", box));
+  setStatus("busy", "ANALYSING");
+  clearInterval(timer);
+  timer = setInterval(() => {
+    const seconds = Math.floor((Date.now() - started) / 1000);
+    const step = PROGRESS_STEPS.filter(([from]) => seconds >= from).pop();
+    title.textContent = step[1];
+    elapsed.textContent = `${seconds} s`;
+  }, 500);
+  return started;
+}
+
+function showError(message) {
+  clearInterval(timer);
+  const box = el("div", "banner");
+  box.setAttribute("role", "alert");
+  box.append(el("span", "label", "Analysis failed"), el("div", "", message));
+  output.replaceChildren(box);
+  setStatus("error", "ERROR");
+}
+
+// --- Results --------------------------------------------------------------
+
+function summaryCell(label, value, sub) {
+  const cell = el("div");
+  cell.append(el("div", "label", label));
+  const valueNode = el("div", "value");
+  valueNode.append(value);
+  cell.append(valueNode);
+  if (sub) cell.append(el("div", "sub", sub));
+  return cell;
+}
+
+function renderSummary(d, meta, roundTripSeconds) {
+  const strip = el("div", "summary");
+  const badge = el("span", `badge ${d.confidence}`, d.confidence);
+  const modelSeconds = meta && typeof meta.latency_s === "number" ? meta.latency_s : null;
+  const latency = modelSeconds !== null ? `${modelSeconds.toFixed(1)} s` : `${roundTripSeconds.toFixed(1)} s`;
+  const model = (meta && meta.model) || "round trip";
+  const latencyNote = !meta || !meta.cached ? model
+    : meta.source === "example" ? `pre-computed example · ${model}`
+    : `cached · same photo as before · ${model}`;
+  strip.append(
+    summaryCell("Material", MATERIAL_NAMES[d.material] || d.material),
+    summaryCell("Failure mode", humanise(d.primary_mode), d.primary_mode),
+    summaryCell("Confidence", badge),
+    summaryCell(meta && meta.cached ? "Original analysis time" : "Analysis time", latency, latencyNote),
+  );
+  return panel(null, strip);
+}
+
+function renderList(items, className) {
+  const list = el("ul", className);
+  items.forEach((item) => list.append(el("li", "", item)));
+  return list;
+}
+
+function renderEvidence(d) {
+  const content = d.visual_evidence.length
+    ? renderList(d.visual_evidence, "bullets")
+    : el("p", "muted", "No features could be observed.");
+  return panel("Visual evidence · observed in this photo", body(content));
+}
+
+function renderCause(d) {
+  const parts = [panel("Probable cause", body(el("p", "", d.probable_cause || "Not determined.")))];
+  if (d.alternative_modes.length) {
+    const list = el("ul", "alts");
+    d.alternative_modes.forEach(([mode, why]) => {
+      const item = el("li");
+      item.append(el("code", "", mode), el("div", "muted", why));
+      list.append(item);
+    });
+    parts.push(panel("Alternatives considered", body(list)));
+  }
+  const column = el("div", "stack");
+  column.append(...parts);
+  return column;
+}
+
+function calcCell(label, number, unit) {
+  const cell = el("div");
+  cell.append(el("div", "label", label), el("div", "num", number));
+  if (unit) cell.append(el("div", "unit", unit));
+  return cell;
+}
+
+function renderComputed(computed) {
+  const box = el("div", "calc");
+  const head = el("div", "calc-head");
+  head.append(el("span", "mark", "CALCULATED"),
+    el("span", "src", `${computed.calculated_by || "mechanics.py"} · not model-generated`));
+  box.append(head);
+
+  const inputs = computed.inputs || {};
+  if (computed.error) {
+    const foot = el("div", "calc-foot");
+    foot.append(el("span", "flag", computed.error));
+    box.append(foot);
+    return box;
+  }
+
+  const prefix = computed.reduction_is_lower_bound ? "≥ " : "";
+  const grid = el("div", "calc-grid");
+  grid.append(
+    calcCell("Kt now", formatNumber(computed.kt_current, 2),
+      `r ${formatNumber(inputs.current_radius_mm, 1)} mm · r/d ${formatNumber(computed.r_over_d_current, 3)}`),
+    calcCell("Kt proposed", formatNumber(computed.kt_proposed, 2),
+      `r ${formatNumber(inputs.proposed_radius_mm, 1)} mm · r/d ${formatNumber(computed.r_over_d_proposed, 3)}`),
+    calcCell("Peak stress", `${prefix}${formatNumber(computed.peak_stress_reduction_pct, 1)} %`,
+      computed.reduction_is_lower_bound ? "lower, at least" : "lower"),
+    calcCell("Section depth d", formatNumber(inputs.section_depth_mm, 1), "mm"),
+  );
+  box.append(grid);
+
+  const foot = el("div", "calc-foot");
+  const flags = [];
+  if (inputs.dimensions_source) flags.push(DIMENSION_SOURCES[inputs.dimensions_source] || inputs.dimensions_source);
+  if (computed.is_capped) flags.push("sharp corner: Kt capped, true value is higher");
+  if (computed.is_extrapolated) flags.push("extrapolated beyond chart range");
+  if (flags.length) foot.append(el("div", "flag", `Inputs and limits: ${flags.join(" · ")}`));
+  if (computed.basis) foot.append(el("div", "", computed.basis));
+  box.append(foot);
+  return box;
+}
+
+function renderSolution(solution, rank) {
+  const row = el("div", "solution");
+  const content = el("div", "solution-body");
+  const tags = el("div", "tags");
+  tags.append(
+    el("span", solution.addresses_root_cause ? "tag root" : "tag",
+      solution.addresses_root_cause ? "Addresses root cause" : "Adds margin only"),
+    el("span", "tag", `Effort: ${solution.effort}`),
+  );
+  const proscons = el("div", "proscons");
+  const pros = el("div");
+  pros.append(el("div", "label", "Pros"), renderList(solution.pros, "pros"));
+  const cons = el("div");
+  cons.append(el("div", "label", "Cons"), renderList(solution.cons, "cons"));
+  proscons.append(pros, cons);
+  content.append(el("h3", "", solution.title), tags, el("p", "", solution.description), proscons);
+  if (solution.computed) content.append(renderComputed(solution.computed));
+  row.append(el("div", "rank", String(rank).padStart(2, "0")), content);
+  return row;
+}
+
+function renderSolutions(d) {
+  const legend = el("div", "legend");
+  const modelKey = el("span");
+  modelKey.append(el("span", "swatch"), "Model-generated assessment");
+  const calcKey = el("span");
+  calcKey.append(el("span", "swatch calc"), "Calculated by mechanics.py");
+  legend.append(modelKey, calcKey);
+  const box = panel("Solutions · ranked", legend);
+  d.solutions.forEach((solution, index) => box.append(renderSolution(solution, index + 1)));
+  return box;
+}
+
+function renderInsufficient(d) {
+  const box = el("div", "banner insufficient");
+  box.setAttribute("role", "alert");
+  box.append(el("span", "label", "Image insufficient · no diagnosis made"),
+    el("div", "", d.insufficient_reason || "The fracture surface is not visible well enough."));
+  return box;
+}
+
+function showDiagnosis(d, meta, roundTripSeconds) {
+  clearInterval(timer);
+  const parts = [];
+  if (d.insufficient_image) {
+    parts.push(renderInsufficient(d), renderSummary(d, meta, roundTripSeconds), renderEvidence(d));
+    setStatus("done", "INSUFFICIENT IMAGE");
+  } else {
+    const columns = el("div", "two");
+    columns.append(renderEvidence(d), renderCause(d));
+    parts.push(renderSummary(d, meta, roundTripSeconds), columns);
+    if (d.solutions.length) parts.push(renderSolutions(d));
+    setStatus("done", "COMPLETE");
+  }
+  output.replaceChildren(...parts);
+}
+
+// --- Requests -------------------------------------------------------------
+
+async function readError(response) {
+  const text = await response.text();
+  try {
+    const parsed = JSON.parse(text);
+    return parsed.error || parsed.detail || text;
+  } catch {
+    return text || `The server answered ${response.status} with no message.`;
+  }
+}
+
+function readMeta(response) {
+  const raw = response.headers.get(META_HEADER);
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return null; }
+}
+
+async function run(request) {
+  if (busy) return;
+  setBusy(true);
+  const started = showLoading();
+  // On a phone the results sit below the form; bring the progress into view.
+  output.scrollIntoView({ behavior: "smooth", block: "start" });
+  try {
+    const response = await request();
+    if (!response.ok) {
+      showError(`${await readError(response)} (HTTP ${response.status})`);
+      return;
+    }
+    const diagnosis = await response.json();
+    showDiagnosis(diagnosis, readMeta(response), (Date.now() - started) / 1000);
+  } catch (error) {
+    showError(`Could not complete the request: ${error.message}. Is the server still running?`);
+  } finally {
+    clearInterval(timer);
+    setBusy(false);
+  }
+}
+
+function analyse() {
+  if (!selectedFile) return;
+  const form = new FormData();
+  form.append("image", selectedFile);
+  const context = $("context").value.trim();
+  if (context) form.append("context", context);
+  run(() => fetch("/diagnose", { method: "POST", body: form }));
+}
+
+// --- Specimen input -------------------------------------------------------
+
+function showPreview(source, name, missingText) {
+  const drop = $("drop");
+  const caption = el("div", "file-name", name);
+  const image = el("img");
+  image.alt = "Selected specimen photo";
+  image.onerror = () => image.replaceWith(el("small", "", missingText));
+  image.src = source;
+  drop.replaceChildren(image, caption);
+}
+
+function selectFile(file) {
+  if (!file) return;
+  selectedFile = file;
+  showPreview(URL.createObjectURL(file), `${file.name} · ${(file.size / 1048576).toFixed(1)} MB`,
+    "Preview not available for this format. It will still be analysed.");
+  $("analyse").disabled = busy;
+}
+
+const drop = $("drop");
+drop.addEventListener("click", () => $("file-any").click());
+drop.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" || event.key === " ") { event.preventDefault(); $("file-any").click(); }
+});
+["dragenter", "dragover"].forEach((name) => drop.addEventListener(name, (event) => {
+  event.preventDefault();
+  drop.classList.add("over");
+}));
+["dragleave", "drop"].forEach((name) => drop.addEventListener(name, (event) => {
+  event.preventDefault();
+  drop.classList.remove("over");
+}));
+drop.addEventListener("drop", (event) => selectFile(event.dataTransfer.files[0]));
+$("file-any").addEventListener("change", (event) => selectFile(event.target.files[0]));
+$("file-camera").addEventListener("change", (event) => selectFile(event.target.files[0]));
+$("camera").addEventListener("click", () => $("file-camera").click());
+$("analyse").addEventListener("click", analyse);
+document.querySelectorAll("[data-example]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const n = button.dataset.example;
+    showPreview(`/static/examples/${n}.jpg`, `Bundled example ${n}`, "Example photo not bundled yet.");
+    selectedFile = null;
+    run(() => fetch(`/examples/${n}`));
+  });
+});
+
+showEmpty();
+</script>
+</body>
+</html>
