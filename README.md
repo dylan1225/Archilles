@@ -78,6 +78,7 @@ photo + note ─► diagnose.py   one Gemini call with the knowledge base, a str
 | `static/viewer3d.js` | The 3D exhibit: gallery scene, part builders, one builder per kind of fix. |
 | `static/vendor/` | three.js 0.170.0 and OrbitControls (MIT), served locally so the demo works offline. |
 | `static/examples/` | Bundled demo photos with their real, pre-computed Gemini results. |
+| `docs/demo-photo-guide.md` | How to shoot and bundle a fourth example that shows the calculated card. |
 | `eval/run_eval.py` | Accuracy run over `eval/labels.csv` + `eval/images/`, cached, with a few-shot leak check. |
 
 ### 3D exhibit data
