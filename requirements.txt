@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pydantic
+anthropic
+python-multipart
+pillow
+pillow-heif
+python-dotenv
+pytest
