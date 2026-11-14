@@ -160,6 +160,79 @@ def fillet_improvement(
     }
 
 
+SECTION_SHAPES = ("round", "rectangular")
+SECTION_RATIO_DECIMALS = 2
+GRAMS_DECIMALS = 1
+MM3_PER_CM3 = 1000.0
+
+_SECTION_BASIS = (
+    "Same material, length and load. Weight scales with cross-section area. Bending "
+    "strength scales with the section modulus (diameter cubed for a round section; "
+    "width x thickness squared for a rectangle bent across its thickness). Stiffness "
+    "scales with the second moment of area (diameter to the fourth; width x "
+    "thickness cubed). These are ratios for the same load, not stress-concentration "
+    "values: holes, notches and sharp corners are not included."
+)
+
+
+def _section_properties(shape: str, dims: dict) -> tuple[float, float, float]:
+    """(area mm^2, section modulus mm^3, second moment mm^4) for one section."""
+    if shape == "round":
+        d = dims["diameter_mm"]
+        _require_positive("diameter_mm", d)
+        return math.pi * d**2 / 4, math.pi * d**3 / 32, math.pi * d**4 / 64
+    if shape == "rectangular":
+        b, h = dims["width_mm"], dims["thickness_mm"]
+        _require_positive("width_mm", b)
+        _require_positive("thickness_mm", h)
+        return b * h, b * h**2 / 6, b * h**3 / 12
+    raise ValueError(f"shape must be one of {SECTION_SHAPES}, got {shape!r}")
+
+
+def _require_positive(name: str, value: float) -> None:
+    _require_finite(name, value)
+    if value <= 0:
+        raise ValueError(f"{name} must be > 0, got {value}")
+
+
+def section_change(
+    shape: str,
+    current: dict,
+    proposed: dict,
+    length_mm: float | None = None,
+    density_g_cm3: tuple[float, float] | None = None,
+) -> dict:
+    """Weight, bending strength and stiffness ratios for a change of section.
+
+    current / proposed hold diameter_mm (round) or width_mm and thickness_mm
+    (rectangular, bent across its thickness). With a length and a density range,
+    masses are added in grams as ranges.
+    """
+    area0, modulus0, inertia0 = _section_properties(shape, current)
+    area1, modulus1, inertia1 = _section_properties(shape, proposed)
+    result = {
+        "weight_ratio": round(area1 / area0, SECTION_RATIO_DECIMALS),
+        "strength_ratio": round(modulus1 / modulus0, SECTION_RATIO_DECIMALS),
+        "stiffness_ratio": round(inertia1 / inertia0, SECTION_RATIO_DECIMALS),
+        "area_mm2": [round(area0, 2), round(area1, 2)],
+        "basis": _SECTION_BASIS,
+    }
+    if length_mm is not None and density_g_cm3 is not None:
+        _require_positive("length_mm", length_mm)
+        low, high = density_g_cm3
+        _require_positive("density", low)
+        _require_positive("density", high)
+
+        def grams(area: float) -> list[float]:
+            volume_cm3 = area * length_mm / MM3_PER_CM3
+            return [round(volume_cm3 * low, GRAMS_DECIMALS), round(volume_cm3 * high, GRAMS_DECIMALS)]
+
+        result["mass_before_g"] = grams(area0)
+        result["mass_after_g"] = grams(area1)
+        result["mass_added_g"] = grams(area1 - area0)
+    return result
+
+
 def min_wall_thickness_check(measured_mm: float, process: str = "fdm") -> dict:
     """Check a measured wall thickness against practical limits for the process."""
     if process != "fdm":

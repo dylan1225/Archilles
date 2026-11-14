@@ -71,7 +71,8 @@ photo + note ─► diagnose.py   one Gemini call with the knowledge base, a str
 |---|---|
 | `main.py` | FastAPI app: `/`, `POST /diagnose`, `GET /examples/{n}`, `GET /mechanics/fillet` (recompute from typed measurements). Errors are always JSON. |
 | `diagnose.py` | Image prep (HEIC/EXIF), prompt, Gemini call with a time limit, validation, cache. |
-| `mechanics.py` | Stress concentration lookup, fillet improvement, FDM wall check. No model calls. |
+| `mechanics.py` | Stress concentration lookup, fillet improvement, section weight/strength ratios, FDM wall check. No model calls. |
+| `materials.py` + `knowledge/materials.csv` | Reference material properties with sources; material comparisons. |
 | `knowledge/failure_modes.md` | Failure-mode knowledge base, inserted into the prompt verbatim. |
 | `knowledge/examples/` | Optional few-shot photos with `.json` labels. |
 | `static/index.html` | The single-page UI. |
@@ -99,11 +100,22 @@ venv/bin/python -m pytest
 venv/bin/python eval/run_eval.py
 ```
 
-117 offline tests with a fake model client cover the mechanics tables, schema and
+161 offline tests with a fake model client cover the mechanics tables, schema and
 rule enforcement, retries and timeouts, the cache, the 3D fields and the bundled
 examples. The eval needs `eval/labels.csv` and `eval/images/`.
 
 ## Update log
+
+### 2026-11-14 — Knowledge base and materials (branch `ui-and-ai-assistant-dev`)
+- All 11 failure modes written, each with a cited source; the page shows the
+  mode's name and a Reference line. Every block is marked draft until checked.
+- `knowledge/materials.csv`: 12 common robotics materials (printed plastics,
+  plastic sheet, aluminium, steel, four woods), each value with its source.
+- Optional **Material** picker in step 2; a **Reference data** card shows the
+  chosen material, and "switch material" fixes get a side-by-side comparison.
+- "Thicker section" fixes get a Calculated card with exact weight, bending
+  strength and stiffness ratios (e.g. a 12 → 16 mm dowel is ×1.78 heavier and
+  ×2.37 stronger), plus grams when the material and length are known.
 
 ### 2026-11-14 — Calculated before/after for geometry fixes
 - Fixes that add or enlarge a fillet, increase a radius or soften a corner now

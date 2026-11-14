@@ -24,9 +24,11 @@ shows its definition and explanation. A fuller teaching mode comes later.
 it from `postmortem` (at `7fd796b`), which stays unchanged. All parts are
 committed there.
 
-Status (2026-11-14): Part 1 built — 11 modes drafted with sources and shown on the
-page; every mode is `Status: draft` until a team member or mentor checks it
-against its source. Part 2 in progress. Parts 3–5 not started.
+Status (2026-11-14): Parts 1 and 2 built. Part 1: 11 failure modes drafted with
+sources and shown on the page. Part 2: materials table (12 rows), material picker,
+Reference data card, material comparison, and the weight and strength card for
+thicker sections. Every mode and every material row is `draft` until a team member
+or mentor checks it against its source. Parts 3–5 not started.
 
 ## Who does what
 

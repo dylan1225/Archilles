@@ -49,6 +49,8 @@ def solution(**overrides) -> dict:
         "effort": "trivial",
         "addresses_root_cause": True,
         "geometry": None,
+        "section_change": None,
+        "proposed_material_id": None,
         "visual": {"kind": "add_fillet", "label": "Round the inside corner"},
     }
     return {**base, **overrides}
@@ -356,7 +358,7 @@ def test_results_saved_before_the_3d_fields_still_load():
         **{k: v for k, v in old.items() if k not in ("specimen", "solutions", "alternative_modes")},
         "alternative_modes": [["other", "why"]],
         "solutions": [
-            {k: v for k, v in solution().items() if k not in ("geometry", "visual")} | {"computed": None}
+            {k: v for k, v in solution().items() if k not in ("geometry", "visual", "section_change", "proposed_material_id")} | {"computed": None}
         ],
     }
 

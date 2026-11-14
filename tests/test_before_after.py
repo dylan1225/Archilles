@@ -62,6 +62,8 @@ def _model_answer(geometry):
         "effort": "trivial",
         "addresses_root_cause": True,
         "geometry": geometry,
+        "section_change": None,
+        "proposed_material_id": None,
         "visual": {"kind": "add_fillet", "label": "Round the corner"},
     }
     plain = {**solution, "title": "Thicker wall", "geometry": None, "addresses_root_cause": False}

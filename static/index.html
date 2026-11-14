@@ -210,6 +210,38 @@
     .calc-try { border-top: 0; border-left: 1px solid var(--calc-line); align-content: start; padding: 18px 20px; }
   }
   .exhibit-calc { padding: 0 16px 18px; border-top: 1px solid var(--line); }
+  .calc-change { padding: 4px 0 8px; font: 700 22px/1.2 var(--mono); }
+  .calc-row.weight .what, .calc-row.weight .kt { color: #10241c; }
+
+  /* --- Reference data: slate blue, distinct from model text and from Calculated --- */
+  .refcard { margin-top: 16px; border: 2px solid #34506f; border-radius: 3px; background: #eef2f7; color: #142233; }
+  .ref-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 8px 14px; background: #34506f; color: #eef2f7; }
+  .ref-head .mark { font: 700 12px/1 var(--mono); letter-spacing: .16em; background: #eef2f7; color: #34506f; padding: 5px 7px; border-radius: 2px; }
+  .ref-head .src { font: 12px/1.2 var(--mono); }
+  .ref-table { width: 100%; border-collapse: collapse; margin: 6px 0 0; }
+  .ref-table th, .ref-table td { padding: 9px 14px; text-align: left; border-bottom: 1px dashed #b9c6d6; vertical-align: top; }
+  .ref-table tr:first-child th { font: 600 13px/1.2 var(--serif); letter-spacing: .08em; text-transform: uppercase; color: #34506f; }
+  .ref-table th { font: 600 15px/1.3 var(--sans); }
+  .ref-table th small { display: block; font: 13px/1.3 var(--sans); color: #51637a; }
+  .ref-table td { font: 600 17px/1.3 var(--mono); }
+  .ref-table td.change { color: #34506f; }
+  .refcard { container: ref / inline-size; }
+  .ref-scroll { overflow-x: auto; }
+  @container ref (max-width: 520px) {
+    .ref-table th, .ref-table td { padding: 8px 8px; }
+    .ref-table td { font-size: 15px; }
+    .ref-table th { font-size: 14px; }
+  }
+  .ref-table td small { display: block; margin-top: 2px; font: 13px/1.3 var(--sans); color: #51637a; }
+  .refcard .calc-note, .refcard .calc-basis, .ref-ask { margin: 10px 14px 0; }
+  .ref-ask { font: 15px/1.45 var(--sans); }
+  .ref-foot { padding: 10px 14px 14px; font: 13px/1.45 var(--sans); color: #51637a; }
+  .ref-foot p + p { margin-top: 6px; }
+  .ref-source b { color: #142233; }
+  .ref-source .draft { font-weight: 600; color: var(--warn); }
+  .field-label { display: block; margin-top: 10px; font: 600 14px/1.3 var(--serif); }
+  .field-label .muted { font: 13px/1.3 var(--sans); }
+  select#material { width: 100%; min-height: 42px; margin-top: 6px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 2px; background: #fff; font: 15px/1.2 var(--sans); }
   @container calc (max-width: 520px) {
     .calc-row .what { font-size: 15px; }
     .calc-row .kt { font-size: 26px; }
@@ -277,6 +309,10 @@
           <div class="step-body">
             <textarea id="context"
               placeholder="How it broke, dimensions, material. e.g. PETG bracket, 3 mm wall, sharp inside corner, snapped after two weeks of vibration."></textarea>
+            <label class="field-label" for="material">Material <span class="muted">(optional · a photo can't tell PLA from PETG)</span></label>
+            <select id="material">
+              <option value="">Not sure / not listed</option>
+            </select>
           </div>
         </div>
         <div class="step">
@@ -325,6 +361,18 @@ const GEOMETRY_INPUTS = [
   ["proposed_radius_mm", "Proposed radius (mm)"],
   ["section_depth_mm", "Section depth (mm)"],
 ];
+const ROUND_INPUTS = [
+  ["current_diameter_mm", "Diameter now (mm)"],
+  ["proposed_diameter_mm", "Proposed diameter (mm)"],
+];
+const RECT_INPUTS = [
+  ["current_width_mm", "Width now (mm)"],
+  ["proposed_width_mm", "Proposed width (mm)"],
+  ["current_thickness_mm", "Thickness now (mm)"],
+  ["proposed_thickness_mm", "Proposed thickness (mm)"],
+];
+const FAMILY_NAMES = { printed_plastic: "3D-printing plastics", plastic_sheet: "Plastic sheet", metal: "Metals", wood: "Wood" };
+let MATERIALS = [];
 const RECOMPUTE_DELAY_MS = 250;
 const EXHIBIT_SOLUTIONS = 3;
 const EVIDENCE_ON_PLACARD = 3;
@@ -521,11 +569,11 @@ function afterText(before, after) {
   return before === 0 ? `→ add a ${plain(after, 1)} mm fillet` : `→ enlarge to r ≈ ${plain(after, 1)} mm`;
 }
 
-function calcRow(className, what, detail, kt) {
+function calcRow(className, what, detail, kt, figure) {
   const row = el("div", `calc-row ${className}`);
   const label = el("div", "what", what);
   label.append(el("small", "", detail));
-  row.append(label, el("div", "kt", `Kt ≈ ${plain(kt)}`));
+  row.append(label, el("div", "kt", figure ?? `Kt ≈ ${plain(kt)}`));
   return row;
 }
 
@@ -565,18 +613,69 @@ function calcFigures(computed) {
   return box;
 }
 
+/** Error or "please measure" message shared by every calculated card, or null. */
+function calcNotice(computed) {
+  if (computed.error) return el("div", "calc-error", computed.error);
+  if (computed.needs_input) {
+    return el("p", "calc-ask", computed.prompt
+      || "The photo does not show the dimensions this needs, so nothing is estimated. Measure the part and enter them below.");
+  }
+  return null;
+}
+
+/** "×2.37" */
+function times(value) {
+  return `×${plain(value)}`;
+}
+
+/** [8.1, 10.1] -> "8.1–10.1"; [3.5, 3.5] -> "3.5". */
+function span(range, digits = 1) {
+  if (!range) return "—";
+  const [low, high] = range.map((value) => plain(value, digits));
+  return low === high ? low : `${low}–${high}`;
+}
+
+function sectionText(inputs, when) {
+  return inputs.shape === "round"
+    ? `Ø ${plain(inputs[`${when}_diameter_mm`], 1)} mm`
+    : `${plain(inputs[`${when}_width_mm`], 1)} × ${plain(inputs[`${when}_thickness_mm`], 1)} mm`;
+}
+
+/** The numbers part of the weight and strength card. */
+function sectionFigures(computed) {
+  const box = el("div", "calc-figures");
+  const notice = calcNotice(computed);
+  if (notice) { box.append(notice); return box; }
+  const inputs = computed.inputs;
+  box.append(el("div", "calc-change", `${sectionText(inputs, "current")}  →  ${sectionText(inputs, "proposed")}`));
+  const grams = computed.mass_added_g
+    ? `≈ +${span(computed.mass_added_g)} g in ${materialName(inputs.material_id)}`
+    : "Pick the material in step 2, with a length, to see grams";
+  const weight = el("div", "calc-row weight");
+  const label = el("div", "what", "Weight");
+  label.append(el("small", "", grams));
+  weight.append(label, el("div", "kt", times(computed.weight_ratio)));
+  box.append(
+    calcRow("after", "Bending strength", "same load and material", null, times(computed.strength_ratio)),
+    calcRow("after", "Stiffness", "how much less it bends", null, times(computed.stiffness_ratio)),
+    weight,
+  );
+  if (computed.basis) box.append(el("p", "calc-basis", computed.basis));
+  return box;
+}
+
 /**
- * Before/after card for a geometry fix. The numbers come from mechanics.py,
- * never the model; typed-in measurements are recomputed by the server.
+ * A calculated card with "try your own measurements" inputs. The numbers come
+ * from the server (mechanics.py), never the model; typed values are sent back to
+ * `endpoint` and the figures redrawn.
  */
-function renderComputed(computed) {
+function liveCalcCard(computed, { label, src, fields: fieldSpec, optional = [], endpoint, extraParams = {}, figures: drawFigures }) {
   const box = el("div", "calc");
   box.setAttribute("role", "group");
-  box.setAttribute("aria-label", "Calculated stress change, not model-generated");
+  box.setAttribute("aria-label", `${label}, calculated, not model-generated`);
   const head = el("div", "calc-head");
-  head.append(el("span", "mark", "CALCULATED"),
-    el("span", "src", `${computed.calculated_by || "mechanics.py"} · Peterson charts · not model-generated`));
-  let figures = calcFigures(computed);
+  head.append(el("span", "mark", "CALCULATED"), el("span", "src", `${src} · not model-generated`));
+  let figures = drawFigures(computed);
   const calcBody = el("div", "calc-body");
   calcBody.append(figures);
   box.append(head, calcBody);
@@ -584,7 +683,7 @@ function renderComputed(computed) {
   const original = computed.inputs || {};
   const tryBox = el("div", "calc-try");
   tryBox.append(el("div", "try-title", "Try your own measurements"));
-  const fields = GEOMETRY_INPUTS.map(([name, text]) => {
+  const fields = fieldSpec.map(([name, text]) => {
     const label = el("label", "", text);
     const input = el("input");
     input.type = "number";
@@ -604,7 +703,7 @@ function renderComputed(computed) {
   calcBody.append(tryBox);
 
   function show(next, sourceKey) {
-    const replacement = calcFigures(next);
+    const replacement = drawFigures(next);
     figures.replaceWith(replacement);
     figures = replacement;
     source.textContent = DIMENSION_SOURCES[sourceKey] || "";
@@ -613,14 +712,20 @@ function renderComputed(computed) {
   let pending = null;
   let requestId = 0;
   async function recompute() {
-    const values = Object.fromEntries(fields.map(([name, input]) => [name, input.value.trim()]));
-    if (Object.values(values).some((value) => value === "" || !Number.isFinite(Number(value)))) {
-      show({ needs_input: true, prompt: "Enter all three measurements, in millimetres, to calculate." }, "user_measured");
-      return;
+    const values = {};
+    for (const [name, input] of fields) {
+      const value = input.value.trim();
+      if (value === "" && optional.includes(name)) continue;
+      if (value === "" || !Number.isFinite(Number(value))) {
+        show({ needs_input: true, prompt: "Enter the measurements, in millimetres, to calculate." }, "user_measured");
+        return;
+      }
+      values[name] = value;
     }
+    const params = new URLSearchParams({ ...extraParams, ...values });
     const id = ++requestId;
     try {
-      const response = await fetch(`/mechanics/fillet?${new URLSearchParams(values)}`);
+      const response = await fetch(`${endpoint}?${params}`);
       if (id !== requestId) return; // a newer edit has already been sent
       show(response.ok ? await response.json() : { error: await readError(response) }, "user_measured");
     } catch (error) {
@@ -638,6 +743,139 @@ function renderComputed(computed) {
     show(computed, original.dimensions_source);
   });
   return box;
+}
+
+/** Before/after card for a fillet or radius fix. */
+function renderComputed(computed) {
+  return liveCalcCard(computed, {
+    label: "Stress change", src: `${computed.calculated_by || "mechanics.py"} · Peterson charts`,
+    fields: GEOMETRY_INPUTS, endpoint: "/mechanics/fillet", figures: calcFigures,
+  });
+}
+
+/** Weight and strength card for a thicker-section fix. */
+function renderSection(computed) {
+  const inputs = computed.inputs || {};
+  const round = inputs.shape !== "rectangular";
+  const extraParams = { shape: inputs.shape || "round" };
+  if (inputs.material_id) extraParams.material_id = inputs.material_id;
+  return liveCalcCard(computed, {
+    label: "Weight and strength change", src: "mechanics.py · section properties",
+    fields: [...(round ? ROUND_INPUTS : RECT_INPUTS), ["length_mm", "Length (mm)"]],
+    optional: ["length_mm"], endpoint: "/mechanics/section", extraParams, figures: sectionFigures,
+  });
+}
+
+// --- Reference data (materials table) ----------------------------------------
+
+function materialName(id) {
+  const material = MATERIALS.find((m) => m.id === id);
+  return material ? material.name : id || "this material";
+}
+
+function referenceShell(title) {
+  const box = el("div", "refcard");
+  box.setAttribute("role", "group");
+  box.setAttribute("aria-label", `${title}, reference data, not model-generated`);
+  const head = el("div", "ref-head");
+  head.append(el("span", "mark", "REFERENCE DATA"), el("span", "src", "materials.csv · not model-generated"));
+  box.append(head);
+  return box;
+}
+
+const PROPERTY_ROWS = [
+  ["Strength", (m) => `${span(m.strength_mpa, 0)} MPa`, (m) => m.strength_basis],
+  ["Stiffness", (m) => `${span(m.modulus_gpa)} GPa`, () => "modulus"],
+  ["Stretch before breaking", (m) => (m.elongation_pct ? `${span(m.elongation_pct, 0)} %` : "—"), () => "elongation"],
+  ["Density", (m) => `${span(m.density_g_cm3, 2)} g/cm³`, () => "sets the weight"],
+];
+
+function refFooter(list) {
+  const foot = el("div", "ref-foot");
+  for (const m of list) {
+    if (m.note) foot.append(el("p", "", `${m.name}: ${m.note}`));
+    const source = el("p", "ref-source");
+    source.append(el("b", "", `Source (${m.name}): `), m.source);
+    if (m.status !== "reviewed") source.append(el("span", "draft", " · draft, not yet checked against this source"));
+    foot.append(source);
+  }
+  return foot;
+}
+
+/** Lets a wide table scroll inside its card instead of spilling out on phones. */
+function scrollWrap(table) {
+  const wrap = el("div", "ref-scroll");
+  wrap.tabIndex = 0;
+  wrap.setAttribute("role", "region");
+  wrap.setAttribute("aria-label", "Reference values table");
+  wrap.append(table);
+  return wrap;
+}
+
+/** Reference data for the material the user picked. */
+function renderMaterialFacts(m) {
+  const box = referenceShell(m.name);
+  const table = el("table", "ref-table");
+  const head = el("tr");
+  head.append(el("th", "", ""), el("th", "", m.name));
+  table.append(head);
+  for (const [label, value, note] of PROPERTY_ROWS) {
+    const row = el("tr");
+    const name = el("th", "", label);
+    name.append(el("small", "", note(m)));
+    row.append(name, el("td", "", value(m)));
+    table.append(row);
+  }
+  box.append(scrollWrap(table), refFooter([m]));
+  return box;
+}
+
+/** Current vs proposed material for a "change material" fix. */
+function renderMaterialComparison(c) {
+  const box = referenceShell(c.to.name);
+  const table = el("table", "ref-table");
+  const head = el("tr");
+  head.append(el("th", "", ""));
+  if (c.from) head.append(el("th", "", c.from.name));
+  head.append(el("th", "", c.to.name));
+  if (c.from) head.append(el("th", "", "Change"));
+  table.append(head);
+  const ratios = c.from ? [c.strength_ratio, c.stiffness_ratio, null, c.weight_ratio] : [];
+  PROPERTY_ROWS.forEach(([label, value, note], index) => {
+    const row = el("tr");
+    const name = el("th", "", label);
+    const isStrength = index === 0;
+    // Strength can be measured differently per material, so say how under each value.
+    name.append(el("small", "", isStrength ? "as measured, see each value" : note(c.to)));
+    row.append(name);
+    const cell = (m) => {
+      const td = el("td", "", value(m));
+      if (isStrength) td.append(el("small", "", m.strength_basis));
+      return td;
+    };
+    if (c.from) row.append(cell(c.from));
+    row.append(cell(c.to));
+    if (c.from) row.append(el("td", "change", ratios[index] ? `×${span(ratios[index], 2)}` : ""));
+    table.append(row);
+  });
+  box.append(scrollWrap(table));
+  if (!c.from) {
+    box.append(el("p", "ref-ask", "Pick the part's current material in step 2 to compare the two."));
+  } else if (!c.strength_like_for_like) {
+    box.append(el("div", "calc-note", "⚠ Strength is not like-for-like: the two values were measured differently (tensile vs bending)."));
+  }
+  if (c.basis) box.append(el("p", "calc-basis", c.basis));
+  box.append(refFooter(c.from ? [c.from, c.to] : [c.to]));
+  return box;
+}
+
+/** Every calculated or reference card that belongs to one solution. */
+function solutionCards(solution) {
+  const cards = [];
+  if (solution.computed) cards.push(renderComputed(solution.computed));
+  if (solution.section_computed) cards.push(renderSection(solution.section_computed));
+  if (solution.material_comparison) cards.push(renderMaterialComparison(solution.material_comparison));
+  return cards;
 }
 
 function solutionTags(solution) {
@@ -665,7 +903,7 @@ function renderSolution(solution, rank) {
   const content = el("div", "solution-body");
   content.append(el("h3", "", solution.title), solutionTags(solution), el("p", "", solution.description),
     prosAndCons(solution));
-  if (solution.computed) content.append(renderComputed(solution.computed));
+  content.append(...solutionCards(solution));
   row.append(el("div", "rank", String(rank).padStart(2, "0")), content);
   return row;
 }
@@ -722,8 +960,8 @@ function placardSolution(solution, index, total) {
     el("p", "", solution.description),
     prosAndCons(solution),
   ];
-  if (solution.computed) {
-    parts.push(el("p", "muted section-label", "The calculated before/after for this fix is shown below the model."));
+  if (solution.computed || solution.section_computed || solution.material_comparison) {
+    parts.push(el("p", "muted section-label", "Calculated and reference figures for this fix are shown below the model."));
   }
   return parts;
 }
@@ -793,9 +1031,11 @@ function renderExhibit(d) {
     });
     placard.dataset.state = index === null ? "found" : "solution";
     placard.replaceChildren(...(index === null ? placardAsFound(d) : placardSolution(shown[index], index, shown.length)));
-    const computed = index === null ? null : shown[index].computed;
-    calcSlot.replaceChildren(...(computed ? [renderComputed(computed)] : []));
-    calcSlot.hidden = !computed;
+    const cards = index === null
+      ? (d.material_facts ? [renderMaterialFacts(d.material_facts)] : [])
+      : solutionCards(shown[index]);
+    calcSlot.replaceChildren(...cards);
+    calcSlot.hidden = !cards.length;
     if (viewer) viewer.select(index);
   }
   buttons.forEach((button, i) => {
@@ -896,6 +1136,7 @@ function analyse() {
   form.append("image", selectedFile);
   const context = $("context").value.trim();
   if (context) form.append("context", context);
+  if ($("material").value) form.append("material_id", $("material").value);
   run(() => fetch("/diagnose", { method: "POST", body: form }));
 }
 
@@ -946,10 +1187,34 @@ document.querySelectorAll("[data-example]").forEach((button) => {
     showPreview(photoUrl, `Collection piece ${n}`, "Example photo not bundled yet.");
     selectedFile = null;
     $("analyse").disabled = true;
-    run(() => fetch(`/examples/${n}`));
+    const material = $("material").value;
+    run(() => fetch(`/examples/${n}${material ? `?${new URLSearchParams({ material_id: material })}` : ""}`));
   });
 });
 
+/** Fill the material picker from the reference table, grouped by family. */
+async function loadMaterials() {
+  try {
+    const response = await fetch("/materials");
+    if (!response.ok) return;
+    MATERIALS = await response.json();
+  } catch {
+    return; // the picker stays at "Not sure"; everything else still works
+  }
+  const select = $("material");
+  for (const [family, label] of Object.entries(FAMILY_NAMES)) {
+    const group = el("optgroup");
+    group.label = label;
+    MATERIALS.filter((m) => m.family === family).forEach((m) => {
+      const option = el("option", "", m.name);
+      option.value = m.id;
+      group.append(option);
+    });
+    if (group.children.length) select.append(group);
+  }
+}
+
+loadMaterials();
 showEmpty();
 </script>
 </body>

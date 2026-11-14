@@ -28,6 +28,7 @@ from google import genai
 from PIL import Image, ImageOps, UnidentifiedImageError
 from pydantic import BaseModel, Field, ValidationError
 
+import materials
 import mechanics
 
 logger = logging.getLogger("postmortem.diagnose")
@@ -141,6 +142,10 @@ class Solution(BaseModel):
     computed: dict | None
     visual: Visual | None = None
     geometry: dict | None = None
+    section_change: dict | None = None
+    section_computed: dict | None = None
+    proposed_material_id: str | None = None
+    material_comparison: dict | None = None
 
 
 class Diagnosis(BaseModel):
@@ -158,6 +163,9 @@ class Diagnosis(BaseModel):
     mode_name: str | None = None
     mode_source: str | None = None
     mode_status: str | None = None
+    # The material the user said the part is made of, and its reference data.
+    material_id: str | None = None
+    material_facts: dict | None = None
 
 
 @dataclass(frozen=True)
@@ -194,6 +202,22 @@ class _Geometry(BaseModel):
     dimensions_source: GeometrySource
 
 
+class _SectionChange(BaseModel):
+    shape: Literal["round", "rectangular"]
+    current_diameter_mm: float | None = Field(description="round only; null if unknown.")
+    proposed_diameter_mm: float | None = Field(description="round only; null if unknown.")
+    current_width_mm: float | None = Field(description="rectangular only; null if unknown.")
+    proposed_width_mm: float | None = Field(description="rectangular only; null if unknown.")
+    current_thickness_mm: float | None = Field(
+        description="rectangular only, in the bending direction; null if unknown."
+    )
+    proposed_thickness_mm: float | None = Field(
+        description="rectangular only, in the bending direction; null if unknown."
+    )
+    length_mm: float | None = Field(description="Length of the part; null if unknown.")
+    dimensions_source: GeometrySource
+
+
 class _Specimen(BaseModel):
     shape: SpecimenShape = Field(description="Closest simple shape to the broken part.")
     length_mm: float = Field(description="Longest dimension of the intact part.")
@@ -224,6 +248,15 @@ class _ModelSolution(BaseModel):
             "Only when this solution adds or enlarges a fillet, increases a radius "
             "or softens a corner; else null."
         )
+    )
+    section_change: _SectionChange | None = Field(
+        description=(
+            "Only when this solution makes the section thicker, wider or larger in "
+            "diameter; else null."
+        )
+    )
+    proposed_material_id: str | None = Field(
+        description="Only when this solution switches material: an id from the list given; else null."
     )
     visual: _Visual
 
@@ -317,6 +350,18 @@ photo and say so in dimensions_source. For every solution, set visual.kind to \
 the change that best shows it on the part ("other" if none fits) and \
 visual.label to a caption of at most six words. When the image is \
 insufficient, specimen is null.
+
+8. When a solution makes the section thicker, wider or larger in diameter, fill \
+its section_change field: the shape of the cross-section (round or rectangular), \
+the current and proposed diameter (round) or width and thickness (rectangular, \
+thickness measured in the direction it bends), and the length of the part, in \
+millimetres. Use the user's note when it gives dimensions, otherwise estimate \
+from the photo; set any value you cannot estimate to null. Otherwise \
+section_change is null. Never state a weight or a strength gain yourself.
+
+9. When a solution switches to a different material, set proposed_material_id \
+to the closest id from the list of materials given below, or null if none fits. \
+Otherwise it is null.
 """
 
 
@@ -429,10 +474,15 @@ def _text_block(text: str) -> dict[str, Any]:
     return {"type": "text", "text": text}
 
 
+def _material_list() -> str:
+    return ", ".join(f"{m.id} ({m.name})" for m in materials.load_materials().values())
+
+
 def _system_text(knowledge_base: str, allowed_modes: list[str]) -> str:
     return (
         f"{SYSTEM_RULES}\n"
         f"Allowed values for primary_mode: {', '.join(allowed_modes)}.\n"
+        f"Materials for proposed_material_id: {_material_list()}.\n"
         "Knowledge base blocks whose id starts with TODO are unfinished "
         "placeholders. Ignore them.\n\n"
         f"<knowledge_base>\n{knowledge_base}\n</knowledge_base>"
@@ -480,7 +530,7 @@ def config_fingerprint() -> str:
     rules or the model invalidates old results instead of silently reusing them.
     """
     hasher = hashlib.sha256()
-    for part in (MODEL, SYSTEM_RULES, load_knowledge_base()):
+    for part in (MODEL, SYSTEM_RULES, load_knowledge_base(), _material_list()):
         hasher.update(part.encode("utf-8") + b"\0")
     for example in load_examples():
         hasher.update(example.image_b64.encode("ascii") + b"\0")
@@ -694,13 +744,101 @@ def _to_visual(raw: _Visual) -> Visual:
     return Visual(kind=raw.kind, label=label)
 
 
+SECTION_FIELDS = {
+    "round": ("diameter_mm",),
+    "rectangular": ("width_mm", "thickness_mm"),
+}
+
+
+def section_computed(
+    change: dict[str, Any], density_g_cm3: tuple[float, float] | None = None
+) -> dict[str, Any]:
+    """Weight and strength ratios for a thicker section. Calculated by
+    mechanics.py, never by the model.
+
+    Missing dimensions are listed in `needs_input` rather than guessed; impossible
+    ones are reported in `error`. Grams need a length and a density.
+    """
+    shape = change.get("shape")
+    base = {"type": "section_change", "calculated_by": "mechanics.py", "inputs": dict(change)}
+    if shape not in SECTION_FIELDS:
+        return {**base, "error": f"Not calculated: unknown shape {shape!r}."}
+    needed = [f"{when}_{field}" for field in SECTION_FIELDS[shape] for when in ("current", "proposed")]
+    missing = [name for name in needed if change.get(name) is None]
+    if missing:
+        return {**base, "needs_input": missing}
+    pick = lambda when: {f: change[f"{when}_{f}"] for f in SECTION_FIELDS[shape]}  # noqa: E731
+    length = change.get("length_mm")
+    try:
+        result = mechanics.section_change(
+            shape, pick("current"), pick("proposed"),
+            length_mm=length if density_g_cm3 else None,
+            density_g_cm3=density_g_cm3 if length else None,
+        )
+    except ValueError as exc:
+        logger.info("Section calculation rejected its inputs: %s", exc)
+        return {**base, "error": f"Not calculated: {exc}"}
+    return {**base, **result}
+
+
+def _section_inputs(raw: _SectionChange) -> dict[str, Any]:
+    inputs = raw.model_dump()
+    needed = [f"{w}_{f}" for f in SECTION_FIELDS[raw.shape] for w in ("current", "proposed")]
+    if any(inputs[name] is None for name in needed):
+        inputs["dimensions_source"] = "unknown"
+    return inputs
+
+
+def _known_material(material_id: str | None) -> str | None:
+    """A material id from the model, kept only if it is in the table."""
+    return material_id if material_id in materials.ids() else None
+
+
 def _to_solution(raw: _ModelSolution) -> Solution:
     geometry = raw.geometry
+    section = _section_inputs(raw.section_change) if raw.section_change else None
     return Solution(
-        **raw.model_dump(exclude={"geometry", "visual"}),
+        **raw.model_dump(exclude={"geometry", "visual", "section_change", "proposed_material_id"}),
         computed=_geometry_computed(geometry) if geometry else None,
         visual=_to_visual(raw.visual),
         geometry=geometry.model_dump() if geometry else None,
+        section_change=section,
+        section_computed=section_computed(section) if section else None,
+        proposed_material_id=_known_material(raw.proposed_material_id),
+    )
+
+
+def with_material(diagnosis: Diagnosis, material_id: str | None) -> Diagnosis:
+    """Attach reference data for the user's material, and everything that
+    depends on it: grams on thicker-section fixes and material comparisons.
+
+    Raises materials.MaterialError for an unknown id.
+    """
+    material = materials.get(material_id) if material_id else None
+    solutions = []
+    for solution in diagnosis.solutions:
+        update: dict[str, Any] = {}
+        if solution.section_change:
+            if material:
+                update["section_change"] = {**solution.section_change, "material_id": material.id}
+            update["section_computed"] = section_computed(
+                update.get("section_change", solution.section_change),
+                material.density_g_cm3 if material else None,
+            )
+        proposed = _known_material(solution.proposed_material_id)
+        if proposed:
+            update["material_comparison"] = (
+                materials.compare(material.id, proposed) if material
+                else {"from": None, "to": materials.facts(materials.get(proposed)),
+                      "calculated_by": "materials.py"}
+            )
+        solutions.append(solution.model_copy(update=update))
+    return diagnosis.model_copy(
+        update={
+            "solutions": solutions,
+            "material_id": material.id if material else None,
+            "material_facts": materials.facts(material) if material else None,
+        }
     )
 
 
