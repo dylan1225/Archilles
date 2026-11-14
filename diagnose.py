@@ -344,6 +344,12 @@ def config_fingerprint() -> str:
 
 def _has_credentials() -> bool:
     env_path = PROJECT_DIR / ".env"
+    if env_path.is_dir():
+        raise DiagnosisError(
+            f"{env_path} is a folder, not a file. Replace it with a text file "
+            "containing ANTHROPIC_API_KEY=...",
+            status_code=503,
+        )
     try:
         load_dotenv(env_path)
     except OSError as exc:

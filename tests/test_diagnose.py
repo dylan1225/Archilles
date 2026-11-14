@@ -351,6 +351,14 @@ def test_missing_api_key_is_reported_before_any_call(monkeypatch):
         diagnose.make_client()
 
 
+def test_env_that_is_a_folder_is_named_as_the_problem(monkeypatch, tmp_path):
+    (tmp_path / ".env").mkdir()
+    monkeypatch.setattr(diagnose, "PROJECT_DIR", tmp_path)
+
+    with pytest.raises(DiagnosisError, match="is a folder, not a file"):
+        diagnose.make_client()
+
+
 def test_unreadable_upload_fails_before_any_call():
     client = FakeClient(response(payload()))
 
