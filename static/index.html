@@ -300,12 +300,15 @@ function renderSummary(d, meta, roundTripSeconds) {
   const badge = el("span", `badge ${d.confidence}`, d.confidence);
   const modelSeconds = meta && typeof meta.latency_s === "number" ? meta.latency_s : null;
   const latency = modelSeconds !== null ? `${modelSeconds.toFixed(1)} s` : `${roundTripSeconds.toFixed(1)} s`;
-  const latencyNote = meta && meta.cached ? "pre-computed example" : (meta && meta.model) || "round trip";
+  const model = (meta && meta.model) || "round trip";
+  const latencyNote = !meta || !meta.cached ? model
+    : meta.source === "example" ? `pre-computed example · ${model}`
+    : `cached · same photo as before · ${model}`;
   strip.append(
     summaryCell("Material", MATERIAL_NAMES[d.material] || d.material),
     summaryCell("Failure mode", humanise(d.primary_mode), d.primary_mode),
     summaryCell("Confidence", badge),
-    summaryCell("Analysis time", latency, latencyNote),
+    summaryCell(meta && meta.cached ? "Original analysis time" : "Analysis time", latency, latencyNote),
   );
   return panel(null, strip);
 }

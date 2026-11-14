@@ -77,9 +77,10 @@ def post_diagnose(
     if len(data) > MAX_UPLOAD_BYTES:
         limit_mb = MAX_UPLOAD_BYTES // (1024 * 1024)
         return _error(413, f"That photo is larger than {limit_mb} MB.")
-    result, meta = diagnose.diagnose_with_meta(data, context)
+    result, meta, cached = diagnose.diagnose_cached(data, context)
     return _diagnosis_response(
-        result.model_dump(mode="json"), {**asdict(meta), "cached": False}
+        result.model_dump(mode="json"),
+        {**asdict(meta), "cached": cached, "source": "repeat" if cached else "live"},
     )
 
 
@@ -97,5 +98,5 @@ def get_example(n: int) -> JSONResponse:
     except (OSError, ValueError, KeyError, ValidationError) as exc:
         logger.exception("Bundled example %d is unreadable", n)
         return _error(500, f"Bundled example {n} is corrupt: {type(exc).__name__}.")
-    meta = {**stored.get("meta", {}), "cached": True}
+    meta = {**stored.get("meta", {}), "cached": True, "source": "example"}
     return _diagnosis_response(result.model_dump(mode="json"), meta)

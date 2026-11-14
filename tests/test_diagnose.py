@@ -373,6 +373,61 @@ def test_missing_api_key_is_reported_before_any_call(monkeypatch):
         diagnose.make_client()
 
 
+@pytest.fixture
+def cache_dir(monkeypatch, tmp_path):
+    monkeypatch.setattr(diagnose, "CACHE_DIR", tmp_path / "cache")
+    return tmp_path / "cache"
+
+
+def test_same_photo_is_only_sent_to_the_model_once(cache_dir):
+    client = FakeClient(response(payload()))
+    photo = image_bytes()
+
+    first, _, first_cached = diagnose.diagnose_cached(photo, None, client=client)
+    second, meta, second_cached = diagnose.diagnose_cached(photo, None, client=client)
+
+    assert (first_cached, second_cached) == (False, True)
+    assert second == first
+    assert meta.latency_s >= 0
+    assert len(client.requests) == 1
+
+
+def test_different_note_or_knowledge_base_is_not_served_from_cache(cache_dir, monkeypatch):
+    client = FakeClient(response(payload()), response(payload()), response(payload()))
+    photo = image_bytes()
+
+    diagnose.diagnose_cached(photo, None, client=client)
+    diagnose.diagnose_cached(photo, "it was bent", client=client)
+    monkeypatch.setattr(diagnose, "load_knowledge_base", lambda: TEST_KB + "\nedited")
+    diagnose.diagnose_cached(photo, None, client=client)
+
+    assert len(client.requests) == 3
+
+
+def test_failures_are_never_cached(cache_dir):
+    client = FakeClient(ApiStatusError(503), response(payload()))
+    photo = image_bytes()
+
+    with pytest.raises(DiagnosisError):
+        diagnose.diagnose_cached(photo, None, client=client)
+    _, _, cached = diagnose.diagnose_cached(photo, None, client=client)
+
+    assert cached is False
+
+
+def test_corrupt_cache_file_is_ignored_and_replaced(cache_dir):
+    client = FakeClient(response(payload()), response(payload()))
+    photo = image_bytes()
+    diagnose.diagnose_cached(photo, None, client=client)
+    next(cache_dir.glob("*.json")).write_text("{broken", encoding="utf-8")
+
+    result, _, cached = diagnose.diagnose_cached(photo, None, client=client)
+
+    assert cached is False
+    assert result.primary_mode == "fatigue_metal"
+    assert len(client.requests) == 2
+
+
 def test_env_that_is_a_folder_is_named_as_the_problem(monkeypatch, tmp_path):
     (tmp_path / ".env").mkdir()
     monkeypatch.setattr(diagnose, "PROJECT_DIR", tmp_path)

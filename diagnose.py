@@ -35,7 +35,8 @@ pillow_heif.register_heif_opener()
 PROJECT_DIR = Path(__file__).resolve().parent
 KNOWLEDGE_PATH = PROJECT_DIR / "knowledge" / "failure_modes.md"
 EXAMPLES_DIR = PROJECT_DIR / "knowledge" / "examples"
-EXAMPLE_IMAGE_SUFFIXES = (".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp")
+CACHE_DIR = PROJECT_DIR / "cache" / "diagnoses"
+EXAMPLE_IMAGE_SUFFIXES =(".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp")
 
 MODEL = "gemini-4-hydrogen"
 API_KEY_VARIABLES = ("GEMINI_API_KEY", "GOOGLE_API_KEY")
@@ -588,6 +589,47 @@ def diagnose_with_meta(
     )
 
 
+def _cache_path(image_bytes: bytes, user_context: str | None) -> Path:
+    hasher = hashlib.sha256(image_bytes)
+    hasher.update(b"\0" + (user_context or "").strip().encode("utf-8"))
+    hasher.update(b"\0" + config_fingerprint().encode("ascii"))
+    return CACHE_DIR / f"{hasher.hexdigest()}.json"
+
+
+def _read_cache(path: Path) -> tuple[Diagnosis, RunMeta] | None:
+    if not path.is_file():
+        return None
+    try:
+        stored = json.loads(path.read_text(encoding="utf-8"))
+        return Diagnosis.model_validate(stored["diagnosis"]), RunMeta(**stored["meta"])
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        logger.warning("Ignoring unreadable cache file %s: %s", path.name, exc)
+        return None
+
+
+def diagnose_cached(
+    image_bytes: bytes, user_context: str | None = None, client: Any = None
+) -> tuple[Diagnosis, RunMeta, bool]:
+    """diagnose_with_meta, but the same photo, note and configuration is only
+    ever sent to the model once. Returns (diagnosis, meta, was_cached).
+
+    Failures are never cached. A cache that cannot be written is logged and the
+    fresh answer is still returned.
+    """
+    path = _cache_path(image_bytes, user_context)
+    hit = _read_cache(path)
+    if hit:
+        return (*hit, True)
+    result, meta = diagnose_with_meta(image_bytes, user_context, client)
+    try:
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        body = {"diagnosis": result.model_dump(mode="json"), "meta": asdict(meta)}
+        path.write_text(json.dumps(body, indent=1), encoding="utf-8")
+    except OSError as exc:
+        logger.warning("Could not write cache file %s: %s", path, exc)
+    return result, meta, False
+
+
 def diagnose(image_bytes: bytes, user_context: str | None = None) -> Diagnosis:
     diagnosis, _ = diagnose_with_meta(image_bytes, user_context)
     return diagnosis
@@ -600,11 +642,11 @@ def main() -> int:
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     try:
-        diagnosis, meta = diagnose_with_meta(args.image.read_bytes(), args.context)
+        diagnosis, meta, cached = diagnose_cached(args.image.read_bytes(), args.context)
     except (DiagnosisError, OSError) as exc:
         sys.stderr.write(f"FAILED: {exc}\n")
         return 1
-    output = {"diagnosis": diagnosis.model_dump(), "meta": asdict(meta)}
+    output = {"diagnosis": diagnosis.model_dump(mode="json"), "meta": asdict(meta), "cached": cached}
     sys.stdout.write(json.dumps(output, indent=2) + "\n")
     return 0
 

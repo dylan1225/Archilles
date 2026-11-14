@@ -1,0 +1,92 @@
+{
+ "diagnosis": {
+  "material": "wood",
+  "primary_mode": "bending_overload_wood",
+  "confidence": "high",
+  "visual_evidence": [
+   "A light-colored cylindrical wooden dowel lies diagonally across a wooden workbench and is broken into two pieces in the lower-middle of the frame.",
+   "A long, sharp splinter protrudes downward along the longitudinal grain from the left side of the upper broken end.",
+   "The matching left side of the lower piece shows an elongated groove along the grain where the splinter pulled out.",
+   "The opposite (right) side of both broken ends shows a stepped, slightly jagged fracture running across the grain.",
+   "No knots, holes, notches, or dark rot discolouration are visible at the break; the wood grain runs nearly parallel to the dowel axis."
+  ],
+  "probable_cause": "A single bending load exceeded the flexural strength of the dowel. Tension on one side pulled out a long splinter along the grain while the opposite compression side broke across the grain in a stepped fracture, typical of sound wood overloaded in bending.",
+  "alternative_modes": [
+   [
+    "other",
+    "A brash (brittle) wood failure from decay or severe cross-grain defect would produce an abrupt, flat break across the grain with very short or no splinters, whereas this fracture has a long splinter along straight grain. Metal and FDM modes do not apply because the part is clearly solid wood."
+   ]
+  ],
+  "solutions": [
+   {
+    "title": "Shorten the unsupported span or add a central support",
+    "description": "Move the supports closer together or place an intermediate support near the point of load application to reduce the peak bending moment on the dowel.",
+    "pros": [
+     "Directly reduces the bending stress without changing the dowel diameter",
+     "Keeps existing mating holes and hardware unchanged"
+    ],
+    "cons": [
+     "Requires adding or relocating a support feature in the assembly",
+     "May obstruct clearance along the span"
+    ],
+    "effort": "moderate",
+    "addresses_root_cause": true,
+    "computed": null
+   },
+   {
+    "title": "Reposition the applied load closer to a support",
+    "description": "Shift the point where force is applied toward the supported ends rather than mid-span, lowering the lever arm creating the bending moment.",
+    "pros": [
+     "Lowers peak bending moment proportionally to the reduced lever arm",
+     "Requires no extra material or heavier dowel"
+    ],
+    "cons": [
+     "Changes load geometry and may require modifying mating parts"
+    ],
+    "effort": "moderate",
+    "addresses_root_cause": true,
+    "computed": null
+   },
+   {
+    "title": "Increase the dowel diameter or use a deeper section",
+    "description": "Replace the dowel with a larger-diameter rod or orient a rectangular section with greater depth in the bending direction.",
+    "pros": [
+     "Bending strength increases rapidly with section depth (cubed for a circular diameter)"
+    ],
+    "cons": [
+     "Increases weight and material cost",
+     "Requires enlarging mating holes or brackets"
+    ],
+    "effort": "moderate",
+    "addresses_root_cause": false,
+    "computed": null
+   },
+   {
+    "title": "Switch to a higher-strength straight-grained hardwood or composite rod",
+    "description": "Use a tougher, higher-modulus species such as hickory or ash with verified straight grain, or substitute a fiberglass or metal rod if geometry cannot change.",
+    "pros": [
+     "Drop-in replacement with identical outer dimensions",
+     "No changes needed to mating holes or supports"
+    ],
+    "cons": [
+     "Higher material cost and potentially longer sourcing time",
+     "Does not reduce the applied bending moment"
+    ],
+    "effort": "trivial",
+    "addresses_root_cause": false,
+    "computed": null
+   }
+  ],
+  "insufficient_image": false,
+  "insufficient_reason": null
+ },
+ "meta": {
+  "model": "gemini-4-hydrogen",
+  "latency_s": 39.32,
+  "attempts": 1,
+  "input_tokens": 4649,
+  "output_tokens": 687,
+  "thinking_tokens": 890,
+  "cost_usd": 0.018801
+ }
+}
