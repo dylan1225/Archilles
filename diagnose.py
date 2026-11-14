@@ -8,6 +8,7 @@ from mechanics.py and are attached to a solution's `computed` field afterwards.
 
 import argparse
 import base64
+import hashlib
 import io
 import json
 import logging
@@ -326,8 +327,29 @@ def output_schema(allowed_modes: list[str]) -> dict[str, Any]:
     return {**schema, "properties": properties}
 
 
+def config_fingerprint() -> str:
+    """Hash of everything besides the photo that shapes an answer.
+
+    Cache keys include it, so editing the knowledge base, the examples, the
+    rules or the model invalidates old results instead of silently reusing them.
+    """
+    hasher = hashlib.sha256()
+    for part in (MODEL, EFFORT, SYSTEM_RULES, load_knowledge_base()):
+        hasher.update(part.encode("utf-8") + b"\0")
+    for example in load_examples():
+        hasher.update(example.image_b64.encode("ascii") + b"\0")
+        hasher.update(example.label.encode("utf-8") + b"\0")
+    return hasher.hexdigest()
+
+
 def _has_credentials() -> bool:
-    load_dotenv(PROJECT_DIR / ".env")
+    env_path = PROJECT_DIR / ".env"
+    try:
+        load_dotenv(env_path)
+    except OSError as exc:
+        raise DiagnosisError(
+            f"{env_path} exists but could not be read ({exc}).", status_code=503
+        ) from exc
     return bool(os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN"))
 
 
