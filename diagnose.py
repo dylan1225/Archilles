@@ -61,6 +61,10 @@ PRICE_CACHE_WRITE = 5.00
 class DiagnosisError(Exception):
     """A failure with a message that is safe and useful to show the user."""
 
+    def __init__(self, message: str, status_code: int = 502) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+
 
 # --- Public schema ----------------------------------------------------------
 
@@ -250,13 +254,14 @@ def prepare_image(image_bytes: bytes) -> tuple[str, str]:
     Returns (base64 data, media type).
     """
     if not image_bytes:
-        raise DiagnosisError("The upload was empty.")
+        raise DiagnosisError("The upload was empty.", status_code=400)
     try:
         with Image.open(io.BytesIO(image_bytes)) as opened:
             image = ImageOps.exif_transpose(opened).convert("RGB")
     except (UnidentifiedImageError, OSError, ValueError) as exc:
         raise DiagnosisError(
-            "That file could not be read as an image. Use a JPEG, PNG or HEIC photo."
+            "That file could not be read as an image. Use a JPEG, PNG or HEIC photo.",
+            status_code=400,
         ) from exc
     image.thumbnail((MAX_LONG_EDGE_PX, MAX_LONG_EDGE_PX))
     buffer = io.BytesIO()
@@ -330,7 +335,8 @@ def make_client() -> anthropic.Anthropic:
     if not _has_credentials():
         raise DiagnosisError(
             "ANTHROPIC_API_KEY is not set. Add it to the .env file in the project "
-            "folder and restart."
+            "folder and restart.",
+            status_code=503,
         )
     return anthropic.Anthropic(timeout=MODEL_TIMEOUT_S, max_retries=0)
 
