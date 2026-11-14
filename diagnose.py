@@ -13,6 +13,7 @@ import hashlib
 import io
 import json
 import logging
+import math
 import os
 import re
 import sys
@@ -77,6 +78,54 @@ class DiagnosisError(Exception):
 # --- Public schema ----------------------------------------------------------
 
 
+SpecimenShape = Literal["round_rod", "rect_bar", "flat_plate", "l_bracket"]
+SpecimenFeature = Literal["none", "hole", "notch", "sharp_corner"]
+LoadCase = Literal["bending_span", "cantilever", "tension", "unknown"]
+DimensionsSource = Literal["user_context", "estimated_from_image"]
+VisualKind = Literal[
+    "add_support",
+    "move_load",
+    "thicken_section",
+    "change_material",
+    "add_fillet",
+    "reinforce_feature",
+    "relocate_feature",
+    "densify_infill",
+    "reorient_layers",
+    "add_rib",
+    "surface_treatment",
+    "other",
+]
+
+# Sane bounds for the schematic 3D model. Values outside are clamped, not
+# rejected: a bad 3D hint must never cost a slow retry of the whole diagnosis.
+SPECIMEN_MIN_MM = 0.5
+SPECIMEN_MAX_MM = 2000.0
+BREAK_POSITION_MIN = 0.05
+BREAK_POSITION_MAX = 0.95
+VISUAL_LABEL_MAX_CHARS = 80
+
+
+class Specimen(BaseModel):
+    """Simplified shape of the broken part, for the schematic 3D exhibit."""
+
+    shape: SpecimenShape
+    length_mm: float
+    width_mm: float
+    thickness_mm: float
+    break_position: float
+    feature: SpecimenFeature
+    load_case: LoadCase
+    dimensions_source: DimensionsSource
+
+
+class Visual(BaseModel):
+    """How a solution is drawn on the 3D exhibit."""
+
+    kind: VisualKind
+    label: str
+
+
 class Solution(BaseModel):
     title: str
     description: str
@@ -85,6 +134,7 @@ class Solution(BaseModel):
     effort: Literal["trivial", "moderate", "significant"]
     addresses_root_cause: bool
     computed: dict | None
+    visual: Visual | None = None
 
 
 class Diagnosis(BaseModel):
@@ -97,6 +147,7 @@ class Diagnosis(BaseModel):
     solutions: list[Solution]
     insufficient_image: bool
     insufficient_reason: str | None
+    specimen: Specimen | None = None
 
 
 @dataclass(frozen=True)
@@ -126,7 +177,25 @@ class _FilletChange(BaseModel):
     current_radius_mm: float = Field(description="0 for a sharp corner.")
     proposed_radius_mm: float
     section_depth_mm: float = Field(description="Depth of the section at the notch.")
-    dimensions_source: Literal["user_context", "estimated_from_image"]
+    dimensions_source: DimensionsSource
+
+
+class _Specimen(BaseModel):
+    shape: SpecimenShape = Field(description="Closest simple shape to the broken part.")
+    length_mm: float = Field(description="Longest dimension of the intact part.")
+    width_mm: float = Field(description="Width, or the diameter for a round_rod.")
+    thickness_mm: float
+    break_position: float = Field(
+        description="Where the break is along the length, 0 = one end, 1 = the other."
+    )
+    feature: SpecimenFeature = Field(description="What sits at the break, if anything.")
+    load_case: LoadCase
+    dimensions_source: DimensionsSource
+
+
+class _Visual(BaseModel):
+    kind: VisualKind = Field(description="The change this solution makes to the part.")
+    label: str = Field(description="Caption of at most 6 words for the 3D callout.")
 
 
 class _ModelSolution(BaseModel):
@@ -139,6 +208,7 @@ class _ModelSolution(BaseModel):
     fillet: _FilletChange | None = Field(
         description="Only when this solution adds or enlarges a fillet; else null."
     )
+    visual: _Visual
 
 
 class _AlternativeMode(BaseModel):
@@ -156,6 +226,9 @@ class _ModelDiagnosis(BaseModel):
     primary_mode: str
     confidence: Literal["high", "medium", "low"]
     probable_cause: str
+    specimen: _Specimen | None = Field(
+        description="Simplified shape of the part for a 3D sketch; null if the image is insufficient."
+    )
     alternative_modes: list[_AlternativeMode]
     solutions: list[_ModelSolution]
 
@@ -214,6 +287,16 @@ user's note when it gives them (dimensions_source "user_context"); otherwise \
 estimate them from the photo ("estimated_from_image"). Otherwise fillet is \
 null. Never state a stress concentration factor or a percentage stress \
 reduction yourself. The system calculates those from the fillet field.
+
+7. For a schematic 3D sketch, fill specimen: the closest simple shape \
+(round_rod, rect_bar, flat_plate or l_bracket), the intact part's length, width \
+(diameter for a rod) and thickness in millimetres, where along the length it \
+broke (0 to 1), what feature sits at the break, and how it was loaded. Take \
+dimensions from the user's note when given, otherwise estimate them from the \
+photo and say so in dimensions_source. For every solution, set visual.kind to \
+the change that best shows it on the part ("other" if none fits) and \
+visual.label to a caption of at most six words. When the image is \
+insufficient, specimen is null.
 """
 
 
@@ -481,9 +564,45 @@ def _fillet_computed(fillet: _FilletChange) -> dict[str, Any]:
     return {**base, "geometry": mechanics.SUPPORTED_GEOMETRY, **result}
 
 
+def _clamp(value: float, low: float, high: float, fallback: float) -> float:
+    if not math.isfinite(value):
+        return fallback
+    return min(max(value, low), high)
+
+
+def _to_specimen(raw: _Specimen | None) -> Specimen | None:
+    """The model's shape hint, clamped into a range the 3D sketch can draw."""
+    if raw is None:
+        return None
+    length = _clamp(raw.length_mm, SPECIMEN_MIN_MM, SPECIMEN_MAX_MM, 100.0)
+    width = _clamp(raw.width_mm, SPECIMEN_MIN_MM, length, min(10.0, length))
+    thickness = _clamp(raw.thickness_mm, SPECIMEN_MIN_MM, length, min(5.0, length))
+    if raw.shape == "round_rod":
+        thickness = width
+    return Specimen(
+        shape=raw.shape,
+        length_mm=length,
+        width_mm=width,
+        thickness_mm=thickness,
+        break_position=_clamp(raw.break_position, BREAK_POSITION_MIN, BREAK_POSITION_MAX, 0.5),
+        feature=raw.feature,
+        load_case=raw.load_case,
+        dimensions_source=raw.dimensions_source,
+    )
+
+
+def _to_visual(raw: _Visual) -> Visual:
+    label = " ".join(raw.label.split())[:VISUAL_LABEL_MAX_CHARS]
+    return Visual(kind=raw.kind, label=label)
+
+
 def _to_solution(raw: _ModelSolution) -> Solution:
     computed = _fillet_computed(raw.fillet) if raw.fillet else None
-    return Solution(**raw.model_dump(exclude={"fillet"}), computed=computed)
+    return Solution(
+        **raw.model_dump(exclude={"fillet", "visual"}),
+        computed=computed,
+        visual=_to_visual(raw.visual),
+    )
 
 
 def _to_diagnosis(raw: _ModelDiagnosis) -> Diagnosis:
@@ -509,6 +628,7 @@ def _to_diagnosis(raw: _ModelDiagnosis) -> Diagnosis:
         solutions=[_to_solution(s) for s in raw.solutions[:MAX_SOLUTIONS]],
         insufficient_image=False,
         insufficient_reason=None,
+        specimen=_to_specimen(raw.specimen),
     )
 
 

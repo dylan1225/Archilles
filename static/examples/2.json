@@ -4,92 +4,117 @@
   "primary_mode": "other",
   "confidence": "medium",
   "visual_evidence": [
-   "Four red plastic rectangular bar pieces resting on a wooden surface; the upper two pieces are broken while the lower two pieces show smooth, flat 45-degree angled end faces.",
-   "The upper-right piece stands vertically with a jagged, uneven top fracture where two outer wall corners protrude higher than the center.",
-   "Inside the fractured top of the upper-right piece, thin outer perimeter walls and an internal cross-shaped infill structure are exposed, with slight pale/whitish edging along the torn right corner.",
-   "The upper-left piece lies horizontally with a dark fracture at its right end passing directly through a semicircular hole or notch.",
-   "No obvious gross bending or necking deformation is visible along the straight shafts of the broken pieces."
+   "Top-right standing piece: red plastic rectangular bar with its upward-facing fracture surface showing a thin outer perimeter shell and a hollow interior crossed by sparse internal infill ribs.",
+   "Top-right standing piece: jagged, uneven fracture rim around the perimeter with raised corner peaks and slight whitish stress-whitening along the torn edges, rather than a flat single-layer plane.",
+   "Top-left piece: mating red rectangular bar lying flat with a semicircular hole or cutout directly at the broken right end and a stepped fracture face.",
+   "Bottom-left and bottom-right pieces: two matching red rectangular pieces with smooth, flat 45-degree angled faces pointing toward each other and no visible rough fracture texture on those angled faces."
   ],
-  "probable_cause": "Cross-layer overload fracture (likely bending or impact) of an FDM-printed part, initiating at the circular hole/notch where the net cross-section is reduced. The thin outer perimeter walls and sparse internal infill visible at the break left insufficient solid material around the hole to carry the load. Confidence is medium because the camera distance limits fine micro-texture detail on the upper-left fracture surface.",
+  "probable_cause": "Cross-layer overload fracture through the perimeters and sparse infill of an FDM-printed part, initiating at the stress concentration and reduced cross-section of the hole at the break. Unlike pure single-layer delamination, the fracture surface is jagged and exposes the cross-section of the outer perimeter walls and internal sparse infill ribs.",
   "alternative_modes": [
    [
     "layer_delamination_fdm",
-    "Layer delamination typically produces a flat break along a single layer boundary with intact bead lines, whereas the upper-right piece shows a jagged, multi-level fracture cutting across perimeter walls and exposing internal infill."
+    "The exposed fracture on the standing piece is jagged with raised perimeter corner peaks and exposes the cross-section of sparse internal infill ribs rather than separating cleanly along a single flat layer boundary with intact rounded bead tops."
    ]
   ],
   "solutions": [
    {
-    "title": "Add local perimeters and dense infill around the hole",
-    "description": "Increase the wall/perimeter count to 4 to 6 and use a slicer modifier mesh to print 100% infill around the hole and high-stress region instead of sparse cross infill.",
+    "title": "Increase perimeter walls and infill density around the hole",
+    "description": "Increase perimeter wall loops from the thin shell visible to 5-6 walls and raise infill density to 50-100% locally (using modifier meshes in the slicer) around the hole so the reduced cross-section is solid rather than hollow.",
     "pros": [
-     "No CAD changes required",
-     "Substantially increases solid load-bearing cross-section around the hole",
-     "Minimal extra filament if applied only locally"
+     "Eliminates the hollow interior voids seen at the break",
+     "Directly reinforces the thin walls around the hole without changing external dimensions",
+     "Requires only slicer setting changes with no CAD rework"
     ],
     "cons": [
-     "Slightly longer print time",
-     "Small increase in material usage"
+     "Increases print time and filament usage",
+     "Slightly increases part weight"
     ],
     "effort": "trivial",
     "addresses_root_cause": true,
-    "computed": null
+    "computed": null,
+    "visual": {
+     "kind": "densify_infill",
+     "label": "Increase wall count and infill density"
+    }
    },
    {
-    "title": "Reinforce or relocate the hole in CAD",
-    "description": "Add a wider boss or shoulder around the hole to compensate for the material removed by the hole, or move the hole away from the highest bending moment location.",
+    "title": "Reinforce or relocate the hole away from peak stress",
+    "description": "Move the hole out of the highest-load section or widen the bar / add a local boss around the hole so the net cross-section matches the rest of the bar.",
     "pros": [
-     "Directly reduces peak stress around the hole",
-     "Keeps the rest of the bar unchanged in weight"
+     "Removes the geometric weak point where the fracture initiated",
+     "Provides continuous load paths around the cutout"
     ],
     "cons": [
-     "Requires CAD modification and re-testing",
-     "Added width around the hole may affect clearance with mating parts"
+     "Requires modifying the CAD model and checking clearance with mating parts",
+     "Adds slight bulk if a local boss is added"
     ],
     "effort": "moderate",
     "addresses_root_cause": true,
-    "computed": null
+    "computed": null,
+    "visual": {
+     "kind": "reinforce_feature",
+     "label": "Reinforce or relocate the hole"
+    }
    },
    {
-    "title": "Orient part so continuous perimeters follow the bending axis",
-    "description": "Print the bar flat with continuous perimeter extrusions running lengthwise along the tension/compression faces and looping around the hole.",
+    "title": "Optimize print orientation and layer bonding",
+    "description": "Orient the bar on the build plate so continuous perimeter extrusions run uninterrupted along the primary load direction and around the hole, and raise nozzle temperature by 5 to 10 C with reduced cooling fan.",
     "pros": [
-     "Maximizes strength along the main load path",
-     "Zero extra material or cost"
+     "Aligns continuous filament strands with the tensile load path",
+     "Improves fusion between perimeters and infill walls"
     ],
     "cons": [
-     "Cross-holes or angled faces may require support material or minor cleanup"
+     "May require support material depending on other part features",
+     "Higher nozzle temperature with lower cooling can slightly reduce overhang crispness"
     ],
     "effort": "trivial",
     "addresses_root_cause": true,
-    "computed": null
+    "computed": null,
+    "visual": {
+     "kind": "reorient_layers",
+     "label": "Orient continuous perimeters along length"
+    }
    },
    {
-    "title": "Switch to a tougher filament material",
-    "description": "Reprint the part using a higher-toughness, more ductile polymer such as PETG or Nylon instead of a rigid/brittle standard filament.",
+    "title": "Switch to a tougher filament such as PETG or Nylon",
+    "description": "Print the part in a higher-toughness, more ductile polymer (such as PETG, ABS, or PA/Nylon) instead of rigid PLA to tolerate stress concentrations at holes without sudden brittle cracking.",
     "pros": [
-     "Higher impact resistance and elongation before fracture",
-     "Requires no geometry changes"
+     "Higher impact resistance and elongation before break",
+     "Better energy absorption around notches and holes"
     ],
     "cons": [
-     "Higher filament cost",
-     "Different print profile, drying, or enclosure requirements",
-     "Slightly lower stiffness under load"
+     "Higher filament cost and potential need for filament drying or an enclosure",
+     "Slightly lower stiffness than PLA"
     ],
-    "effort": "trivial",
+    "effort": "moderate",
     "addresses_root_cause": false,
-    "computed": null
+    "computed": null,
+    "visual": {
+     "kind": "change_material",
+     "label": "Switch to tougher PETG filament"
+    }
    }
   ],
   "insufficient_image": false,
-  "insufficient_reason": null
+  "insufficient_reason": null,
+  "specimen": {
+   "shape": "rect_bar",
+   "length_mm": 70.0,
+   "width_mm": 12.0,
+   "thickness_mm": 12.0,
+   "break_position": 0.52,
+   "feature": "hole",
+   "load_case": "unknown",
+   "dimensions_source": "estimated_from_image"
+  }
  },
  "meta": {
   "model": "gemini-4-hydrogen",
-  "latency_s": 93.87,
+  "latency_s": 43.45,
   "attempts": 1,
-  "input_tokens": 4649,
-  "output_tokens": 744,
-  "thinking_tokens": 3426,
-  "cost_usd": 0.038248
+  "input_tokens": 5461,
+  "output_tokens": 1305,
+  "thinking_tokens": 5260,
+  "cost_usd": 0.057429
  }
 }

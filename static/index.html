@@ -4,145 +4,214 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Postmortem — fracture surface analysis</title>
+<script type="importmap">
+{ "imports": { "three": "/static/vendor/three.module.min.js", "three/addons/": "/static/vendor/addons/" } }
+</script>
 <style>
   :root {
-    --bg: #0e1216; --panel: #161b21; --panel-2: #1c232b; --line: #2b343f;
-    --text: #d9dfe6; --muted: #8492a2; --faint: #5d6977;
-    --calc: #4fc3d9; --calc-bg: #0f2228; --calc-line: #1f5563;
-    --good: #3fb27f; --warn: #e2a33b; --bad: #de6450;
-    --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+    /* Gallery palette: limestone, parchment, ink, one orange accent. */
+    --paper: #f3eee3; --card: #fbf8f1; --stone: #e8e0cd; --stone-2: #ded4bd;
+    --line: #d6cab0; --line-strong: #b4a581;
+    --ink: #1d1a16; --muted: #5d5548; --faint: #8b8170;
+    --orange: #e77500; --orange-ink: #a85000; --orange-wash: #fbebd7;
+    --calc: #3d6a58; --calc-bg: #ecf1ea; --calc-line: #b7cbbd;
+    --good: #2e7650; --warn: #9a5a00; --bad: #a3271f;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
     --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --shadow: 0 1px 0 rgba(29, 26, 22, .04), 0 6px 18px -10px rgba(29, 26, 22, .25);
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 var(--sans); }
+  html, body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
+  body { background-image: linear-gradient(180deg, var(--stone) 0, var(--paper) 340px); background-repeat: no-repeat; }
   button, textarea, input { font: inherit; color: inherit; }
-  h1, h2, h3, p, ul, ol { margin: 0; padding: 0; }
+  h1, h2, h3, p, ul, ol, figure { margin: 0; padding: 0; }
   ul, ol { list-style: none; }
+  :focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
 
-  header { display: flex; align-items: center; gap: 14px; padding: 10px 16px;
-    border-bottom: 1px solid var(--line); background: var(--panel); }
-  .wordmark { font: 700 15px/1 var(--mono); letter-spacing: .22em; }
-  .tagline { color: var(--muted); font-size: 12px; }
-  .status { margin-left: auto; font: 11px/1 var(--mono); letter-spacing: .08em;
-    padding: 5px 8px; border: 1px solid var(--line); border-radius: 3px; color: var(--muted); }
-  .status[data-state="busy"] { color: var(--warn); border-color: var(--warn); }
-  .status[data-state="done"] { color: var(--good); border-color: var(--good); }
-  .status[data-state="error"] { color: var(--bad); border-color: var(--bad); }
+  /* --- Header: dark band with an orange rule ----------------------------- */
+  header.site { display: flex; align-items: center; gap: 16px; padding: 14px 24px;
+    background: #141210; color: #f3eee3; border-bottom: 3px solid var(--orange); }
+  .wordmark { font: 600 20px/1 var(--serif); letter-spacing: .26em; }
+  .tagline { color: #bdb3a1; font: italic 14px/1.2 var(--serif); }
+  .status { margin-left: auto; font: 600 11px/1 var(--mono); letter-spacing: .1em; padding: 6px 10px;
+    border: 1px solid #4a443b; border-radius: 2px; color: #bdb3a1; }
+  .status[data-state="busy"] { color: #f2b25c; border-color: #f2b25c; }
+  .status[data-state="done"] { color: #8fd1a8; border-color: #8fd1a8; }
+  .status[data-state="error"] { color: #f08c80; border-color: #f08c80; }
 
-  main { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 16px;
-    padding: 16px; max-width: 1400px; margin: 0 auto; align-items: start; }
-  @media (max-width: 900px) { main { grid-template-columns: minmax(0, 1fr); } }
+  main { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 20px;
+    padding: 22px 24px 48px; max-width: 1440px; margin: 0 auto; align-items: start; }
+  @media (max-width: 920px) { main { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+    header.site { padding: 12px 16px; } .tagline { display: none; } }
 
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; }
-  .panel > h2, .label { font: 600 10.5px/1 var(--mono); letter-spacing: .14em;
-    text-transform: uppercase; color: var(--muted); }
-  .panel > h2 { padding: 10px 12px; border-bottom: 1px solid var(--line); }
-  .panel-body { padding: 12px; }
-  .stack > * + * { margin-top: 12px; }
+  /* --- Panels: placard-like cards --------------------------------------- */
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 3px; box-shadow: var(--shadow); }
+  .panel > h2, .label { font: 600 11.5px/1.2 var(--serif); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+  .panel > h2 { padding: 12px 16px 10px; border-bottom: 1px solid var(--line); }
+  .panel-body { padding: 14px 16px 16px; }
+  .stack > * + * { margin-top: 16px; }
+  .muted { color: var(--muted); }
+  [hidden] { display: none !important; }
 
+  /* --- Specimen form ------------------------------------------------------ */
+  .step { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; }
+  .step-n { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+    border: 1px solid var(--line-strong); font: 600 13px/1 var(--serif); color: var(--muted); background: var(--paper); }
+  .step-title { font: 600 15px/26px var(--serif); }
+  .step-body { grid-column: 2; margin-top: 6px; }
+  .step-body > * + * { margin-top: 8px; }
   .drop { display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 6px; min-height: 190px; padding: 14px; text-align: center; cursor: pointer;
-    border: 1.5px dashed var(--faint); border-radius: 4px; background: var(--panel-2); }
-  .drop:hover, .drop:focus-visible, .drop.over { border-color: var(--calc); outline: none; }
-  .drop strong { font-size: 15px; }
+    gap: 6px; min-height: 170px; padding: 14px; text-align: center; cursor: pointer;
+    border: 1.5px dashed var(--line-strong); border-radius: 3px; background: var(--paper); }
+  .drop:hover, .drop:focus-visible, .drop.over { border-color: var(--orange); background: var(--orange-wash); outline: none; }
+  .drop strong { font: 600 16px/1.3 var(--serif); }
   .drop small { color: var(--muted); }
-  .drop img { max-width: 100%; max-height: 220px; border-radius: 3px; display: block; }
+  .drop img { max-width: 100%; max-height: 220px; border-radius: 2px; display: block; border: 6px solid #fff; box-shadow: var(--shadow); }
   .file-name { font: 12px/1.3 var(--mono); color: var(--muted); word-break: break-all; }
-  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden;
-    clip: rect(0 0 0 0); white-space: nowrap; }
-
-  textarea { width: 100%; min-height: 70px; resize: vertical; padding: 8px;
-    background: var(--bg); border: 1px solid var(--line); border-radius: 3px; }
-  textarea:focus-visible { outline: 1px solid var(--calc); }
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 8px 12px; border: 1px solid var(--line); border-radius: 3px;
-    background: var(--panel-2); cursor: pointer; }
-  .btn:hover:not(:disabled) { border-color: var(--muted); }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  textarea { width: 100%; min-height: 78px; resize: vertical; padding: 9px 10px;
+    background: #fff; border: 1px solid var(--line); border-radius: 2px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px;
+    padding: 8px 14px; border: 1px solid var(--line-strong); border-radius: 2px; background: var(--card); cursor: pointer; }
+  .btn:hover:not(:disabled) { border-color: var(--ink); }
   .btn:disabled { opacity: .45; cursor: not-allowed; }
-  .btn.primary { width: 100%; padding: 11px; font-weight: 600; background: #d9dfe6;
-    color: #0e1216; border-color: #d9dfe6; }
-  .btn.primary:hover:not(:disabled) { background: #fff; }
-  .row { display: flex; gap: 8px; }
-  .row > * { flex: 1; }
+  .btn.wide { width: 100%; }
+  .btn.primary { width: 100%; min-height: 46px; font: 600 15px/1 var(--serif); letter-spacing: .14em; text-transform: uppercase;
+    background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .btn.primary:hover:not(:disabled) { background: var(--orange); border-color: var(--orange); color: #1b1006; }
+  .collection { display: grid; gap: 8px; }
+  .collection .btn { justify-content: flex-start; text-align: left; gap: 12px; }
+  .collection .numeral { font: 600 14px/1 var(--serif); color: var(--orange-ink); min-width: 26px; }
+  .collection .what { display: block; font-size: 13px; color: var(--muted); }
 
-  .empty, .loading { padding: 56px 20px; text-align: center; color: var(--muted); }
-  .empty strong, .loading strong { display: block; color: var(--text); font-size: 16px; margin-bottom: 6px; }
-  .bar { height: 3px; margin: 18px auto 0; max-width: 320px; background: var(--line);
-    border-radius: 2px; overflow: hidden; }
-  .bar::after { content: ""; display: block; height: 100%; width: 35%; background: var(--calc);
-    animation: slide 1.3s ease-in-out infinite; }
+  /* --- Empty / loading / errors ------------------------------------------ */
+  .empty, .loading { padding: 64px 24px; text-align: center; color: var(--muted); }
+  .empty strong, .loading strong { display: block; color: var(--ink); font: 600 20px/1.3 var(--serif); margin-bottom: 8px; }
+  .empty .arch { width: 64px; height: 84px; margin: 0 auto 18px; display: block; }
+  .bar { height: 3px; margin: 20px auto 0; max-width: 320px; background: var(--line); border-radius: 2px; overflow: hidden; }
+  .bar::after { content: ""; display: block; height: 100%; width: 35%; background: var(--orange); animation: slide 1.3s ease-in-out infinite; }
   @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(290%); } }
   @media (prefers-reduced-motion: reduce) { .bar::after { animation: none; width: 100%; opacity: .5; } }
   .elapsed { font: 12px/1 var(--mono); margin-top: 10px; }
-
-  .banner { padding: 12px 14px; border: 1px solid var(--bad); border-left-width: 4px;
-    border-radius: 4px; background: #2a1613; }
+  .banner { padding: 14px 16px; border: 1px solid var(--bad); border-left-width: 4px; border-radius: 3px; background: #fbeeeb; }
   .banner .label { color: var(--bad); margin-bottom: 6px; display: block; }
-  .banner.insufficient { border-color: var(--warn); background: #2a2110; }
+  .banner.insufficient { border-color: var(--warn); background: #fbf1df; }
   .banner.insufficient .label { color: var(--warn); }
 
+  /* --- Summary strip ------------------------------------------------------ */
   .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
-  .summary > div { padding: 12px; border-right: 1px solid var(--line); }
+  .summary > div { padding: 14px 16px; border-right: 1px solid var(--line); }
   .summary > div:last-child { border-right: 0; }
-  .summary .value { margin-top: 7px; font-size: 17px; font-weight: 600; }
+  .summary .value { margin-top: 6px; font: 600 19px/1.25 var(--serif); }
   .summary .sub { font: 11px/1.3 var(--mono); color: var(--muted); margin-top: 3px; overflow-wrap: anywhere; }
-  .badge { display: inline-block; font: 600 11px/1 var(--mono); letter-spacing: .1em;
-    text-transform: uppercase; padding: 5px 8px; border-radius: 3px; border: 1px solid; }
+  .badge { display: inline-block; font: 600 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase;
+    padding: 5px 8px; border-radius: 2px; border: 1px solid; }
   .badge.high { color: var(--good); } .badge.medium { color: var(--warn); } .badge.low { color: var(--bad); }
 
-  .two { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; }
-  @media (max-width: 1100px) { .two { grid-template-columns: minmax(0, 1fr); } }
-  .bullets li { position: relative; padding: 5px 0 5px 16px; border-bottom: 1px solid var(--line); }
-  .bullets li:last-child { border-bottom: 0; }
-  .bullets li::before { content: ""; position: absolute; left: 2px; top: 13px; width: 5px; height: 5px;
-    background: var(--muted); }
-  .alts li { padding: 6px 0; border-bottom: 1px solid var(--line); }
-  .alts li:last-child { border-bottom: 0; }
-  .alts code, code { font: 12px/1.3 var(--mono); color: var(--text); }
+  /* --- The exhibit -------------------------------------------------------- */
+  .exhibit-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 16px;
+    border-bottom: 1px solid var(--line); }
+  .exhibit-head h2 { font: 600 20px/1.2 var(--serif); }
+  .exhibit-head .kicker { display: block; font: 600 11px/1.2 var(--serif); letter-spacing: .18em; text-transform: uppercase; color: var(--orange-ink); }
+  .seg { display: inline-flex; margin-left: auto; border: 1px solid var(--line-strong); border-radius: 2px; background: var(--paper); }
+  .seg button { min-height: 40px; padding: 6px 14px; border: 0; border-right: 1px solid var(--line); background: transparent; cursor: pointer;
+    font: 600 13px/1.1 var(--serif); letter-spacing: .06em; color: var(--muted); }
+  .seg button:last-child { border-right: 0; }
+  .seg button:hover { color: var(--ink); background: var(--stone); }
+  .seg button[aria-checked="true"] { background: var(--ink); color: var(--paper); }
+  .seg button[aria-checked="true"].sol { background: var(--orange); color: #1b1006; }
+  .seg .short { display: none; }
+  @media (max-width: 560px) { .seg { margin-left: 0; width: 100%; } .seg button { flex: 1; padding: 6px 4px; }
+    .seg .long { display: none; } .seg .short { display: inline; } }
 
-  .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font: 11px/1 var(--mono); color: var(--muted);
-    padding: 10px 12px; border-bottom: 1px solid var(--line); }
-  .swatch { display: inline-block; width: 9px; height: 9px; margin-right: 6px; vertical-align: -1px;
-    background: var(--muted); }
-  .swatch.calc { background: var(--calc); }
+  .exhibit-body { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+  @media (max-width: 1120px) { .exhibit-body { grid-template-columns: minmax(0, 1fr); } }
 
-  .solution { display: grid; grid-template-columns: 44px minmax(0, 1fr); border-bottom: 1px solid var(--line); }
-  .solution:last-child { border-bottom: 0; }
-  .rank { font: 700 20px/1 var(--mono); color: var(--faint); padding: 14px 0 0 12px; }
-  .solution-body { padding: 12px 12px 14px 0; }
-  .solution h3 { font-size: 15px; font-weight: 600; }
-  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 7px 0 8px; }
-  .tag { font: 600 10px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase;
-    padding: 4px 6px; border: 1px solid var(--line); border-radius: 2px; color: var(--muted); }
+  .vitrine { padding: 16px; border-right: 1px solid var(--line); }
+  @media (max-width: 1120px) { .vitrine { border-right: 0; border-bottom: 1px solid var(--line); } }
+  /* Lancet-arch frame: an outer stone band and the stage inset within it. */
+  .arch-frame { --arch: polygon(0 9%, 5% 5.4%, 10% 3.9%, 17.5% 2.6%, 25% 1.6%, 35% .7%, 42.5% .27%, 50% 0,
+      57.5% .27%, 65% .7%, 75% 1.6%, 82.5% 2.6%, 90% 3.9%, 95% 5.4%, 100% 9%, 100% 100%, 0 100%);
+    position: relative; padding: 7px; background: var(--line-strong); clip-path: var(--arch); }
+  .stage { position: relative; height: clamp(320px, 54vh, 540px); background: #e9e1cd; clip-path: var(--arch); overflow: hidden; }
+  .v3d-canvas { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+  .v3d-canvas:active { cursor: grabbing; }
+  .v3d-canvas:focus-visible { outline: 3px solid var(--orange); outline-offset: -3px; }
+  .v3d-fallback { display: grid; place-items: center; height: 100%; padding: 24px; text-align: center; color: var(--muted); }
+  .v3d-callout { position: absolute; left: 0; top: 0; pointer-events: none; }
+  .v3d-callout > i { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: var(--orange);
+    transform: translate(-50%, -50%); box-shadow: 0 0 0 4px rgba(231, 117, 0, .25); }
+  .v3d-callout > span { position: absolute; transform: translate(-50%, calc(-100% - 12px)); white-space: nowrap; max-width: 260px;
+    overflow: hidden; text-overflow: ellipsis; padding: 5px 9px; background: rgba(20, 18, 16, .9); color: #f7f2e7;
+    border-left: 3px solid var(--orange); font: 600 12px/1.2 var(--serif); letter-spacing: .04em; }
+  .v3d-callout[data-tone="fracture"] > i { background: #9b2226; box-shadow: 0 0 0 4px rgba(155, 34, 38, .22); }
+  .v3d-callout[data-tone="fracture"] > span { border-left-color: #c2453c; }
+  .stage-tools { position: absolute; left: 12px; right: 12px; bottom: 10px; display: flex; align-items: center; gap: 10px;
+    pointer-events: none; }
+  .stage-tools .hint { font: 12px/1.2 var(--sans); color: var(--muted); background: rgba(251, 248, 241, .85); padding: 4px 8px; border-radius: 2px; }
+  .stage-tools .btn { margin-left: auto; pointer-events: auto; min-height: 32px; padding: 4px 10px; font-size: 13px; background: rgba(251, 248, 241, .92); }
+  .vitrine figcaption { margin-top: 10px; font: italic 13px/1.4 var(--serif); color: var(--muted); }
+  .vitrine figcaption b { font-style: normal; font-weight: 600; color: var(--ink); }
+
+  .placard { padding: 20px 22px 22px; background: linear-gradient(180deg, var(--card), #f6f1e6); }
+  .placard .kicker { font: 600 11px/1.2 var(--serif); letter-spacing: .18em; text-transform: uppercase; color: var(--orange-ink); }
+  .placard h3 { margin-top: 6px; font: 600 23px/1.2 var(--serif); }
+  .placard .rule { width: 48px; height: 2px; background: var(--orange); margin: 12px 0 14px; }
+  .placard p { max-width: 62ch; }
+  .placard .section-label { margin: 16px 0 6px; }
+  .placard[data-state="found"] .kicker { color: #9b2226; }
+  .placard[data-state="found"] .rule { background: #9b2226; }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 2px; }
+  .tag { font: 600 10.5px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase;
+    padding: 5px 7px; border: 1px solid var(--line-strong); border-radius: 2px; color: var(--muted); background: var(--card); }
   .tag.root { color: var(--good); border-color: var(--good); }
-  .proscons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+  .proscons { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
   @media (max-width: 600px) { .proscons { grid-template-columns: 1fr; } }
-  .proscons li { padding: 3px 0 3px 16px; position: relative; }
-  .proscons li::before { position: absolute; left: 0; font: 700 13px/1.45 var(--mono); }
+  .proscons > div { padding: 10px 12px; border: 1px solid var(--line); border-radius: 2px; background: var(--card); }
+  .proscons .label { margin-bottom: 6px; display: block; }
+  .proscons li { padding: 3px 0 3px 18px; position: relative; }
+  .proscons li::before { position: absolute; left: 0; font: 700 14px/1.5 var(--mono); }
   .pros li::before { content: "+"; color: var(--good); }
   .cons li::before { content: "\2212"; color: var(--bad); }
 
-  .calc { margin-top: 12px; border: 1px solid var(--calc-line); border-radius: 3px; background: var(--calc-bg); }
-  .calc-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 7px 10px;
-    border-bottom: 1px solid var(--calc-line); }
-  .calc-head .mark { font: 700 10.5px/1 var(--mono); letter-spacing: .14em; color: #06171b;
-    background: var(--calc); padding: 4px 6px; border-radius: 2px; }
+  /* --- Evidence, cause, alternatives, other solutions ------------------- */
+  .two { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; }
+  @media (max-width: 1100px) { .two { grid-template-columns: minmax(0, 1fr); } }
+  .bullets li { position: relative; padding: 7px 0 7px 18px; border-bottom: 1px solid var(--line); }
+  .bullets li:last-child { border-bottom: 0; }
+  .bullets li::before { content: ""; position: absolute; left: 3px; top: 15px; width: 6px; height: 6px; transform: rotate(45deg); background: var(--orange); }
+  .alts li { padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .alts li:last-child { border-bottom: 0; }
+  code { font: 12px/1.3 var(--mono); color: var(--ink); background: var(--stone); padding: 1px 4px; border-radius: 2px; }
+
+  .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font: 11px/1 var(--mono); color: var(--muted);
+    padding: 10px 16px; border-bottom: 1px solid var(--line); }
+  .swatch { display: inline-block; width: 9px; height: 9px; margin-right: 6px; vertical-align: -1px; background: var(--faint); }
+  .swatch.calc { background: var(--calc); }
+  .solution { display: grid; grid-template-columns: 52px minmax(0, 1fr); border-bottom: 1px solid var(--line); }
+  .solution:last-child { border-bottom: 0; }
+  .rank { font: 600 22px/1 var(--serif); color: var(--orange-ink); padding: 16px 0 0 16px; }
+  .solution-body { padding: 14px 16px 16px 0; }
+  .solution h3 { font: 600 17px/1.3 var(--serif); }
+
+  .calc { margin-top: 14px; border: 1px solid var(--calc-line); border-radius: 2px; background: var(--calc-bg); }
+  .calc-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--calc-line); }
+  .calc-head .mark { font: 700 10.5px/1 var(--mono); letter-spacing: .14em; color: #fff; background: var(--calc); padding: 4px 6px; border-radius: 2px; }
   .calc-head .src { font: 11px/1 var(--mono); color: var(--calc); }
   .calc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
   .calc-grid > div { padding: 9px 10px; border-right: 1px solid var(--calc-line); }
   .calc-grid > div:last-child { border-right: 0; }
-  .calc-grid .label { color: var(--calc); opacity: .8; }
+  .calc-grid .label { color: var(--calc); }
   .calc-grid .num { font: 600 19px/1.1 var(--mono); margin-top: 6px; }
   .calc-grid .unit { font: 11px/1.2 var(--mono); color: var(--muted); margin-top: 3px; }
-  .calc-foot { padding: 7px 10px; border-top: 1px solid var(--calc-line); font: 11px/1.45 var(--mono);
-    color: var(--muted); }
+  .calc-foot { padding: 7px 10px; border-top: 1px solid var(--calc-line); font: 11px/1.45 var(--mono); color: var(--muted); }
   .calc-foot .flag { color: var(--warn); }
-  .muted { color: var(--muted); }
-  [hidden] { display: none !important; }
 </style>
 </head>
 <body>
-<header>
+<header class="site">
   <span class="wordmark">POSTMORTEM</span>
   <span class="tagline">Fracture surface analysis</span>
   <span class="status" id="status" data-state="idle" role="status">READY</span>
@@ -151,29 +220,44 @@
 <main>
   <section class="stack" aria-label="Specimen">
     <div class="panel">
-      <h2>Specimen photo</h2>
+      <h2>New specimen</h2>
       <div class="panel-body stack">
-        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose or drop a photo">
-          <strong>Drop a photo of the fracture surface</strong>
-          <small>or click to choose a file · JPEG, PNG, HEIC</small>
+        <div class="step">
+          <span class="step-n" aria-hidden="true">1</span>
+          <span class="step-title">Photograph the break</span>
+          <div class="step-body">
+            <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose or drop a photo">
+              <strong>Drop a photo of the fracture surface</strong>
+              <small>or click to choose a file · JPEG, PNG, HEIC</small>
+            </div>
+            <input class="visually-hidden" type="file" id="file-any" accept="image/*,.heic,.heif" tabindex="-1">
+            <input class="visually-hidden" type="file" id="file-camera" accept="image/*" capture="environment" tabindex="-1">
+            <button class="btn wide" id="camera" type="button">Take a photo with the camera</button>
+          </div>
         </div>
-        <input class="visually-hidden" type="file" id="file-any" accept="image/*,.heic,.heif" tabindex="-1">
-        <input class="visually-hidden" type="file" id="file-camera" accept="image/*" capture="environment" tabindex="-1">
-        <button class="btn" id="camera" type="button" style="width:100%">Take a photo with the camera</button>
-        <div>
-          <label class="label" for="context">Context (optional)</label>
-          <textarea id="context" style="margin-top:7px"
-            placeholder="How it broke, dimensions, material. e.g. PETG bracket, 3 mm wall, sharp inside corner, snapped after two weeks of vibration."></textarea>
+        <div class="step">
+          <span class="step-n" aria-hidden="true">2</span>
+          <label class="step-title" for="context">Describe it <span class="muted">(optional)</span></label>
+          <div class="step-body">
+            <textarea id="context"
+              placeholder="How it broke, dimensions, material. e.g. PETG bracket, 3 mm wall, sharp inside corner, snapped after two weeks of vibration."></textarea>
+          </div>
         </div>
-        <button class="btn primary" id="analyse" type="button" disabled>Analyse</button>
+        <div class="step">
+          <span class="step-n" aria-hidden="true">3</span>
+          <span class="step-title">Analyse</span>
+          <div class="step-body">
+            <button class="btn primary" id="analyse" type="button" disabled>Analyse</button>
+          </div>
+        </div>
       </div>
     </div>
     <div class="panel">
-      <h2>Try an example</h2>
-      <div class="panel-body row">
-        <button class="btn" type="button" data-example="1">Example 1</button>
-        <button class="btn" type="button" data-example="2">Example 2</button>
-        <button class="btn" type="button" data-example="3">Example 3</button>
+      <h2>From the collection</h2>
+      <div class="panel-body collection">
+        <button class="btn" type="button" data-example="1"><span class="numeral">I</span><span>Wooden dowel<span class="what">Snapped in bending</span></span></button>
+        <button class="btn" type="button" data-example="2"><span class="numeral">II</span><span>Printed bars<span class="what">Broke through a hole</span></span></button>
+        <button class="btn" type="button" data-example="3"><span class="numeral">III</span><span>Craft stick<span class="what">Photo not good enough</span></span></button>
       </div>
     </div>
   </section>
@@ -181,7 +265,7 @@
   <section class="stack" id="output" aria-live="polite" aria-label="Diagnosis"></section>
 </main>
 
-<script>
+<script type="module">
 "use strict";
 
 const META_HEADER = "X-Postmortem-Meta";
@@ -198,13 +282,17 @@ const DIMENSION_SOURCES = {
   user_context: "dimensions from your note",
   estimated_from_image: "dimensions ESTIMATED from the photo",
 };
+const EXHIBIT_SOLUTIONS = 3;
+const EVIDENCE_ON_PLACARD = 3;
 
 const $ = (id) => document.getElementById(id);
 const output = $("output");
 const statusChip = $("status");
 let selectedFile = null;
+let photoUrl = null;
 let busy = false;
 let timer = null;
+let viewer = null;
 
 /** Build an element. Text always goes in via textContent, never as HTML. */
 function el(tag, className, text) {
@@ -247,13 +335,33 @@ function formatNumber(value, digits) {
   return typeof value === "number" && Number.isFinite(value) ? value.toFixed(digits) : "n/a";
 }
 
+/** Replace the results area, releasing the 3D viewer first. */
+function showOutput(...parts) {
+  if (viewer) { viewer.dispose(); viewer = null; }
+  output.replaceChildren(...parts);
+}
+
 // --- States ---------------------------------------------------------------
+
+function archIcon() {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 64 84");
+  svg.setAttribute("class", "arch");
+  svg.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS(svg.namespaceURI, "path");
+  path.setAttribute("d", "M4 82 V38 Q4 12 32 2 Q60 12 60 38 V82 Z M14 82 V42 Q14 22 32 13 Q50 22 50 42 V82");
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", "#b4a581");
+  path.setAttribute("stroke-width", "2");
+  svg.append(path);
+  return svg;
+}
 
 function showEmpty() {
   const box = el("div", "empty");
-  box.append(el("strong", "", "No specimen loaded"),
-    el("span", "", "Add a close, sharp, well-lit photo of the broken surface, then press Analyse."));
-  output.replaceChildren(panel("Diagnosis", box));
+  box.append(archIcon(), el("strong", "", "The gallery is empty"),
+    el("span", "", "Add a close, sharp, well-lit photo of the broken surface and press Analyse, or open a piece from the collection."));
+  showOutput(panel("Diagnosis", box));
 }
 
 function showLoading() {
@@ -262,7 +370,7 @@ function showLoading() {
   const elapsed = el("div", "elapsed", "0 s");
   const box = el("div", "loading");
   box.append(title, el("span", "", "Do not close this page."), el("div", "bar"), elapsed);
-  output.replaceChildren(panel("Diagnosis", box));
+  showOutput(panel("Diagnosis", box));
   setStatus("busy", "ANALYSING");
   clearInterval(timer);
   timer = setInterval(() => {
@@ -279,7 +387,7 @@ function showError(message) {
   const box = el("div", "banner");
   box.setAttribute("role", "alert");
   box.append(el("span", "label", "Analysis failed"), el("div", "", message));
-  output.replaceChildren(box);
+  showOutput(box);
   setStatus("error", "ERROR");
 }
 
@@ -388,36 +496,49 @@ function renderComputed(computed) {
   return box;
 }
 
-function renderSolution(solution, rank) {
-  const row = el("div", "solution");
-  const content = el("div", "solution-body");
+function solutionTags(solution) {
   const tags = el("div", "tags");
   tags.append(
     el("span", solution.addresses_root_cause ? "tag root" : "tag",
       solution.addresses_root_cause ? "Addresses root cause" : "Adds margin only"),
     el("span", "tag", `Effort: ${solution.effort}`),
   );
+  return tags;
+}
+
+function prosAndCons(solution) {
   const proscons = el("div", "proscons");
   const pros = el("div");
-  pros.append(el("div", "label", "Pros"), renderList(solution.pros, "pros"));
+  pros.append(el("span", "label", "Pros"), renderList(solution.pros, "pros"));
   const cons = el("div");
-  cons.append(el("div", "label", "Cons"), renderList(solution.cons, "cons"));
+  cons.append(el("span", "label", "Cons"), renderList(solution.cons, "cons"));
   proscons.append(pros, cons);
-  content.append(el("h3", "", solution.title), tags, el("p", "", solution.description), proscons);
+  return proscons;
+}
+
+function renderSolution(solution, rank) {
+  const row = el("div", "solution");
+  const content = el("div", "solution-body");
+  content.append(el("h3", "", solution.title), solutionTags(solution), el("p", "", solution.description),
+    prosAndCons(solution));
   if (solution.computed) content.append(renderComputed(solution.computed));
   row.append(el("div", "rank", String(rank).padStart(2, "0")), content);
   return row;
 }
 
-function renderSolutions(d) {
-  const legend = el("div", "legend");
+function legend() {
+  const box = el("div", "legend");
   const modelKey = el("span");
   modelKey.append(el("span", "swatch"), "Model-generated assessment");
   const calcKey = el("span");
   calcKey.append(el("span", "swatch calc"), "Calculated by mechanics.py");
-  legend.append(modelKey, calcKey);
-  const box = panel("Solutions · ranked", legend);
-  d.solutions.forEach((solution, index) => box.append(renderSolution(solution, index + 1)));
+  box.append(modelKey, calcKey);
+  return box;
+}
+
+function renderSolutions(d, title = "Solutions · ranked", startAt = 0) {
+  const box = panel(title, legend());
+  d.solutions.slice(startAt).forEach((solution, index) => box.append(renderSolution(solution, startAt + index + 1)));
   return box;
 }
 
@@ -429,6 +550,130 @@ function renderInsufficient(d) {
   return box;
 }
 
+// --- The exhibit: 3D vitrine + placard ------------------------------------
+
+function placardAsFound(d) {
+  const parts = [
+    el("div", "kicker", "As found · before any change"),
+    el("h3", "", humanise(d.primary_mode)),
+    el("div", "rule"),
+    el("p", "", d.probable_cause || "Not determined."),
+  ];
+  if (d.visual_evidence.length) {
+    parts.push(el("div", "label section-label", "Key evidence"),
+      renderList(d.visual_evidence.slice(0, EVIDENCE_ON_PLACARD), "bullets"));
+  }
+  parts.push(el("p", "muted section-label", "Choose a solution above to see it built into the part."));
+  return parts;
+}
+
+function placardSolution(solution, index, total) {
+  const parts = [
+    el("div", "kicker", `Solution ${index + 1} of ${total}`),
+    el("h3", "", solution.title),
+    solutionTags(solution),
+    el("div", "rule"),
+    el("p", "", solution.description),
+    prosAndCons(solution),
+  ];
+  if (solution.computed) parts.push(renderComputed(solution.computed));
+  return parts;
+}
+
+function vitrineCaption(specimen, info) {
+  const caption = el("figcaption");
+  const source = specimen.dimensions_source === "user_context"
+    ? "dimensions from your note" : "shape and dimensions estimated from the photo";
+  caption.append(el("b", "", "Schematic reconstruction"), ` · ${source}`);
+  if (info && info.exaggerated) caption.append(" · thin sections drawn thicker so they stay visible");
+  caption.append(". Orange marks the change; red arrows show the load.");
+  return caption;
+}
+
+function renderExhibit(d) {
+  const shown = d.solutions.slice(0, EXHIBIT_SOLUTIONS);
+  const section = el("section", "panel exhibit");
+  section.setAttribute("aria-label", "3D exhibit");
+
+  const head = el("div", "exhibit-head");
+  const titleBox = el("div");
+  titleBox.append(el("span", "kicker", "The exhibit"), el("h2", "", "See each fix on the part"));
+  const seg = el("div", "seg");
+  seg.setAttribute("role", "radiogroup");
+  seg.setAttribute("aria-label", "Show the part as found or with a solution applied");
+  const options = [{ index: null, long: "As found", short: "As found" },
+    ...shown.map((_, i) => ({ index: i, long: `Solution ${i + 1}`, short: String(i + 1) }))];
+  const buttons = options.map((option) => {
+    const button = el("button", option.index === null ? "" : "sol");
+    button.type = "button";
+    button.setAttribute("role", "radio");
+    button.append(el("span", "long", option.long), el("span", "short", option.short));
+    if (option.index !== null) button.title = shown[option.index].title;
+    seg.append(button);
+    return button;
+  });
+  head.append(titleBox, seg);
+
+  const exhibitBody = el("div", "exhibit-body");
+  const figure = el("figure", "vitrine");
+  const frame = el("div", "arch-frame");
+  const stage = el("div", "stage");
+  frame.append(stage);
+  const tools = el("div", "stage-tools");
+  const reset = el("button", "btn", "Reset view");
+  reset.type = "button";
+  tools.append(el("span", "hint", "Drag to rotate · scroll or pinch to zoom"), reset);
+  const stageWrap = el("div");
+  stageWrap.style.position = "relative";
+  stageWrap.append(frame, tools);
+  figure.append(stageWrap);
+  const placard = el("aside", "placard");
+  placard.setAttribute("aria-live", "polite");
+  exhibitBody.append(figure, placard);
+  section.append(head, exhibitBody);
+
+  let active = null;
+  function choose(index, focus = false) {
+    active = index;
+    buttons.forEach((button, i) => {
+      const on = options[i].index === index;
+      button.setAttribute("aria-checked", String(on));
+      button.tabIndex = on ? 0 : -1;
+      if (on && focus) button.focus();
+    });
+    placard.dataset.state = index === null ? "found" : "solution";
+    placard.replaceChildren(...(index === null ? placardAsFound(d) : placardSolution(shown[index], index, shown.length)));
+    if (viewer) viewer.select(index);
+  }
+  buttons.forEach((button, i) => {
+    button.addEventListener("click", () => choose(options[i].index));
+    button.addEventListener("keydown", (event) => {
+      const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+      if (event.key === "Home" || event.key === "End" || step) {
+        event.preventDefault();
+        const current = options.findIndex((option) => option.index === active);
+        const next = event.key === "Home" ? 0 : event.key === "End" ? options.length - 1
+          : (current + step + options.length) % options.length;
+        choose(options[next].index, true);
+      }
+    });
+  });
+  choose(null);
+
+  // Load the viewer separately so a 3D failure never breaks the text results.
+  import("/static/viewer3d.js").then(({ createViewer }) => {
+    if (!stage.isConnected) return;
+    viewer = createViewer(stage, { specimen: d.specimen, material: d.material, solutions: shown, photoUrl });
+    viewer.select(active);
+    reset.addEventListener("click", () => viewer && viewer.resetView());
+    figure.append(vitrineCaption(d.specimen, viewer.info));
+  }).catch((error) => {
+    stage.replaceChildren(el("div", "v3d-fallback", `3D view could not load (${error.message}). The placard still describes each solution.`));
+    tools.hidden = true;
+  });
+  return section;
+}
+
 function showDiagnosis(d, meta, roundTripSeconds) {
   clearInterval(timer);
   const parts = [];
@@ -438,11 +683,18 @@ function showDiagnosis(d, meta, roundTripSeconds) {
   } else {
     const columns = el("div", "two");
     columns.append(renderEvidence(d), renderCause(d));
-    parts.push(renderSummary(d, meta, roundTripSeconds), columns);
-    if (d.solutions.length) parts.push(renderSolutions(d));
+    parts.push(renderSummary(d, meta, roundTripSeconds));
+    const exhibit = d.specimen && d.solutions.length;
+    if (exhibit) parts.push(renderExhibit(d));
+    parts.push(columns);
+    if (exhibit && d.solutions.length > EXHIBIT_SOLUTIONS) {
+      parts.push(renderSolutions(d, "Also considered", EXHIBIT_SOLUTIONS));
+    } else if (!exhibit && d.solutions.length) {
+      parts.push(renderSolutions(d));
+    }
     setStatus("done", "COMPLETE");
   }
-  output.replaceChildren(...parts);
+  showOutput(...parts);
 }
 
 // --- Requests -------------------------------------------------------------
@@ -509,7 +761,9 @@ function showPreview(source, name, missingText) {
 function selectFile(file) {
   if (!file) return;
   selectedFile = file;
-  showPreview(URL.createObjectURL(file), `${file.name} · ${(file.size / 1048576).toFixed(1)} MB`,
+  if (photoUrl && photoUrl.startsWith("blob:")) URL.revokeObjectURL(photoUrl);
+  photoUrl = URL.createObjectURL(file);
+  showPreview(photoUrl, `${file.name} · ${(file.size / 1048576).toFixed(1)} MB`,
     "Preview not available for this format. It will still be analysed.");
   $("analyse").disabled = busy;
 }
@@ -535,8 +789,10 @@ $("analyse").addEventListener("click", analyse);
 document.querySelectorAll("[data-example]").forEach((button) => {
   button.addEventListener("click", () => {
     const n = button.dataset.example;
-    showPreview(`/static/examples/${n}.jpg`, `Bundled example ${n}`, "Example photo not bundled yet.");
+    photoUrl = `/static/examples/${n}.jpg`;
+    showPreview(photoUrl, `Collection piece ${n}`, "Example photo not bundled yet.");
     selectedFile = null;
+    $("analyse").disabled = true;
     run(() => fetch(`/examples/${n}`));
   });
 });

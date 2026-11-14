@@ -49,6 +49,21 @@ def solution(**overrides) -> dict:
         "effort": "trivial",
         "addresses_root_cause": True,
         "fillet": None,
+        "visual": {"kind": "add_fillet", "label": "Round the inside corner"},
+    }
+    return {**base, **overrides}
+
+
+def specimen(**overrides) -> dict:
+    base = {
+        "shape": "l_bracket",
+        "length_mm": 40.0,
+        "width_mm": 12.0,
+        "thickness_mm": 4.0,
+        "break_position": 0.5,
+        "feature": "sharp_corner",
+        "load_case": "cantilever",
+        "dimensions_source": "estimated_from_image",
     }
     return {**base, **overrides}
 
@@ -62,6 +77,7 @@ def payload(**overrides) -> dict:
         "primary_mode": "fatigue_metal",
         "confidence": "medium",
         "probable_cause": "Cyclic bending at a sharp corner.",
+        "specimen": specimen(),
         "alternative_modes": [
             {"mode": "other", "why_less_likely": "Two distinct zones are visible."}
         ],
@@ -273,6 +289,81 @@ def test_insufficient_image_never_carries_a_mode_or_solutions():
     assert result.confidence == "low"
     assert result.solutions == []
     assert result.alternative_modes == []
+    assert result.specimen is None
+
+
+# --- 3D exhibit fields ------------------------------------------------------
+
+
+def test_specimen_and_solution_visuals_pass_through():
+    result, _ = run(FakeClient(response(payload())))
+
+    assert result.specimen.shape == "l_bracket"
+    assert result.specimen.length_mm == 40.0
+    assert result.specimen.feature == "sharp_corner"
+    assert result.specimen.dimensions_source == "estimated_from_image"
+    assert result.solutions[0].visual.kind == "add_fillet"
+    assert result.solutions[0].visual.label == "Round the inside corner"
+
+
+def test_out_of_range_specimen_values_are_clamped_not_rejected():
+    body = payload(
+        specimen=specimen(
+            length_mm=1e9, width_mm=-3.0, thickness_mm=0.0, break_position=1.7
+        )
+    )
+    client = FakeClient(response(body))
+
+    result, meta = run(client)
+
+    assert meta.attempts == 1  # a bad 3D hint never costs a retry
+    assert result.specimen.length_mm == diagnose.SPECIMEN_MAX_MM
+    assert result.specimen.width_mm == diagnose.SPECIMEN_MIN_MM
+    assert result.specimen.thickness_mm == diagnose.SPECIMEN_MIN_MM
+    assert result.specimen.break_position == diagnose.BREAK_POSITION_MAX
+
+
+def test_round_rod_thickness_follows_its_diameter():
+    body = payload(specimen=specimen(shape="round_rod", width_mm=8.0, thickness_mm=30.0))
+
+    result, _ = run(FakeClient(response(body)))
+
+    assert result.specimen.thickness_mm == 8.0
+
+
+def test_visual_label_is_tidied_and_capped():
+    long_label = "  Add   a\nrib " + "x" * 200
+    body = payload(solutions=[solution(visual={"kind": "add_rib", "label": long_label})] * 3)
+
+    result, _ = run(FakeClient(response(body)))
+
+    label = result.solutions[0].visual.label
+    assert label.startswith("Add a rib x")
+    assert len(label) == diagnose.VISUAL_LABEL_MAX_CHARS
+
+
+def test_missing_specimen_still_gives_a_diagnosis():
+    result, meta = run(FakeClient(response(payload(specimen=None))))
+
+    assert meta.attempts == 1
+    assert result.specimen is None
+    assert result.primary_mode == "fatigue_metal"
+
+
+def test_results_saved_before_the_3d_fields_still_load():
+    old = payload()
+    stored = {
+        **{k: v for k, v in old.items() if k not in ("specimen", "solutions", "alternative_modes")},
+        "alternative_modes": [["other", "why"]],
+        "solutions": [
+            {k: v for k, v in solution().items() if k not in ("fillet", "visual")} | {"computed": None}
+        ],
+    }
+
+    result = Diagnosis.model_validate(stored)
+
+    assert result.specimen is None
+    assert result.solutions[0].visual is None
 
 
 def test_malformed_answer_is_retried_once_then_succeeds():
