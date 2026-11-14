@@ -1,0 +1,95 @@
+{
+ "diagnosis": {
+  "material": "fdm_print",
+  "primary_mode": "other",
+  "confidence": "medium",
+  "visual_evidence": [
+   "Four red plastic rectangular bar pieces resting on a wooden surface; the upper two pieces are broken while the lower two pieces show smooth, flat 45-degree angled end faces.",
+   "The upper-right piece stands vertically with a jagged, uneven top fracture where two outer wall corners protrude higher than the center.",
+   "Inside the fractured top of the upper-right piece, thin outer perimeter walls and an internal cross-shaped infill structure are exposed, with slight pale/whitish edging along the torn right corner.",
+   "The upper-left piece lies horizontally with a dark fracture at its right end passing directly through a semicircular hole or notch.",
+   "No obvious gross bending or necking deformation is visible along the straight shafts of the broken pieces."
+  ],
+  "probable_cause": "Cross-layer overload fracture (likely bending or impact) of an FDM-printed part, initiating at the circular hole/notch where the net cross-section is reduced. The thin outer perimeter walls and sparse internal infill visible at the break left insufficient solid material around the hole to carry the load. Confidence is medium because the camera distance limits fine micro-texture detail on the upper-left fracture surface.",
+  "alternative_modes": [
+   [
+    "layer_delamination_fdm",
+    "Layer delamination typically produces a flat break along a single layer boundary with intact bead lines, whereas the upper-right piece shows a jagged, multi-level fracture cutting across perimeter walls and exposing internal infill."
+   ]
+  ],
+  "solutions": [
+   {
+    "title": "Add local perimeters and dense infill around the hole",
+    "description": "Increase the wall/perimeter count to 4 to 6 and use a slicer modifier mesh to print 100% infill around the hole and high-stress region instead of sparse cross infill.",
+    "pros": [
+     "No CAD changes required",
+     "Substantially increases solid load-bearing cross-section around the hole",
+     "Minimal extra filament if applied only locally"
+    ],
+    "cons": [
+     "Slightly longer print time",
+     "Small increase in material usage"
+    ],
+    "effort": "trivial",
+    "addresses_root_cause": true,
+    "computed": null
+   },
+   {
+    "title": "Reinforce or relocate the hole in CAD",
+    "description": "Add a wider boss or shoulder around the hole to compensate for the material removed by the hole, or move the hole away from the highest bending moment location.",
+    "pros": [
+     "Directly reduces peak stress around the hole",
+     "Keeps the rest of the bar unchanged in weight"
+    ],
+    "cons": [
+     "Requires CAD modification and re-testing",
+     "Added width around the hole may affect clearance with mating parts"
+    ],
+    "effort": "moderate",
+    "addresses_root_cause": true,
+    "computed": null
+   },
+   {
+    "title": "Orient part so continuous perimeters follow the bending axis",
+    "description": "Print the bar flat with continuous perimeter extrusions running lengthwise along the tension/compression faces and looping around the hole.",
+    "pros": [
+     "Maximizes strength along the main load path",
+     "Zero extra material or cost"
+    ],
+    "cons": [
+     "Cross-holes or angled faces may require support material or minor cleanup"
+    ],
+    "effort": "trivial",
+    "addresses_root_cause": true,
+    "computed": null
+   },
+   {
+    "title": "Switch to a tougher filament material",
+    "description": "Reprint the part using a higher-toughness, more ductile polymer such as PETG or Nylon instead of a rigid/brittle standard filament.",
+    "pros": [
+     "Higher impact resistance and elongation before fracture",
+     "Requires no geometry changes"
+    ],
+    "cons": [
+     "Higher filament cost",
+     "Different print profile, drying, or enclosure requirements",
+     "Slightly lower stiffness under load"
+    ],
+    "effort": "trivial",
+    "addresses_root_cause": false,
+    "computed": null
+   }
+  ],
+  "insufficient_image": false,
+  "insufficient_reason": null
+ },
+ "meta": {
+  "model": "gemini-4-hydrogen",
+  "latency_s": 93.87,
+  "attempts": 1,
+  "input_tokens": 4649,
+  "output_tokens": 744,
+  "thinking_tokens": 3426,
+  "cost_usd": 0.038248
+ }
+}
