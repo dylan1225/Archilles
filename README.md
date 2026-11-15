@@ -465,37 +465,33 @@ workflow, specialist objectives, deterministic candidate checks and 3D integrati
 ---
 ### How we used Cursor
  
-Cursor was the core coding agent for the repository.
+Cursor was our AI coding agent for bringing the project together. Our work
+lived on separate GitHub branches, and we used Cursor to combine and merge them
+into the final product. The 2026-11-15 "UI version 2.0" entry in the update log
+is an example: it keeps `main`'s Archilles page and brings in the newer results
+area from the redesign branch, restyled to match.
  
-- **Changes across the stack.** Cursor handled work that crosses files, such as
-  the `specimen` and per-fix `visual` fields in the model output, the three.js
-  builders in `static/viewer3d.js` that consume them, and the tests covering
-  both.
-- **Tests as the gate.** An agent change was kept only when the offline suite
-  passed. The suite uses a fake model client, so it runs without keys or a
-  network connection and each change could be checked in seconds.
-- **Numbers from sources, not from the agent.** Engineering values come from
-  published references in `mechanics.py` and `knowledge/materials.csv`, and the
-  tests check that the working steps shown for each calculation equal the
-  reported number.
-- **Human review.** A team member read every change before it was committed.
 ### How we used Grok Bot
  
 The Grok Bot automation ran as a separate step in our workflow, outside the
-application, and gave us a second reviewer that did not share the coding
-agent's context. It is the same idea as the skeptic agent in the interior
-review: an independent check is worth more than a confident first answer.
+application, and acted as a second reviewer: an independent check before
+changes went in, in the same spirit as the skeptic agent in the interior
+review.
  
-- **Review against the project's rules.** It checked changes against the rules
-  in this README: evidence before a failure mode, no numbers calculated by a
-  model, and no claim the photo does not support.
-- **Edge cases for the tests.** It proposed awkward inputs, such as an intact
-  part, a blurred photo or out-of-range dimensions, which we turned into offline
-  tests where they exposed a gap.
+- **Change review and commits.** It reviewed our changes and helped with our
+  commits.
+- **Overconfidence checks.** It checked that the model was not overconfident:
+  that a diagnosis was backed by what the photo shows, and that uncertainty was
+  stated rather than hidden. This is the same concern the uncertainty handling
+  in the update log addresses (three-run consistency, null detection and a
+  required rejected alternative).
 ### Guardrails
  
 - API keys stay in the ignored `.env` and never appear in source.
-- The tools did not change what the project claims. The 3D model is still a
-  schematic and the interior review is still a screening, not an inspection
-  (see [What this is not](#what-this-is-not)).
+- Engineering values come from published references in `mechanics.py` and
+  `knowledge/materials.csv`, not from a model, and the tests check that the
+  working steps shown for each calculation equal the reported number.
+- How the project was built does not change what it claims. The 3D model is
+  still a schematic and the interior review is still a screening, not an
+  inspection (see [What this is not](#what-this-is-not)).
  
