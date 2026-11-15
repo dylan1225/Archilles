@@ -1,7 +1,7 @@
 /**
  * Pre-failure interior review UI.
  *
- *   <field-note-leads viewer="building-interior-viewer">  buildings flagged by scan technicians
+ *   <field-note-leads viewer="building-interior-viewer">  the saved building example
  *   <house-analysis viewer="building-interior-viewer">    the agent review and its 3D scenario
  *
  * Both follow the building selected in the tour viewer and stay independent of it.
@@ -18,6 +18,9 @@ const create = (tag, className, text) => {
 const strings = (value) => Array.isArray(value) ? value.filter((item) => typeof item === 'string') : [];
 const number = (value, digits = 1) => Number(value).toLocaleString(undefined, { maximumFractionDigits: digits });
 const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const providerDetail = (text) => /\b(quota|credits?)\b/i.test(String(text || ''));
+const activityForDisplay = (events) => Array.isArray(events)
+  ? events.filter((event) => event && !(event.agent === 'system' && providerDetail(event.text))) : [];
 
 class FieldNoteLeads extends HTMLElement {
   connectedCallback() {
@@ -28,10 +31,9 @@ class FieldNoteLeads extends HTMLElement {
       <link rel="stylesheet" href="/static/house-analysis.css">
       <section class="leads" aria-labelledby="leads-title">
         <div class="leads-head">
-          <div><p class="eyebrow">A SIGNAL HIDING IN THE SCAN DATA</p><h2 id="leads-title">Flagged by the people who scanned them</h2></div>
-          <p class="leads-intro">Scan technicians leave notes for the listing team. Searched across the whole collection, those notes point at interiors worth a closer look.</p>
+          <h2 id="leads-title">Saved example</h2>
         </div>
-        <div class="lead-list" role="list"><p class="leads-status" role="status">Reading field notes…</p></div>
+        <div class="lead-list" role="list"><p class="leads-status" role="status">Loading saved example…</p></div>
       </section>`;
     this.load();
   }
@@ -41,15 +43,15 @@ class FieldNoteLeads extends HTMLElement {
   async load() {
     const list = this.shadowRoot.querySelector('.lead-list');
     try {
-      const response = await fetch(`${this.api}/leads`);
+      const response = await fetch(`${this.api}/reviews/nFKebdbTD5U`);
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'The field notes could not be searched.');
+      if (!response.ok || data.report?.model_id !== 'nFKebdbTD5U') throw new Error('The saved example is unavailable. Please try again.');
+      const report = data.report;
       list.replaceChildren();
-      if (!data.leads.length) {
-        list.append(create('p', 'leads-status', 'No field notes in this collection mention an interior problem.'));
-        return;
-      }
-      for (const lead of data.leads.slice(0, 6)) list.append(this.card(lead));
+      list.append(this.card({
+        id: report.model_id, name: report.model_name, address: report.address,
+        region: report.region, has_saved_review: true,
+      }));
     } catch (error) {
       list.replaceChildren(create('p', 'leads-status', error.message));
     }
@@ -62,10 +64,7 @@ class FieldNoteLeads extends HTMLElement {
     const top = create('span', 'lead-top');
     top.append(create('span', 'lead-region', regions[lead.region] || ''));
     if (lead.has_saved_review) top.append(create('span', 'lead-saved', 'Saved'));
-    const note = create('span', 'lead-note', `“${lead.note}”`);
-    const chips = create('span', 'chips');
-    for (const signal of lead.signals.slice(0, 4)) chips.append(create('span', 'chip', signal.label));
-    button.append(top, create('span', 'lead-address', lead.address || lead.name), note, chips, create('span', 'lead-action', 'Open this building →'));
+    button.append(top, create('span', 'lead-address', lead.address || lead.name), create('span', 'lead-action', 'Open this building →'));
     button.addEventListener('click', () => {
       const viewer = document.querySelector(this.getAttribute('viewer') || 'building-interior-viewer');
       viewer?.selectModel({ id: lead.id, name: lead.name, address: lead.address, thumbnail: lead.thumbnail, floors: lead.floors });
@@ -88,6 +87,8 @@ class HouseAnalysis extends HTMLElement {
     this.pendingOutcome = null;
     this.activityTimer = null;
     this.terminalActivityDelay = null;
+    this.demoTimer = null;
+    this.demoRunning = false;
   }
 
   connectedCallback() {
@@ -117,8 +118,9 @@ class HouseAnalysis extends HTMLElement {
           <div class="assessment-output">
             <div class="initial-state"><span class="outline-house" aria-hidden="true">⌂</span><p class="eyebrow">EVIDENCE BEFORE CONCLUSIONS</p><h3>Small signs. Earlier attention.</h3><p>Pick a flagged building, or any building in the collection, then run the review to see what the agents find and what it could lead to.</p></div>
             <div class="progress" hidden role="status" aria-live="polite"><span class="spinner" aria-hidden="true"></span><div><p class="progress-stage">Preparing review</p><p class="progress-message">Loading the scan.</p><span class="elapsed"></span></div></div>
+            <p class="activity-label field-label" hidden>Agent activity</p>
             <ol class="activity live-activity" hidden aria-label="Agent activity"></ol>
-            <div class="assessment-error" hidden role="alert"><strong>Review paused.</strong><p class="error-message"></p><p>The recorded activity is kept above. Run a fresh review to try again.</p></div>
+            <div class="assessment-error" hidden role="alert"><strong>Review paused.</strong><p class="error-message"></p><p>Activity stays visible above. Run a fresh review to try again.</p></div>
             <div class="report" hidden></div>
           </div>
         </div>
@@ -158,6 +160,9 @@ class HouseAnalysis extends HTMLElement {
     this.activityEvents = [];
     this.pendingOutcome = null;
     this.terminalActivityDelay = null;
+    clearTimeout(this.demoTimer);
+    this.demoTimer = null;
+    this.demoRunning = false;
   }
 
   disposeViewer() {
@@ -202,6 +207,8 @@ class HouseAnalysis extends HTMLElement {
     this.$('.progress').hidden = true;
     this.$('.live-activity').hidden = true;
     this.$('.live-activity').replaceChildren();
+    this.$('.activity-label').hidden = true;
+    this.$('.activity-label').textContent = 'Agent activity';
     this.$('.saved-note').hidden = true;
     this.$('.initial-state').hidden = false;
     this.$('dialog').close();
@@ -248,7 +255,9 @@ class HouseAnalysis extends HTMLElement {
     this.$('.progress-stage').textContent = 'Preparing review';
     this.$('.progress-message').textContent = 'Loading the scan.';
     this.$('.live-activity').hidden = false;
+    this.$('.activity-label').hidden = false;
     this.started = Date.now();
+    this.$('.elapsed').hidden = false;
     this.$('.elapsed').textContent = '0:00 elapsed';
     this.elapsedTimer = setInterval(() => {
       const seconds = Math.floor((Date.now() - this.started) / 1000);
@@ -267,7 +276,7 @@ class HouseAnalysis extends HTMLElement {
       if (!job.id) throw new Error('The review service returned an incomplete response.');
       this.pollJob(job.id, version);
     } catch (error) {
-      if (version === this.version && error.name !== 'AbortError') this.fail(error.message);
+      if (version === this.version && error.name !== 'AbortError') this.startFailureDemo(error.message, version);
     }
   }
 
@@ -279,7 +288,7 @@ class HouseAnalysis extends HTMLElement {
       const job = await response.json();
       if (version !== this.version || !this.isConnected) return;
       if (!response.ok) throw new Error(job.error || 'The review service lost this review. Please try again.');
-      this.activityEvents = Array.isArray(job.activity) ? job.activity : [];
+      this.activityEvents = activityForDisplay(job.activity);
       if (job.status === 'completed') {
         if (!job.report || job.report.model_id !== this.house.id) throw new Error('The report does not match the selected building. Please start a new review.');
         clearInterval(this.elapsedTimer);
@@ -330,13 +339,54 @@ class HouseAnalysis extends HTMLElement {
     if (!outcome) return;
     this.pendingOutcome = null;
     if (outcome.status === 'failed') {
-      this.fail(outcome.error || 'The review paused before all tasks were complete. Please try again.');
+      this.startFailureDemo(outcome.error || 'The review paused before all tasks were complete. Please try again.', version);
       return;
     }
     this.busy = false;
     this.$('.progress').hidden = true;
     this.$('.live-activity').hidden = true;
+    this.$('.activity-label').hidden = true;
     this.renderReport(outcome.report, outcome.activity, outcome.evidence_base);
+  }
+
+  startFailureDemo(message, version) {
+    if (version !== this.version || !this.isConnected || this.demoRunning) return;
+    this.demoRunning = true;
+    this.busy = true;
+    clearTimeout(this.pollTimer);
+    clearInterval(this.elapsedTimer);
+    this.$('.assessment-error').hidden = true;
+    this.$('.progress').hidden = false;
+    this.$('.progress-message').textContent = 'Following the inspection workflow through three review cycles.';
+    this.$('.elapsed').hidden = true;
+    this.$('.elapsed').textContent = '';
+    this.$('.activity-label').hidden = false;
+    this.$('.activity-label').textContent = 'Demo preview · includes simulated steps';
+    const list = this.$('.live-activity');
+    list.hidden = false;
+    const recorded = this.activityEvents.slice(0, list.childElementCount);
+    const offset = Math.max(0, Number(recorded.at(-1)?.t) || 0);
+    const steps = ['ceiling surfaces', 'walls and openings', 'floors and fixtures'].flatMap((focus, index) => [
+      { agent: 'lead', text: `Assigning the surveyor to examine ${focus}.`, cycle: index + 1 },
+      { agent: 'surveyor', text: `Inspecting ${focus} and selecting an observation for a closer look.`, cycle: index + 1 },
+      { agent: 'skeptic', text: 'Checking another angle and considering alternative explanations.', cycle: index + 1 },
+      { agent: 'analyst', text: 'Preparing an illustrative failure scenario and matching repair options.', cycle: index + 1 },
+    ]).map((event, index) => ({ ...event, simulated: true, t: offset + index * 2.5 }));
+    let shown = 0;
+    const advance = () => {
+      if (version !== this.version || !this.isConnected || !this.demoRunning) return;
+      this.demoTimer = null;
+      if (shown === steps.length) {
+        this.demoRunning = false;
+        this.fail(message);
+        return;
+      }
+      this.$('.progress-stage').textContent = `Review cycle ${steps[shown].cycle} of 3`;
+      this.renderActivity(list, recorded.concat(steps.slice(0, ++shown)), true);
+      this.demoTimer = setTimeout(advance, 2500);
+    };
+    this.updateButton();
+    advance();
   }
 
   fail(message) {
@@ -346,14 +396,18 @@ class HouseAnalysis extends HTMLElement {
     clearTimeout(this.activityTimer);
     this.activityTimer = null;
     this.pendingOutcome = null;
+    clearTimeout(this.demoTimer);
+    this.demoTimer = null;
+    this.demoRunning = false;
     this.$('.progress').hidden = true;
-    this.$('.error-message').textContent = message;
+    this.$('.error-message').textContent = providerDetail(message)
+      ? 'The live review is unavailable right now. Please try again later.' : message;
     this.$('.assessment-error').hidden = false;
     this.updateButton();
   }
 
   renderActivity(list, events, follow = false) {
-    const items = Array.isArray(events) ? events : [];
+    const items = activityForDisplay(events);
     for (const event of items.slice(list.childElementCount)) {
       const row = create('li', 'event');
       row.dataset.agent = agents[event.agent] ? event.agent : 'system';
@@ -464,11 +518,12 @@ class HouseAnalysis extends HTMLElement {
       }
       root.append(details);
     }
-    if (Array.isArray(activity) && activity.length) {
+    const visibleActivity = activityForDisplay(activity);
+    if (visibleActivity.length) {
       const details = create('details', 'block');
-      details.append(create('summary', '', `How the agents got here · ${activity.length} steps`));
+      details.append(create('summary', '', `How the agents got here · ${visibleActivity.length} steps`));
       const list = create('ol', 'activity');
-      this.renderActivity(list, activity);
+      this.renderActivity(list, visibleActivity);
       details.append(list);
       root.append(details);
     }
