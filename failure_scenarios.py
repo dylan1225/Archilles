@@ -144,7 +144,7 @@ def repair_costs(area_m2: float, room_area_m2: float | None) -> dict:
     }]
     after_items = [leak, {
         "label": "Close the opening the fallen section leaves", "low": patch[0], "high": patch[1],
-        "basis": "Priced at the flagged section's area, as now. A real collapse often takes more ceiling with it.",
+        "basis": "Priced at the flagged section's area, as now. A real collapse can take more ceiling with it.",
         "reference_id": "inchcalculator_drywall",
     }]
     notes = []
@@ -175,7 +175,7 @@ def repair_costs(area_m2: float, room_area_m2: float | None) -> dict:
     now, after = bill("Repair now", now_items), bill("Repair after the section falls", after_items)
     notes += [
         "Not priced: injury, damaged furniture and belongings, or living elsewhere during the work.",
-        "Rough ranges from US consumer cost guides, not a quote. Local labour rates, access and the ceiling's finish change the price; plaster usually costs more than drywall.",
+        "Rough ranges from US consumer cost guides, not a quote. Local labour rates, access and the ceiling's finish change the price.",
     ]
     return {
         "currency": "USD",
