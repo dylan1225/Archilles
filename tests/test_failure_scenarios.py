@@ -100,3 +100,58 @@ def test_scenario_carries_the_repair_cost_for_its_own_areas():
     room = {"name": "Bedroom", "kind": "Bedroom", "area_m2": 12.0}
     scenario = fs.build_ceiling_scenario(finding(), room, [position("R1-A", "R1", 2.0, 1.5)], None, ANALYSIS)
     assert scenario["repair_cost"] == fs.repair_costs(1.0, 12.0)
+
+
+def wall_finding(width=0.15, height=1.0, category="moisture", title="Dark streaking beside the shower") -> dict:
+    # A strip on the wall x = 0, facing +x into the room, 1.5 m to 2.5 m above the floor.
+    return {"id": "F2", "category": category, "title": title, "observation": "", "confidence": "high", "placement": {
+        "surface": "wall", "center": [0.0, 1.0, 2.0], "normal": [1.0, 0.0, 0.0],
+        "corners": [[0, 1 - width / 2, 2 + height / 2], [0, 1 + width / 2, 2 + height / 2], [0, 1 + width / 2, 2 - height / 2], [0, 1 - width / 2, 2 - height / 2]],
+        "area_m2": width * height, "height_above_floor_m": 2.0, "approximate": False,
+    }}
+
+
+def test_wall_scenario_keeps_the_flagged_area_and_widens_only_the_short_side():
+    room = {"name": "Bathroom", "kind": "Bathroom", "area_m2": 3.5}
+    scenario = fs.build_scenario(wall_finding(), room, [position("R8-A", "R8", 1.0, 1.0)], None, None, "los_angeles")
+    assert scenario["mechanism"] == "wall_moisture_damage" and scenario["surface"] == "wall" and scenario["kind"] == "mould"
+    assert scenario["written_by_analyst"] is False and "could" in scenario["why"]
+    # Numbers describe the 0.15 m² that was flagged; only the drawing is widened, and the page is told.
+    assert scenario["calc"]["area_m2"] == 0.15 and scenario["calc"]["drawn_area_m2"] == pytest.approx(0.45, abs=0.01)
+    assert scenario["zone"]["widened"] is True and "stud bay" in scenario["calc"]["inputs"][0]
+    ys = [corner[1] for corner in scenario["zone"]["corners"]]
+    zs = [corner[2] for corner in scenario["zone"]["corners"]]
+    assert max(ys) - min(ys) == pytest.approx(0.45) and max(zs) - min(zs) == pytest.approx(1.0)
+    assert scenario["calc"]["top_height_m"] == 2.5 and scenario["zone"]["floor_z"] == 0.0
+    assert [stage["id"] for stage in scenario["stages"]] == ["as_scanned", "saturation", "sag", "detach", "aftermath"]
+    with pytest.raises(ValueError):
+        fs.build_wall_scenario(finding(), room, [position("R8-A", "R8", 1.0, 1.0)], None, ANALYSIS)
+
+
+def test_a_mechanism_applies_to_ceilings_and_damp_walls_only():
+    assert fs.fits({**finding(), "category": "moisture"}) and fs.fits({**finding(), "category": "structure"})
+    assert fs.fits(wall_finding()) and not fs.fits(wall_finding(category="structure"))
+    assert not fs.fits({**finding(), "category": "fire_electrical"}) and not fs.fits({"category": "moisture", "placement": None})
+    with pytest.raises(ValueError):
+        fs.build_scenario(wall_finding(category="fall_safety"), {"name": "Hall", "kind": "Hallway"}, [position("R1-A", "R1", 1.0, 1.0)], None)
+
+
+def test_each_kind_of_damage_is_priced_as_its_own_job():
+    crack = fs.repair_costs_for("crack", "ceiling", 0.3, 7.0)
+    # A dry crack has no leak to fix: retaping now, a ceiling repair later.
+    assert [(i["low"], i["high"]) for i in crack["now"]["items"]] == [(60, 200)]
+    assert [(i["low"], i["high"]) for i in crack["after"]["items"]] == [(350, 1250)] and (crack["added_low"], crack["added_high"]) == (290, 1050)
+    assert any("Not priced" in note for note in crack["notes"])
+    ceiling_crack = {**finding(), "category": "structure", "title": "Open crack across the ceiling", "observation": "", "confidence": "medium"}
+    dry = fs.build_scenario(ceiling_crack, {"name": "Kitchen", "kind": "Kitchen"}, [position("R4-A", "R4", 2.0, 1.5)], None)
+    # Nothing in a crack scenario assumes water, in its words or in what the 3D view draws.
+    assert dry["dry"] is True and dry["kind"] == "crack"
+    assert not any(word in stage["caption"].casefold() for stage in dry["stages"] for word in ("water", "damp", "mould", "wet", "soften"))
+    mould = fs.repair_costs_for("mould", "wall", 0.07, 3.5)
+    assert (mould["now"]["low"], mould["now"]["high"]) == (1100, 3400) and "SPREADS" in mould["heading"]
+    stain = fs.repair_costs_for("stain", "ceiling", 0.3, 7.0)
+    assert [i["role"] for i in stain["now"]["items"]] == ["source", "surface"] and stain["after"] == fs.repair_costs(0.3, 7.0)["after"]
+    assert fs.repair_costs_for("delamination", "ceiling", 1.0, 12.0) == fs.repair_costs(1.0, 12.0)
+    for cost in (crack, mould, stain):
+        for bill in (cost["now"], cost["after"]):
+            assert bill["low"] == sum(i["low"] for i in bill["items"]) and all(i["reference_id"] in cost["reference_ids"] for i in bill["items"])

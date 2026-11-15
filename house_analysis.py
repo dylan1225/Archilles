@@ -180,6 +180,9 @@ class Report(StrictModel):
     findings: list[Finding] = Field(max_length=12)
     rejected: list[Rejected]
     scenario: dict | None
+    # Every confirmed finding a mechanism applies to, the lead scenario first.
+    # Reviews saved before this existed have only `scenario`.
+    scenarios: list[dict] = Field(default_factory=list, max_length=12)
     field_note: FieldNote | None
     prevalence: dict
     rooms: list[RoomCoverage]
@@ -286,7 +289,8 @@ def _limit(exc: Exception) -> tuple | None:
         return ("day",)  # out of credit: as final as a daily quota
     if "RateLimit" not in type(exc).__name__ and "RESOURCE_EXHAUSTED" not in text and "429" not in text:
         return None
-    if "PerDay" in text or "per day" in text:
+    # OpenRouter's free tier reports its daily cap as "free-models-per-day".
+    if "PerDay" in text or "per day" in text or "per-day" in text:
         return ("day",)
     limit = re.search(r"quotaValue': '(\d+)'", text) or re.search(r"limit: (\d+)", text)
     retry = re.search(r"retry in ([\d.]+)s", text)
@@ -925,40 +929,64 @@ def build_report(session: Session) -> dict:
         for c in candidates if c["ruling"] and c["ruling"]["verdict"] == "rejected"
     ]
 
+    def scenario_for(finding: dict, analysis: dict | None) -> dict:
+        candidate = next(c for c in confirmed if c["id"] == finding["id"])
+        position = survey.positions[candidate["position_id"]]
+        room = survey.room(finding["room_id"])
+        mesh = survey.mesh()
+        others = [survey.positions[pid] for pid in room["position_ids"] if pid != position["id"]]
+        bounds = None
+        if mesh is not None:
+            # A scan position beside an open door or closet sees a near surface
+            # where the wall should be, so the room's extent is the union of
+            # what each of its scan positions measured.
+            placement = finding["placement"]
+            top = placement["center"][2]
+            if placement["surface"] != "ceiling":
+                # A wall region sits below the ceiling, so the room's top is
+                # measured straight up from the scan position.
+                origin = position["pose"]["position"]
+                above = mesh.raycast((origin["x"], origin["y"], origin["z"]), (0.0, 0.0, 1.0), max_distance=8.0)
+                if above:
+                    top = above["point"][2]
+                elif room.get("height_m"):
+                    top = position["floor_z"] + room["height_m"]
+                else:
+                    top = max(corner[2] for corner in placement["corners"]) + 0.3
+            boxes = []
+            for item in [position, *others]:
+                origin = item["pose"]["position"]
+                boxes.append(scan_geometry.room_bounds(mesh, (origin["x"], origin["y"], origin["z"]), item["floor_z"], top))
+            bounds = {
+                "min": [min(box["min"][k] for box in boxes) for k in range(3)],
+                "max": [max(box["max"][k] for box in boxes) for k in range(3)],
+            }
+        return failure_scenarios.build_scenario(finding, room, [position, *others], bounds, analysis, survey.model.get("region"))
+
+    # The analyst's finding leads, in the analyst's words. Every other confirmed
+    # finding a mechanism applies to gets the same treatment in this project's words.
     scenario = None
     if forecast and forecast.get("finding_id"):
         target = next((f for f in findings if f["id"] == forecast["finding_id"]), None)
         if target and target["placement"] and target["placement"]["surface"] == "ceiling":
-            position = survey.positions[next(c for c in confirmed if c["id"] == target["id"])["position_id"]]
-            room = survey.room(target["room_id"])
-            mesh = survey.mesh()
-            others = [survey.positions[pid] for pid in room["position_ids"] if pid != position["id"]]
-            bounds = None
-            if mesh is not None:
-                # A scan position beside an open door or closet sees a near surface
-                # where the wall should be, so the room's extent is the union of
-                # what each of its scan positions measured.
-                top = target["placement"]["center"][2]
-                boxes = []
-                for item in [position, *others]:
-                    origin = item["pose"]["position"]
-                    boxes.append(scan_geometry.room_bounds(mesh, (origin["x"], origin["y"], origin["z"]), item["floor_z"], top))
-                bounds = {
-                    "min": [min(box["min"][k] for box in boxes) for k in range(3)],
-                    "max": [max(box["max"][k] for box in boxes) for k in range(3)],
-                }
-            scenario = failure_scenarios.build_ceiling_scenario(target, room, [position, *others], bounds, forecast)
+            scenario = scenario_for(target, forecast)
             # The scenario's finding leads the report.
             findings.sort(key=lambda f: f["id"] != target["id"])
+    scenarios = [scenario] if scenario else []
+    for finding in findings:
+        if failure_scenarios.fits(finding) and not (scenario and finding["id"] == scenario["finding_id"]):
+            try:
+                scenarios.append(scenario_for(finding, None))
+            except ValueError:
+                continue  # a degenerate region: the finding is still reported, without a scenario
 
     evidence = {f["view_id"] for f in findings} | {f["second_view_id"] for f in findings if f["second_view_id"]} | {r["view_id"] for r in rejected}
-    if scenario:
-        evidence |= {view_id for item in scenario["projectors"] for view_id in item["faces"]}
+    evidence |= {view_id for item in scenarios for projector in item["projectors"] for view_id in projector["faces"]}
     surveyed = [room for room in survey.rooms if room["id"] in rooms_opened]
     not_surveyed = [room["name"] for room in survey.rooms if room["id"] not in rooms_opened] + list(survey.skipped_rooms)
     used = {PREVALENCE["reference_id"], "epa_moisture"}
-    if scenario:
-        used |= {"asce7_dead_loads", "nps_plaster", *scenario["repair_cost"]["reference_ids"]}
+    for item in scenarios:
+        used |= {"asce7_dead_loads", "nps_plaster", *item["repair_cost"]["reference_ids"]}
 
     if scenario:
         headline = f"{scenario['room_name']}: a ceiling section shows early signs of failing"
@@ -979,7 +1007,7 @@ def build_report(session: Session) -> dict:
     report = {
         "model_id": survey.model["id"], "model_name": survey.model["name"], "address": survey.model["address"],
         "region": survey.model["region"], "generated_at": datetime.now(timezone.utc).isoformat(),
-        "headline": headline, "summary": summary, "findings": findings, "rejected": rejected, "scenario": scenario,
+        "headline": headline, "summary": summary, "findings": findings, "rejected": rejected, "scenario": scenario, "scenarios": scenarios,
         "field_note": note, "prevalence": PREVALENCE,
         "rooms": [
             {
@@ -1018,6 +1046,14 @@ def validate_report(report: dict, survey: Survey | None = None) -> dict:
             raise AnalysisError("The scenario did not match a confirmed finding. No report was published.")
         if not {view_id for item in parsed.scenario["projectors"] for view_id in item["faces"]} <= cited:
             raise AnalysisError("The scenario cited an image outside the review's evidence. No report was published.")
+    confirmed_ids = {finding.id for finding in parsed.findings}
+    for item in parsed.scenarios:
+        if item.get("finding_id") not in confirmed_ids:
+            raise AnalysisError("A scenario did not match a confirmed finding. No report was published.")
+        if not {view_id for projector in item["projectors"] for view_id in projector["faces"]} <= cited:
+            raise AnalysisError("A scenario cited an image outside the review's evidence. No report was published.")
+    if parsed.scenario is not None and parsed.scenarios and parsed.scenarios[0].get("finding_id") != parsed.scenario.get("finding_id"):
+        raise AnalysisError("The lead scenario did not match the report. No report was published.")
     if parsed.provenance == "preview" and not parsed.provenance_note:
         raise AnalysisError("A preview report must say how it was assembled.")
     if not set(MANDATORY_LIMITATIONS) <= set(parsed.limitations):

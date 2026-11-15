@@ -168,6 +168,9 @@ def test_report_is_built_from_recorded_state_and_survives_a_round_trip(survey):
     assert scenario["finding_id"] == "F1" and scenario["calc"]["drop_height_m"] == 2.5
     assert [p["position_id"] for p in scenario["projectors"]] == ["R1-A", "R1-B"]
     assert scenario["bounds"]["min"][:2] == [-0.15, -0.15]
+    # The analyst's finding leads, in the analyst's words, with a way to fix it.
+    assert report["scenarios"][0] == scenario and scenario["written_by_analyst"] is True
+    assert scenario["repair_plan"]["professional"]["low"] == scenario["repair_cost"]["now"]["low"]
     assert {"R1-A-ceiling", "R1-B-ceiling", "R1-A-wall-1", "R1-B-floor"} <= set(report["evidence_ids"])
     assert set(ha.MANDATORY_LIMITATIONS) <= set(report["limitations"]) and report["provenance"] == "agents"
     assert {source["id"] for source in report["sources"]} == {"iii_water_claims", "epa_moisture", "asce7_dead_loads", "nps_plaster", "inchcalculator_drywall", "bobvila_water_damage"}
@@ -210,6 +213,9 @@ def test_report_validation_rejects_tampering(survey):
     broken(lambda r: r["findings"][0].update(view_id="R2-A-ceiling"))
     broken(lambda r: r["findings"][0]["box"].update(right=0.1))
     broken(lambda r: r["scenario"].update(finding_id="F9"))
+    broken(lambda r: r["scenarios"][0]["projectors"][0]["faces"].append("R7-A-ceiling"))
+    broken(lambda r: r["scenarios"].append({**r["scenarios"][0], "finding_id": "F9"}))
+    broken(lambda r: r["scenarios"].reverse() or r["scenarios"].insert(0, {**r["scenarios"][0], "finding_id": "F1x"}))
     broken(lambda r: r["limitations"].pop())
     broken(lambda r: r["sources"].append({"id": "x", "title": "Made up", "url": "https://example.com"}))
     broken(lambda r: r.update(model_id="other"))
@@ -351,3 +357,34 @@ def test_unconfigured_review_fails_before_any_work(survey, monkeypatch):
     with pytest.raises(ha.AnalysisError) as error:
         ha.run_assessment(survey)
     assert error.value.status_code == 503
+
+
+def test_openrouter_free_tier_daily_cap_is_final_not_a_wait():
+    daily = RuntimeError("Error code: 429 - Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day")
+    assert ha._limit(daily) == ("day",)
+    assert ha._limit(RuntimeError("Error code: 429 - Rate limit exceeded: free-models-per-min"))[0] == "minute"
+
+
+def test_every_confirmed_finding_a_mechanism_fits_gets_its_own_scenario(survey):
+    session = ha.Session(survey)
+    t = tools_for(session)
+    t["surveyor"]["open_room"].invoke({"room_id": "R1"})
+    for view in ("R1-A-ceiling", "R1-A-wall-1"):
+        t["surveyor"]["zoom"].invoke({"view_id": view})
+        t["skeptic"]["zoom"].invoke({"view_id": view})
+    t["surveyor"]["flag_observation"].invoke(FLAG)
+    t["surveyor"]["flag_observation"].invoke({**FLAG, "view_id": "R1-A-wall-1", "title": "Brown drip trails on the wall"})
+    for finding_id in ("F1", "F2"):
+        t["skeptic"]["rule"].invoke({"finding_id": finding_id, "verdict": "confirmed", "reason": "Visible.", "confidence": "low"})
+    t["analyst"]["zoom"].invoke({"view_id": "R1-A-ceiling"})
+    t["analyst"]["forecast"].invoke(FORECAST)
+    report = ha.build_report(session)
+    lead, wall = report["scenarios"]
+    assert report["scenario"] == lead and lead["finding_id"] == "F1" and lead["surface"] == "ceiling"
+    # The wall finding is not the analyst's, so it is described by the mechanism, and says so.
+    assert wall["finding_id"] == "F2" and wall["mechanism"] == "wall_moisture_damage" and wall["written_by_analyst"] is False
+    assert wall["kind"] == "stain" and "low confidence" in wall["why"]
+    # The room is measured to its ceiling, not cut off at the wall region's height.
+    assert wall["bounds"]["max"][2] == lead["bounds"]["max"][2]
+    assert {face for projector in wall["projectors"] for face in projector["faces"]} <= set(report["evidence_ids"])
+    assert ha.validate_report(report, survey) == report
