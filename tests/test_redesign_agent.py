@@ -175,3 +175,49 @@ def test_combined_design_cannot_hide_support_requirement():
     c = candidate('add_rib'); c.requires_added_support = True
     b = agent.CandidateBook(case(), agent.Constraints(allow_added_support=False), lambda e: None)
     assert b.submit('geometry_material', c)['status'] == 'rejected'
+
+
+# --- Failure-mode IDs from the image model (Nemotron) ----------------------------------
+
+def observation(mode, insufficient=False):
+    specimen = case().specimen
+    return agent.Observation(
+        visual_evidence=['Long splinter along the grain'], insufficient_image=insufficient,
+        insufficient_reason='Fracture face not visible' if insufficient else None, material='wood',
+        primary_mode=mode, confidence='medium', probable_cause='Bent past its limit.', summary='It snapped in bending.',
+        specimen=None if insufficient else diagnose._Specimen.model_validate(specimen.model_dump()),
+        alternative_modes=[])
+
+
+def test_schema_sent_to_the_model_lists_the_allowed_mode_ids():
+    enum = agent.Observation.model_json_schema()['properties']['primary_mode']['enum']
+
+    assert set(enum) == {*diagnose.mode_ids(diagnose.load_knowledge_base()), 'other', 'undetermined'}
+
+
+@pytest.mark.parametrize('answer, expected', [
+    ('bending_overload_wood', 'bending_overload_wood'),
+    ('Bending overload wood', 'bending_overload_wood'),     # case and spaces
+    ('Bending overload', 'bending_overload_wood'),          # the mode's display name
+    ('bending_overload', 'bending_overload_wood'),          # unique shortened ID
+    ('other/undetermined', 'undetermined'),                 # Nemotron echoing the prompt
+    ('overload', None),                                     # ambiguous: never guessed
+    ('corrosion', None),                                    # not in the knowledge base
+])
+def test_near_miss_mode_answers_are_matched_or_refused(answer, expected):
+    assert agent.normalise_mode(answer) == expected
+
+
+def test_insufficient_photo_is_accepted_whatever_mode_was_named():
+    result = observation('other/undetermined', insufficient=True).diagnosis()
+
+    assert result.insufficient_image and result.primary_mode == 'undetermined'
+
+
+def test_unknown_mode_error_names_the_value_the_model_returned():
+    with pytest.raises(agent.AgentError, match="'corrosion'"):
+        observation('corrosion').diagnosis()
+
+
+def test_matched_mode_reaches_the_diagnosis():
+    assert observation('Bending overload').diagnosis().primary_mode == 'bending_overload_wood'
