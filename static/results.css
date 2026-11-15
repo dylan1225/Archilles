@@ -23,11 +23,12 @@ details.fold > .fold-body { display: grid; gap: 8px; padding-bottom: 16px; }
 .agent-panel h3 { font: 500 17px/1.3 var(--font-sans); }
 .agent-panel details > summary { cursor: pointer; padding: 6px 0; }
 
-/* The +/− glyph shared by every drop-down. */
-.plus { flex: none; margin-left: auto; display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
+/* The +/− glyph shared by every drop-down (scoped to <summary>, so the
+   drop zone's own "+" icon is left alone). */
+summary .plus { flex: none; margin-left: auto; display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
   border: 1px solid var(--line-strong); color: var(--blue-ink); font: 300 20px/1 var(--font-sans);
   transition: background .3s var(--ease), color .3s var(--ease), border-color .3s var(--ease); }
-.plus::before { content: "+"; }
+summary .plus::before { content: "+"; }
 details[open] > summary .plus { background: var(--ink); border-color: var(--ink); color: #fff; }
 details[open] > summary .plus::before { content: "\2212"; }
 summary:hover .plus { border-color: var(--blue); }

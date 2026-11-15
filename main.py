@@ -87,6 +87,11 @@ def index() -> FileResponse:
     return FileResponse(INDEX_PATH)
 
 
+@app.get("/postmortem")
+def postmortem_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "postmortem.html")
+
+
 @app.get("/interiors")
 def building_interiors() -> FileResponse:
     return FileResponse(STATIC_DIR / "interiors.html")

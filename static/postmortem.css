@@ -81,7 +81,7 @@ html.gated .brand:not(.placed) { visibility: hidden; }
 .mode-card .go span { display: inline-grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--line-strong); font-size: 20px;
   transition: background .5s var(--ease), color .5s var(--ease), transform .6s var(--ease); }
 .mode-card:hover .go span { background: var(--ink); color: var(--bg); transform: rotate(-45deg); }
-.mode-card.future:hover .go span { transform: none; }
+.mode-card.future:hover .go span, .mode-card.past:hover .go span { transform: none; }
 @media (max-width: 860px) {
   .modes { grid-template-columns: 1fr; }
   .mode-card { min-height: 0; }
