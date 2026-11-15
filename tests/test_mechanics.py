@@ -220,3 +220,24 @@ def test_wall_thickness_rejects_unknown_process():
 def test_wall_thickness_rejects_non_positive_measurement(measured):
     with pytest.raises(ValueError):
         min_wall_thickness_check(measured)
+
+
+# --- Peak stress at a stated reference load -----------------------------------
+
+
+def test_fillet_improvement_gives_peak_stress_at_a_reference_nominal_stress():
+    result = fillet_improvement(0.0, 3.0, 10.0)
+
+    assert result["reference_nominal_stress_mpa"] == 10.0
+    # Peak = Kt x nominal, from the same rounded Kt values the card shows.
+    assert result["peak_stress_current_mpa"] == pytest.approx(result["kt_current"] * 10.0)
+    assert result["peak_stress_proposed_mpa"] == pytest.approx(result["kt_proposed"] * 10.0)
+    assert result["peak_stress_current_mpa"] > result["peak_stress_proposed_mpa"]
+
+
+def test_reference_peak_stresses_agree_with_the_percent_reduction():
+    result = fillet_improvement(0.5, 2.0, 10.0)
+
+    drop = 1 - result["peak_stress_proposed_mpa"] / result["peak_stress_current_mpa"]
+
+    assert drop * 100 == pytest.approx(result["peak_stress_reduction_pct"], abs=0.05)

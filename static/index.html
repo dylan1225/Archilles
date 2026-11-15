@@ -418,6 +418,17 @@ function calcFigures(computed) {
     ? `Peak stress drops ${computed.reduction_is_lower_bound ? "≥ " : "~"}${Math.round(pct)}%`
     : pct < 0 ? `Peak stress rises ~${Math.round(-pct)}%` : "No change in peak stress";
   box.append(result);
+  if (typeof computed.peak_before_mpa === "number" && typeof computed.peak_after_mpa === "number") {
+    // Worked example at a stated reference load, computed by mechanics.py.
+    const nominal = plain(computed.reference_nominal_stress_mpa, 1);
+    const worked = el("div", "calc-worked");
+    worked.append(
+      el("span", "calc-worked-label", `At a reference ${nominal} MPa nominal stress`),
+      el("span", "calc-worked-figures", `Peak ${plain(computed.peak_before_mpa, 1)} MPa → ${plain(computed.peak_after_mpa, 1)} MPa`),
+      el("small", "", "Reference load for illustration, not this part's measured load. Peak = Kt × nominal stress."),
+    );
+    box.append(worked);
+  }
   if (computed.is_capped) {
     box.append(el("div", "calc-note",
       `⚠ Estimated, outside the tabulated range: a sharp corner has no finite Kt, so ${plain(computed.kt_before)} is a capped lower bound. The real drop is at least this.`));
