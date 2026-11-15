@@ -1,4 +1,9 @@
 filename,true_mode,material,how_it_broke,difficulty
-null_intact_bar.jpg,not_applicable,fdm_print,intact printed bar (null specimen),easy
-null_clean_bolt.jpg,not_applicable,metal,clean intact bolt (null specimen),easy
-null_not_a_part.jpg,not_applicable,other,not a part at all (null specimen),easy
+brittle_plastic_print.jpg.jfif,brittle_fracture_polymer,fdm_print,not recorded,unknown
+metal_fatigue_01.jfif,fatigue_metal,metal,not recorded,unknown
+metal_overload_02.jpg,ductile_overload_metal,metal,not recorded,unknown
+printbar_infill0.jpg,infill_shear_fdm,fdm_print,0 percent infill crushed in a vise,easy
+printbar_infill0_01.jpg,infill_shear_fdm,fdm_print,0 percent infill crushed in a vise,easy
+printbar_underextrude_14.jpg,under_extrusion_porosity_fdm,fdm_print,printed at 68 percent flow then snapped in three-point bend,hard
+torsional_grain_shear_wood.jpg,torsional_grain_shear_wood,wood,not recorded,unknown
+wood_bend_overload.jpg,bending_overload_wood,wood,not recorded,unknown
