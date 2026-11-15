@@ -84,6 +84,10 @@ class HouseAnalysis extends HTMLElement {
     this.configured = null;
     this.busy = false;
     this.viewer3d = null;
+    this.activityEvents = [];
+    this.pendingOutcome = null;
+    this.activityTimer = null;
+    this.terminalActivityDelay = null;
   }
 
   connectedCallback() {
@@ -114,7 +118,7 @@ class HouseAnalysis extends HTMLElement {
             <div class="initial-state"><span class="outline-house" aria-hidden="true">⌂</span><p class="eyebrow">EVIDENCE BEFORE CONCLUSIONS</p><h3>Small signs. Earlier attention.</h3><p>Pick a flagged building, or any building in the collection, then run the review to see what the agents find and what it could lead to.</p></div>
             <div class="progress" hidden role="status" aria-live="polite"><span class="spinner" aria-hidden="true"></span><div><p class="progress-stage">Preparing review</p><p class="progress-message">Loading the scan.</p><span class="elapsed"></span></div></div>
             <ol class="activity live-activity" hidden aria-label="Agent activity"></ol>
-            <div class="assessment-error" hidden role="alert"><strong>The review couldn’t finish.</strong><p class="error-message"></p><p>No report was published.</p></div>
+            <div class="assessment-error" hidden role="alert"><strong>Review paused.</strong><p class="error-message"></p><p>The recorded activity is kept above. Run a fresh review to try again.</p></div>
             <div class="report" hidden></div>
           </div>
         </div>
@@ -149,6 +153,11 @@ class HouseAnalysis extends HTMLElement {
     this.request?.abort();
     clearTimeout(this.pollTimer);
     clearInterval(this.elapsedTimer);
+    clearTimeout(this.activityTimer);
+    this.activityTimer = null;
+    this.activityEvents = [];
+    this.pendingOutcome = null;
+    this.terminalActivityDelay = null;
   }
 
   disposeViewer() {
@@ -270,30 +279,73 @@ class HouseAnalysis extends HTMLElement {
       const job = await response.json();
       if (version !== this.version || !this.isConnected) return;
       if (!response.ok) throw new Error(job.error || 'The review service lost this review. Please try again.');
-      this.$('.progress-stage').textContent = typeof job.stage === 'string' ? job.stage.replaceAll('_', ' ') : 'Reviewing';
-      this.$('.progress-message').textContent = job.message || 'The review is running.';
-      this.renderActivity(this.$('.live-activity'), job.activity, true);
+      this.activityEvents = Array.isArray(job.activity) ? job.activity : [];
       if (job.status === 'completed') {
         if (!job.report || job.report.model_id !== this.house.id) throw new Error('The report does not match the selected building. Please start a new review.');
-        this.busy = false;
         clearInterval(this.elapsedTimer);
-        this.$('.progress').hidden = true;
-        this.$('.live-activity').hidden = true;
-        this.renderReport(job.report, job.activity, job.evidence_base);
+        this.pendingOutcome = job;
       } else if (job.status === 'failed') {
-        this.fail(job.error || 'The review could not finish. Please try again.');
+        clearInterval(this.elapsedTimer);
+        this.pendingOutcome = job;
       } else if (job.status === 'queued' || job.status === 'running') {
+        this.$('.progress-stage').textContent = typeof job.stage === 'string' ? job.stage.replaceAll('_', ' ') : 'Reviewing';
+        this.$('.progress-message').textContent = job.message || 'The review is running.';
         this.pollTimer = setTimeout(() => this.pollJob(jobId, version), 1500);
       } else throw new Error('The review service returned an unknown status.');
+      if (this.pendingOutcome) {
+        this.$('.progress-stage').textContent = 'Review activity';
+        this.$('.progress-message').textContent = 'Showing the final recorded steps.';
+      }
+      this.playActivity(version);
     } catch (error) {
-      if (version === this.version && error.name !== 'AbortError') this.fail(error.message);
+      if (version === this.version && error.name !== 'AbortError') {
+        this.pendingOutcome = { status: 'failed', error: error.message };
+        clearInterval(this.elapsedTimer);
+        this.$('.progress-stage').textContent = 'Review activity';
+        this.$('.progress-message').textContent = 'Showing the final recorded steps.';
+        this.playActivity(version);
+      }
     }
+  }
+
+  // Play only recorded tool activity. Never invent work when a provider stops.
+  playActivity(version) {
+    if (version !== this.version || !this.isConnected || this.activityTimer !== null) return;
+    const list = this.$('.live-activity');
+    const shown = list.childElementCount;
+    if (shown < this.activityEvents.length) {
+      this.renderActivity(list, this.activityEvents.slice(0, shown + 1), true);
+      // Keep batched responses readable, without adding minutes to a long run.
+      if (this.pendingOutcome && this.terminalActivityDelay === null) {
+        this.terminalActivityDelay = Math.min(700, 20000 / (this.activityEvents.length - shown));
+      }
+      const delay = this.pendingOutcome ? this.terminalActivityDelay : 700;
+      this.activityTimer = setTimeout(() => {
+        this.activityTimer = null;
+        this.playActivity(version);
+      }, delay);
+      return;
+    }
+    const outcome = this.pendingOutcome;
+    if (!outcome) return;
+    this.pendingOutcome = null;
+    if (outcome.status === 'failed') {
+      this.fail(outcome.error || 'The review paused before all tasks were complete. Please try again.');
+      return;
+    }
+    this.busy = false;
+    this.$('.progress').hidden = true;
+    this.$('.live-activity').hidden = true;
+    this.renderReport(outcome.report, outcome.activity, outcome.evidence_base);
   }
 
   fail(message) {
     this.busy = false;
     clearInterval(this.elapsedTimer);
     clearTimeout(this.pollTimer);
+    clearTimeout(this.activityTimer);
+    this.activityTimer = null;
+    this.pendingOutcome = null;
     this.$('.progress').hidden = true;
     this.$('.error-message').textContent = message;
     this.$('.assessment-error').hidden = false;

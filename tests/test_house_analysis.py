@@ -315,9 +315,11 @@ def test_an_unfinished_review_is_never_published(survey, monkeypatch):
         tools_for(session)["surveyor"]["open_room"].invoke({"room_id": "R1"})  # opens a room, finishes nothing
 
     monkeypatch.setattr(ha, "_run_lead", lazy_lead)
+    events = []
     with pytest.raises(ha.AnalysisError, match="could not finish"):
-        ha.run_assessment(survey)
+        ha.run_assessment(survey, on_activity=events.append)
     assert len(runs) == ha.MAX_LEAD_RUNS and runs[1].startswith("Resume")
+    assert [event["round"] for event in events if "round" in event] == [1, 2, 3]
 
     def quota(session, _session, instruction):
         raise ha.QuotaExhausted
@@ -326,6 +328,22 @@ def test_an_unfinished_review_is_never_published(survey, monkeypatch):
     with pytest.raises(ha.AnalysisError, match="ran out of quota or credit") as error:
         ha.run_assessment(survey)
     assert error.value.status_code == 429
+
+
+def test_lead_startup_failures_get_three_recovery_rounds(survey, monkeypatch):
+    monkeypatch.setattr(ha, "analysis_config", lambda: {"configured": True, "models": ["m"]})
+    monkeypatch.setattr(ha, "_chat_model", lambda name: object())
+    starts = []
+
+    def interrupted_start(model, session):
+        starts.append(session)
+        raise RuntimeError("temporary startup failure")
+
+    monkeypatch.setattr(ha, "build_lead", interrupted_start)
+    with pytest.raises(ha.AnalysisError, match="could not finish"):
+        ha.run_assessment(survey)
+    assert len(starts) == 3
+    assert all(session is starts[0] for session in starts)
 
 
 def test_a_review_resumes_after_a_failed_run_and_publishes_when_complete(survey, monkeypatch):

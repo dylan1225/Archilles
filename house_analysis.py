@@ -1097,18 +1097,23 @@ def run_assessment(survey: Survey, progress: Callable | None = None, on_activity
         notify("reviewing", "The lead agent is sending a surveyor into every room.")
         session.log("system", f"review started · {len(survey.rooms)} rooms · {len(survey.positions)} scan positions")
         for attempt in range(MAX_LEAD_RUNS):
+            round_label = f"Review round {attempt + 1} of {MAX_LEAD_RUNS}"
+            notify("reviewing", f"{round_label} · the lead is coordinating the remaining inspection tasks.")
+            session.log("system", f"{round_label.lower()} · starting the lead coordinator", round=attempt + 1)
             instruction = (
                 f"Review this building: {survey.model['name']}." if attempt == 0
                 else "Resume this building's review. Call review_status and delegate exactly the unfinished work it lists."
             )
-            lead = build_lead(model, session)
             try:
+                lead = build_lead(model, session)
                 _run_lead(lead, session, instruction)
             except QuotaExhausted:
                 raise AnalysisError(
                     "The vision service ran out of quota or credit partway through the review. No report was published. "
                     "Add credit, list more models in HOUSE_ANALYSIS_MODEL, or try again after the quota resets.", 429,
                 ) from None
+            except ImportError:
+                raise
             except Exception as exc:  # provider or graph failure: the session keeps what was done
                 logger.warning("Review lead run %d failed (%s)", attempt + 1, type(exc).__name__)
             if session.done():
