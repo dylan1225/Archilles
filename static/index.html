@@ -51,6 +51,13 @@
 
   main { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 22px;
     padding: 22px 24px 56px; max-width: 1440px; margin: 0 auto; align-items: start; }
+  main.has-result { grid-template-columns: 260px minmax(0, 1fr); }
+  .has-result #camera, .has-result #analyse-step { display: none; }
+  .has-result .drop { min-height: 0; padding: 8px; }
+  .has-result .drop img { max-height: 170px; }
+  #another-part { display: none; }
+  .has-result #another-part { display: inline-flex; }
+  @media (max-width: 920px) { main.has-result { grid-template-columns: minmax(0, 1fr); } }
   @media (max-width: 920px) { main { grid-template-columns: minmax(0, 1fr); padding: 16px; }
     header.site { padding: 12px 16px; } .tagline { display: none; } }
   .stack > * + * { margin-top: 18px; }
@@ -114,7 +121,7 @@
     border: 1px solid var(--line); border-radius: 2px; font-size: var(--fs-base); }
   .field-label { display: block; font: 600 var(--fs-base)/1.3 var(--serif); }
   .field-label .muted { display: block; font: var(--fs-xs)/1.35 var(--sans); }
-  select#material { width: 100%; min-height: 44px; margin-top: 6px; padding: 8px 10px; border: 1px solid var(--line);
+  select#engine, select#material { width: 100%; min-height: 44px; margin-top: 6px; padding: 8px 10px; border: 1px solid var(--line);
     border-radius: 2px; background: #fff; font-size: var(--fs-base); }
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px;
     padding: 8px 14px; border: 1px solid var(--line-strong); border-radius: 2px; background: var(--card); cursor: pointer; font-size: var(--fs-base); }
@@ -132,6 +139,14 @@
   .collection .numeral { font: 600 var(--fs-base)/1 var(--serif); color: var(--orange-ink); min-width: 26px; }
   .collection .what { display: block; font-size: var(--fs-sm); color: var(--muted); }
 
+  .agent-options { padding: 14px 18px; }
+  .agent-options label { display: block; margin: 12px 0 6px; font-size: var(--fs-sm); }
+  .agent-options input[type="number"] { width: 100%; min-height: 44px; padding: 8px; border: 1px solid var(--line); }
+  .agent-options input[type="checkbox"] { accent-color: var(--orange-ink); }
+  .agent-log { max-height: 240px; overflow: auto; padding-left: 20px; font-size: var(--fs-sm); }
+  .agent-panel .panel-body > * + * { margin-top: 12px; }
+  .agent-panel .btn { font-family: var(--serif); }
+  #agent-availability { font-size: var(--fs-xs); color: var(--muted); }
   /* --- Empty / loading / errors ------------------------------------------ */
   .empty, .loading { padding: 64px 24px; text-align: center; color: var(--muted); }
   .empty strong, .loading strong { display: block; color: var(--ink); font: 600 var(--fs-lg)/1.3 var(--serif); margin-bottom: 8px; }
@@ -177,16 +192,14 @@
     border-bottom: 1px solid var(--line); }
   .exhibit-head h2 { font: 600 var(--fs-lg)/1.2 var(--serif); }
   .exhibit-head .kicker { display: block; font: 600 var(--fs-xs)/1.2 var(--serif); letter-spacing: .18em; text-transform: uppercase; color: var(--orange-ink); }
-  .seg { display: flex; margin-left: auto; max-width: 100%; overflow-x: auto; border: 1px solid var(--line-strong);
-    border-radius: 2px; background: var(--paper); scrollbar-width: thin; }
-  .seg button { flex: none; min-height: 44px; padding: 6px 14px; border: 0; border-right: 1px solid var(--line); background: transparent;
-    cursor: pointer; font: 600 var(--fs-sm)/1.15 var(--serif); color: var(--muted); white-space: nowrap; max-width: 26ch;
-    overflow: hidden; text-overflow: ellipsis; }
-  .seg button:last-child { border-right: 0; }
-  .seg button:hover { color: var(--ink); background: var(--stone); }
-  .seg button[aria-checked="true"] { background: var(--ink); color: var(--paper); }
-  .seg button[aria-checked="true"].sol { background: var(--orange); color: #1b1006; }
-  @media (max-width: 760px) { .seg { margin-left: 0; width: 100%; } }
+  .seg { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+  .seg button { flex: 1 1 auto; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line-strong);
+    border-radius: 2px; background: var(--paper); cursor: pointer;
+    font: 600 var(--fs-sm)/1.35 var(--serif); color: var(--ink); white-space: normal; overflow-wrap: anywhere; }
+  .seg button:hover { background: var(--orange-wash); border-color: var(--orange-ink); }
+  .seg button[aria-checked="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .seg button[aria-checked="true"].sol { background: var(--orange); border-color: var(--orange); color: #1b1006; }
+  @media (max-width: 600px) { .seg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
   .exhibit-body { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
   @media (max-width: 1120px) { .exhibit-body { grid-template-columns: minmax(0, 1fr); } }
@@ -212,11 +225,14 @@
   .stage.labels-off .v3d-callout { display: none; }
   .v3d-callout[data-tone="fracture"] > i { background: #9b2226; box-shadow: 0 0 0 4px rgba(155, 34, 38, .22); }
   .v3d-callout[data-tone="fracture"] > span { border-left-color: #c2453c; }
-  .stage-tools { position: absolute; left: 12px; right: 12px; bottom: 10px; display: flex; align-items: center; gap: 10px; pointer-events: none; }
-  .stage-tools .hint { font: var(--fs-xs)/1.2 var(--sans); color: var(--muted); background: rgba(251, 248, 241, .9); padding: 5px 8px; border-radius: 2px; }
-  .stage-tools .tool-group { margin-left: auto; display: flex; gap: 8px; pointer-events: auto; }
-  .stage-tools .btn { min-height: 36px; padding: 4px 12px; font-size: var(--fs-sm); background: rgba(251, 248, 241, .94); }
-  .stage-tools .btn[aria-pressed="true"] { border-color: var(--ink); }
+  .stage-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 0;
+    border-bottom: 1px solid var(--line); }
+  .stage-tools .hint { flex: 1 1 150px; font: var(--fs-xs)/1.45 var(--sans); color: var(--muted); }
+  .stage-tools .tool-group { display: flex; flex-wrap: wrap; gap: 8px; }
+  .stage-tools .btn { min-height: 44px; padding: 8px 12px; font: 600 var(--fs-sm)/1.2 var(--serif);
+    color: var(--ink); background: var(--paper); border: 1px solid var(--line-strong); }
+  .stage-tools .btn:hover { background: var(--orange-wash); border-color: var(--orange-ink); }
+  .stage-tools .btn[aria-pressed="true"] { color: var(--orange-ink); background: var(--orange-wash); border-color: var(--orange-ink); }
   .vitrine figcaption { margin-top: 10px; font: italic var(--fs-sm)/1.45 var(--serif); color: var(--muted); }
   .vitrine figcaption b { font-style: normal; font-weight: 600; color: var(--ink); }
 
@@ -242,6 +258,12 @@
   .pros li::before, .cons li::before { position: absolute; left: 0; font: 700 var(--fs-base)/1.55 var(--mono); }
   .pros li::before { content: "+"; color: var(--good); }
   .cons li::before { content: "\2212"; color: var(--bad); }
+  /* Calculated figures inside Pros / Cons: monospace, green, tagged, never prose. */
+  .pros li.calc-item, .cons li.calc-item { margin: 4px 0; padding: 7px 10px 7px 30px; border-left: 3px solid var(--calc);
+    background: var(--calc-bg); color: #10241c; font: 600 var(--fs-sm)/1.45 var(--mono); }
+  .pros li.calc-item::before, .cons li.calc-item::before { left: 11px; top: 7px; line-height: 1.45; }
+  .calc-tag { display: inline-block; margin-right: 8px; padding: 2px 6px; border-radius: 2px; background: var(--calc);
+    color: #f2f7f3; font: 700 var(--fs-xs)/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; vertical-align: 1px; }
   .proscons { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
   @media (max-width: 600px) { .proscons { grid-template-columns: 1fr; } }
   .proscons > div { padding: 12px 14px; border: 1px solid var(--line); border-radius: 2px; background: var(--card); }
@@ -384,7 +406,7 @@
             </select>
           </div>
         </details>
-        <div class="step">
+        <div class="step" id="analyse-step">
           <span class="step-n" aria-hidden="true">3</span>
           <span class="step-title">Analyse</span>
           <div class="step-body">
@@ -393,6 +415,19 @@
         </div>
       </div>
     </div>
+    <details class="panel agent-options" id="agent-options">
+      <summary>Design constraints &amp; analysis mode</summary>
+      <label for="engine">Analysis mode</label>
+      <select id="engine"><option value="gemini">Gemini · original pipeline</option><option value="deep" disabled>Deep Agents · Nemotron</option></select>
+      <p id="agent-availability">Checking agent availability…</p>
+      <label for="design-note">Your constraints (retained for follow-up redesigns)</label>
+      <textarea id="design-note" maxlength="2000" placeholder="e.g. Beginner tools only. Keep the same mounting holes."></textarea>
+      <label for="weight-limit">Maximum added weight (%) · optional</label>
+      <input id="weight-limit" type="number" min="0" max="1000" placeholder="e.g. 30">
+      <label><input id="keep-material" type="checkbox" checked> Keep the same material</label>
+      <label><input id="allow-support" type="checkbox" checked> Additional supports allowed</label>
+    </details>
+    <button class="btn wide" id="another-part" type="button">Analyse another part</button>
     <details class="panel fold" id="collection" open>
       <summary><span class="fold-title">From the collection</span><span class="row-count">3</span><span class="chev" aria-hidden="true"></span></summary>
       <div class="panel-body collection">
@@ -454,6 +489,8 @@ let photoUrl = null;
 let busy = false;
 let timer = null;
 let viewer = null;
+let currentDiagnosis = null;
+let agentAvailable = false;
 
 /** Build an element. Text always goes in via textContent, never as HTML. */
 function el(tag, className, text) {
@@ -484,6 +521,7 @@ function setStatus(state, text) {
 function setBusy(value) {
   busy = value;
   $("analyse").disabled = value || !selectedFile;
+  document.querySelectorAll("[data-redesign]").forEach(button => { button.disabled = value || !agentAvailable; });
   document.querySelectorAll("[data-example]").forEach((button) => { button.disabled = value; });
 }
 
@@ -1149,23 +1187,91 @@ function solutionTags(solution) {
   return tags;
 }
 
+/** "+8.1–10.1" or "−3.2–4.0" for a signed range. */
+function signedSpan(range, digits = 1) {
+  const sign = range[0] + range[1] >= 0 ? "+" : "−";
+  return `${sign}${span(range.map(Math.abs).sort((a, b) => a - b), digits)}`;
+}
+
+/** True when the middle of a ratio range is an improvement. */
+function better(range, higherIsBetter) {
+  const middle = (range[0] + range[1]) / 2;
+  return higherIsBetter ? middle >= 1 : middle <= 1;
+}
+
+/**
+ * The fix's calculated numbers, phrased as pros or cons with units, so the
+ * model's words ("increases weight slightly") sit next to the real figure.
+ * Formatting only: every number comes from the server (mechanics.py,
+ * materials.py), never from the model.
+ */
+function calculatedEffects(solution) {
+  const pros = [];
+  const cons = [];
+  const put = (good, text) => (good ? pros : cons).push(text);
+
+  const fillet = solution.computed;
+  if (fillet && !fillet.error && !fillet.needs_input && typeof fillet.stress_reduction_pct === "number") {
+    const pct = fillet.stress_reduction_pct;
+    const bound = fillet.reduction_is_lower_bound ? "≥" : "≈";
+    put(pct >= 0, `Peak stress ${pct >= 0 ? "down" : "up"} ${bound} ${Math.round(Math.abs(pct))} % `
+      + `(Kt ${plain(fillet.kt_before)} → ${plain(fillet.kt_after)}, d = ${plain(fillet.inputs.section_depth_mm, 1)} mm)`);
+  }
+
+  const section = solution.section_computed;
+  if (section && !section.error && !section.needs_input) {
+    const change = `${sectionText(section.inputs, "current")} → ${sectionText(section.inputs, "proposed")}`;
+    put(section.strength_ratio >= 1, `Bending strength ×${plain(section.strength_ratio)}, `
+      + `stiffness ×${plain(section.stiffness_ratio)} (${change})`);
+    const grams = section.mass_added_g
+      ? ` (${signedSpan(section.mass_added_g)} g: ${span(section.mass_before_g)} → ${span(section.mass_after_g)} g)`
+      : " (pick a material and length for grams)";
+    put(section.weight_ratio <= 1, `Weight ×${plain(section.weight_ratio)}${grams}`);
+  }
+
+  const swap = solution.material_comparison;
+  if (swap && swap.from) {
+    put(better(swap.strength_ratio, true), `Strength ×${span(swap.strength_ratio, 2)} `
+      + `(${span(swap.from.strength_mpa, 0)} → ${span(swap.to.strength_mpa, 0)} MPa`
+      + `${swap.strength_like_for_like ? "" : ", measured differently"})`);
+    put(better(swap.stiffness_ratio, true), `Stiffness ×${span(swap.stiffness_ratio, 2)} `
+      + `(${span(swap.from.modulus_gpa)} → ${span(swap.to.modulus_gpa)} GPa)`);
+    put(better(swap.weight_ratio, false), `Weight ×${span(swap.weight_ratio, 2)} `
+      + `(density ${span(swap.from.density_g_cm3, 2)} → ${span(swap.to.density_g_cm3, 2)} g/cm³)`);
+  }
+  return { pros, cons };
+}
+
+/** The model's items, led by any calculated items, which are marked as such. */
+function effectList(modelItems, calcItems, className) {
+  const list = el("ul", className);
+  for (const text of calcItems) {
+    const item = el("li", "calc-item");
+    item.append(el("span", "calc-tag", "Calculated"), text);
+    list.append(item);
+  }
+  modelItems.forEach((text) => list.append(glossed("li", "", text)));
+  return list;
+}
+
 function prosAndCons(solution) {
+  const calc = calculatedEffects(solution);
   const proscons = el("div", "proscons");
   const pros = el("div");
-  pros.append(el("span", "label", "Pros"), renderList(solution.pros, "pros"));
+  pros.append(el("span", "label", "Pros"), effectList(solution.pros, calc.pros, "pros"));
   const cons = el("div");
-  cons.append(el("span", "label", "Cons"), renderList(solution.cons, "cons"));
+  cons.append(el("span", "label", "Cons"), effectList(solution.cons, calc.cons, "cons"));
   proscons.append(pros, cons);
   return proscons;
 }
 
 /** A small open-by-default drop-down for the description panel (Pros, Cons). */
-function miniRow(title, items, className) {
+function miniRow(title, items, className, calcItems = []) {
   const details = el("details", "mini");
   details.open = true;
   const summary = el("summary");
-  summary.append(el("span", "label", `${title} (${items.length})`), el("span", "chev"));
-  details.append(summary, renderList(items, className));
+  summary.append(el("span", "label", `${title} (${items.length + calcItems.length})`), el("span", "chev"));
+  details.append(summary, effectList(items, calcItems, className));
   return details;
 }
 
@@ -1193,20 +1299,22 @@ function placardAsFound(d) {
     el("div", "kicker", "As found · before any change"),
     el("h3", "", modeName(d)),
     el("div", "rule"),
-    glossed("p", "", d.probable_cause || "Not determined."),
-    el("p", "hint-below", "Choose a fix above to see it built into the part."),
+    el("p", "", "The red marker shows the break in this schematic. Rotate the part to inspect it, then choose a fix above to compare the change."),
+    el("p", "hint-below", "Open “What the photo shows” below to explore the evidence behind the diagnosis."),
   ];
 }
 
 function placardSolution(solution, index, total) {
+  const calc = calculatedEffects(solution);
   const parts = [
     el("div", "kicker", `Fix ${index + 1} of ${total}`),
     el("h3", "", solution.title),
     solutionTags(solution),
     el("div", "rule"),
+    el("p", "label", "What changes"),
     glossed("p", "", solution.description),
-    miniRow("Pros", solution.pros, "pros"),
-    miniRow("Cons", solution.cons, "cons"),
+    miniRow("Why it helps", solution.pros, "pros", calc.pros),
+    miniRow("Tradeoffs", solution.cons, "cons", calc.cons),
   ];
   if (solution.computed || solution.section_computed || solution.material_comparison) {
     parts.push(el("p", "hint-below", "Calculated and reference figures for this fix are below the model."));
@@ -1224,6 +1332,17 @@ function vitrineCaption(specimen, info) {
   return caption;
 }
 
+const FIX_LABELS = {
+  add_support: "Add support", move_load: "Move load", thicken_section: "Thicken section",
+  change_material: "Change material", add_fillet: "Round corner", reinforce_feature: "Reinforce opening",
+  relocate_feature: "Move opening", densify_infill: "Increase infill", reorient_layers: "Reorient layers",
+  add_rib: "Add rib", surface_treatment: "Treat surface",
+};
+function fixLabel(solution, specimen) {
+  if (solution.visual?.kind === "thicken_section" && specimen.shape === "round_rod") return "Thicken rod";
+  return FIX_LABELS[solution.visual?.kind] || solution.visual?.label || solution.title;
+}
+
 function renderExhibit(d) {
   const shown = d.solutions.slice(0, EXHIBIT_SOLUTIONS);
   const section = el("section", "panel exhibit");
@@ -1235,8 +1354,8 @@ function renderExhibit(d) {
   const seg = el("div", "seg");
   seg.setAttribute("role", "radiogroup");
   seg.setAttribute("aria-label", "Show the part as found or with a fix applied");
-  const options = [{ index: null, text: "As found" },
-    ...shown.map((solution, i) => ({ index: i, text: `${i + 1} · ${(solution.visual && solution.visual.label) || solution.title}` }))];
+  const options = [{ index: null, text: "Original" },
+    ...shown.map((solution, i) => ({ index: i, text: `${i + 1} · ${fixLabel(solution, d.specimen)}` }))];
   const buttons = options.map((option) => {
     const button = el("button", option.index === null ? "" : "sol", option.text);
     button.type = "button";
@@ -1260,8 +1379,9 @@ function renderExhibit(d) {
   labelToggle.type = "button";
   const setLabels = (hidden) => {
     stage.classList.toggle("labels-off", hidden);
-    labelToggle.textContent = hidden ? "Show label" : "Hide label";
-    labelToggle.setAttribute("aria-pressed", String(hidden));
+    labelToggle.textContent = hidden ? "Labels: off" : "Labels: on";
+    labelToggle.setAttribute("aria-label", "Show labels");
+    labelToggle.setAttribute("aria-pressed", String(!hidden));
     try { localStorage.setItem(LABELS_KEY, hidden ? "hidden" : "shown"); } catch { /* private mode: not remembered */ }
   };
   let labelsHidden = false;
@@ -1331,11 +1451,13 @@ function renderExhibit(d) {
 
 /** Fold the left column once a result is showing, so the result has the room. */
 function foldInputs() {
+  document.querySelector("main").classList.add("has-result");
   $("describe").open = false;
   $("collection").open = false;
 }
 
-function showDiagnosis(d, meta, roundTripSeconds) {
+function showDiagnosis(d, meta, roundTripSeconds, agentReport = null) {
+  currentDiagnosis = d;
   clearInterval(timer);
   const parts = [];
   if (d.insufficient_image) {
@@ -1351,9 +1473,114 @@ function showDiagnosis(d, meta, roundTripSeconds) {
     }
     setStatus("done", "COMPLETE");
   }
+  if (!d.insufficient_image) parts.push(renderAgentPanel(agentReport));
   showOutput(...parts);
   foldInputs();
 }
+
+// --- Deep Agents: actual events, retained results and explicit constraints ---
+function readConstraints() {
+  if (!$("weight-limit").reportValidity()) return null;
+  return { note: $("design-note").value.trim(),
+    max_weight_increase_pct: $("weight-limit").value === "" ? null : Number($("weight-limit").value),
+    keep_material: $("keep-material").checked, allow_added_support: $("allow-support").checked };
+}
+
+function renderAgentPanel(report) {
+  const box = panel("Redesign workshop");
+  box.classList.add("agent-panel");
+  const content = body(el("p", "", "Compare specialist designs using your constraints and engineering calculation tools. Follow-up runs reuse this diagnosis."));
+  const edit = el("button", "btn", "Edit constraints");
+  edit.type = "button";
+  edit.addEventListener("click", () => { $("agent-options").open = true; $("design-note").focus(); });
+  const button = el("button", "btn", report ? "Refine these fixes" : "Explore designs with Deep Agents");
+  button.type = "button";
+  button.dataset.redesign = "true";
+  button.disabled = !agentAvailable || busy;
+  button.addEventListener("click", () => {
+    const constraints = readConstraints();
+    if (constraints) runAgents("/redesign", {method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ diagnosis: currentDiagnosis, constraints })});
+  });
+  content.append(edit, button);
+  if (!agentAvailable) content.append(el("p", "muted", "Agent mode needs its optional dependencies and OpenRouter configuration. The original analysis remains available."));
+  if (report) {
+    content.append(el("h3", "", "Why these designs"), el("p", "", report.explanation));
+    for (const candidate of report.candidates) {
+      const selected = report.selected_ids.includes(candidate.id);
+      const details = document.createElement("details");
+      details.append(el("summary", "", `${selected ? "Selected" : "Not selected"} · ${candidate.solution.title} · ${candidate.status}`));
+      details.append(el("p", "", `Specialist: ${candidate.specialist.replaceAll("_", " ")}`));
+      for (const warning of [...candidate.violations, ...candidate.unverified, ...candidate.assumptions]) details.append(el("p", "muted", warning));
+      content.append(details);
+    }
+    content.append(el("h3", "", "Test the redesign"), renderList(report.test_plan));
+    if (report.unresolved_questions.length) content.append(el("h3", "", "Still to confirm"), renderList(report.unresolved_questions));
+  }
+  box.append(content);
+  return box;
+}
+
+async function runAgents(url, options) {
+  if (busy) return;
+  setBusy(true);
+  setStatus("busy", "DESIGNING");
+  const progress = panel("Design exploration · live activity");
+  const log = el("ol", "agent-log");
+  const preview = el("div");
+  progress.append(body(preview, log));
+  output.prepend(progress); // Keep the last usable result on failure.
+  progress.scrollIntoView({behavior: "smooth", block: "start"});
+  const controller = new AbortController();
+  const deadline = setTimeout(() => controller.abort(), 100000);
+  let complete = false;
+  try {
+    const response = await fetch(url, {...options, signal: controller.signal});
+    if (!response.ok) throw new Error(await readError(response));
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let pending = "";
+    const consume = (line) => {
+      if (!line.trim()) return;
+      const event = JSON.parse(line);
+      if (event.type === "error") throw new Error(event.message);
+      if (event.type === "result") {
+        complete = true;
+        showDiagnosis(event.diagnosis, event.meta, event.meta.latency_s, event.agent_report);
+      } else if (event.type === "observation") {
+        preview.replaceChildren(renderVerdict(event.diagnosis));
+        log.append(el("li", "", `${event.elapsed_s}s · Photo evidence ready`));
+      } else {
+        const text = event.type === "candidate"
+          ? `${event.candidate.specialist}: ${event.candidate.solution.title} — ${event.candidate.status}`
+          : event.message;
+        if (text) log.append(el("li", "", `${event.elapsed_s}s · ${text}`));
+      }
+    };
+    while (true) {
+      const {value, done} = await reader.read();
+      pending += decoder.decode(value || new Uint8Array(), {stream: !done});
+      const lines = pending.split("\n"); pending = lines.pop();
+      lines.forEach(consume);
+      if (done) { consume(pending); break; }
+    }
+    if (!complete) throw new Error("The agent stream ended before a recommendation was ready.");
+  } catch (error) {
+    controller.abort();
+    log.append(el("li", "", error.name === "AbortError" ? "Request timed out. Your previous result is unchanged." : error.message));
+    setStatus("error", "AGENT UNAVAILABLE");
+  } finally { clearTimeout(deadline); setBusy(false); }
+}
+
+fetch("/agents/status").then(r => r.ok ? r.json() : Promise.reject()).then(state => {
+  agentAvailable = state.available;
+  $("engine").querySelector('[value="deep"]').disabled = !state.available;
+  $("agent-availability").textContent = state.available
+    ? "Nemotron + two specialist subagents. Speed comparison not yet verified."
+    : state.message;
+  if (state.available) $("engine").value = "deep";
+  document.querySelectorAll("[data-redesign]").forEach(b => { b.disabled = busy || !state.available; });
+}).catch(() => { $("agent-availability").textContent = "Restart the backend to enable the new agent endpoints."; });
 
 // --- Requests -------------------------------------------------------------
 
@@ -1402,7 +1629,12 @@ function analyse() {
   const context = $("context").value.trim();
   if (context) form.append("context", context);
   if ($("material").value) form.append("material_id", $("material").value);
-  run(() => fetch("/diagnose", { method: "POST", body: form }));
+  if ($("engine").value === "deep") {
+    const constraints = readConstraints();
+    if (!constraints) return;
+    form.append("constraints", JSON.stringify(constraints));
+    runAgents("/diagnose/deep", { method: "POST", body: form });
+  } else run(() => fetch("/diagnose", { method: "POST", body: form }));
 }
 
 // --- Specimen input -------------------------------------------------------
@@ -1419,6 +1651,8 @@ function showPreview(source, name, missingText) {
 
 function selectFile(file) {
   if (!file) return;
+  document.querySelector("main").classList.remove("has-result");
+  $("describe").open = true;
   selectedFile = file;
   if (photoUrl && photoUrl.startsWith("blob:")) URL.revokeObjectURL(photoUrl);
   photoUrl = URL.createObjectURL(file);
@@ -1426,6 +1660,14 @@ function selectFile(file) {
     "Preview not available for this format. It will still be analysed.");
   $("analyse").disabled = busy;
 }
+
+$("another-part").addEventListener("click", () => {
+  document.querySelector("main").classList.remove("has-result");
+  $("describe").open = true;
+  $("collection").open = true;
+  $("drop").focus();
+  $("drop").scrollIntoView({ block: "center" });
+});
 
 const drop = $("drop");
 drop.addEventListener("click", () => $("file-any").click());

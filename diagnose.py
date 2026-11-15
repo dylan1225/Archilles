@@ -340,7 +340,14 @@ with the reason it is less likely. Use mode ids.
 or "use a stronger material" on its own is addresses_root_cause false. Pros and \
 cons must be real consequences for this part: weight, cost, print or machining \
 time, complexity, lead time, changes to mating parts. Do not invent a con for \
-balance.
+balance. Give pros and cons as numbers with units wherever you can read or \
+estimate them from the photo or the note: dimensions in mm, wall or perimeter \
+counts, infill percentage, temperatures in °C, numbers of fasteners or parts, \
+print or machining time (mark rough estimates with ~). Do not use vague size \
+words such as slightly, much, significantly or a lot; if you cannot put a number \
+on an effect, state it plainly with no size word. Never state a change in \
+weight, strength, stiffness or stress yourself: the system calculates those and \
+shows them next to your text.
 
 6. When a solution adds or enlarges a fillet, increases a radius or softens a \
 corner at a corner or notch, fill its geometry field: current radius (0 for a \

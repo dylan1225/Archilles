@@ -178,3 +178,76 @@ examples. The eval needs `eval/labels.csv` and `eval/images/`.
 - `mechanics.py`: stress concentration, fillet improvement, wall check.
 - `diagnose.py`: evidence-first vision diagnosis with schema and rule checks.
 - FastAPI app and single-file UI.
+
+## Optional Deep Agents redesign workflow
+
+Uses **LangChain Deep Agents** with OpenRouter's
+`nvidia/nemotron-3.5-super-vl:free`. The existing Gemini pipeline and bundled
+examples remain available without these optional packages.
+
+```bash
+# Run in your own terminal: this editing session could not write Git metadata.
+git switch -c deep-agent-implementation
+venv/bin/pip install -r requirements-agents.txt
+# OPENROUTER_API_KEY belongs in the ignored .env, never in source code.
+venv/bin/python -m uvicorn main:app --port 8010
+```
+
+Stop the previous server before starting the updated one on the same port.
+Use **Design constraints & analysis mode** to select the pipeline. Deep Agents
+becomes selectable only when dependencies and the key are configured.
+
+- **New photo:** Nemotron performs a concise structured evidence extraction,
+  followed by a Deep Agent coordinator and two compiled specialist subagents.
+- **Existing result:** **Explore designs with Deep Agents** skips photo analysis.
+  **Refine these fixes** carries forward the current diagnosis, proposed fixes and
+  retained constraint controls. Edit the constraint note when changing a requirement;
+  there is no hidden long-term conversational memory.
+- **Minimal-change specialist:** load placement, supports, assembly and print orientation.
+- **Geometry/material specialist:** section changes, local reinforcement and permitted
+  material changes. Both must actually submit candidates before a result is accepted.
+- **Tools:** material-reference lookup and candidate evaluation. Python computes
+  section ratios, flags unverified assumptions and rejects explicit constraint violations.
+  Free-text constraints are reviewed by the models and explicitly marked as not
+  deterministically verified. Draft reference data retains its draft status.
+- **Coordinator:** receives tool results and selects registered candidate IDs. Unknown,
+  duplicate or explicitly rejected IDs are blocked in code. Conditional candidates
+  are proposals for testing, not verified designs.
+- **3D:** reuses the existing schematic builders, not CAD reconstruction or FEA.
+  Arbitrary fillet calculations are intentionally omitted from agent candidates.
+- **Progress:** newline-delimited JSON from `/diagnose/deep` or `/redesign` displays
+  actual observation, delegation and tool events. A failed redesign keeps the last result.
+
+The coordinator is instructed to call both specialist tasks in one response;
+`max_concurrency=2` allows their tools/tasks to overlap. The model still controls
+its delegation, so parallel execution must be confirmed in a live trace. Calls
+use a small output budget, disabled reasoning, no SDK retries, an 18-step graph
+limit and a 90-second whole-workflow timeout. The backend makes no automatic paid
+fallback call. Free endpoints can rate-limit multi-call runs.
+
+### Timing and verification
+
+```bash
+venv/bin/python -m pytest -q
+# Real API calls, bypassing caches; do this after installing dependencies.
+venv/bin/python eval/benchmark_agents.py static/examples/1.jpg --runs 3 \
+  --context "Wooden rod. Use the actual measured dimensions here."
+```
+
+The benchmark alternates the two pipelines, reports success counts, wall times and
+median speedup only when all runs succeed, and saves actual outputs in ignored
+`cache/agent-benchmark.json`. Review evidence accuracy, tool calls and usefulness
+alongside timing. An existing-result redesign cannot be compared fairly with a
+fresh full Gemini photo analysis.
+
+**Current verification:** offline tests only; SDK installation, real model tool
+calling, provider support and speedup could not be verified in the restricted
+editing session. No claim that this workflow is faster has been established.
+
+References: [Deep Agents documentation](https://docs.langchain.com/oss/python/deepagents/quickstart),
+[compiled subagents](https://docs.langchain.com/oss/python/deepagents/subagents),
+[OpenRouter model](https://openrouter.ai/nvidia/nemotron-3.5-super-vl:free),
+[HackPrinceton workshop repository](https://github.com/langchain-samples/hack-princeton-intro-to-deep-agents).
+The workshop repository could not be retrieved in this session; implementation
+follows the official SDK documentation. Postmortem's contribution is the engineering
+workflow, specialist objectives, deterministic candidate checks and 3D integration.

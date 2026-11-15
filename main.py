@@ -7,6 +7,7 @@ so the page can always show what went wrong.
 """
 
 import json
+import asyncio
 import logging
 from dataclasses import asdict
 from pathlib import Path
@@ -14,9 +15,9 @@ from typing import Any
 
 from fastapi import FastAPI, File, Form, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 import diagnose
 import materials
@@ -186,3 +187,75 @@ def get_example(n: int, material_id: str | None = None) -> JSONResponse:
     result = diagnose.with_material(result, material_id)
     meta = {**stored.get("meta", {}), "cached": True, "source": "example"}
     return _diagnosis_response(result.model_dump(mode="json"), meta)
+
+
+# Optional Deep Agents endpoints. Gemini and saved examples do not require its packages.
+import redesign_agent
+
+
+class RedesignRequest(BaseModel):
+    diagnosis: diagnose.Diagnosis
+    constraints: redesign_agent.Constraints = Field(default_factory=redesign_agent.Constraints)
+
+
+@app.get("/agents/status")
+def agent_status():
+    return redesign_agent.status()
+
+
+def agent_stream(**kwargs):
+    async def generate():
+        queue = asyncio.Queue()
+        loop = asyncio.get_running_loop()
+
+        def emit(event):
+            loop.call_soon_threadsafe(queue.put_nowait, event)
+
+        async def run():
+            try:
+                result = await redesign_agent.workflow(**kwargs, emit=emit)
+                await queue.put({"type": "result", **result})
+            except redesign_agent.AgentError as exc:
+                await queue.put({"type": "error", "message": str(exc)})
+            finally:
+                await queue.put(None)
+
+        task = asyncio.create_task(run())
+        try:
+            while True:
+                event = await queue.get()
+                if event is None:
+                    break
+                yield json.dumps(event, ensure_ascii=False) + "\n"
+        finally:
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+
+    return StreamingResponse(generate(), media_type="application/x-ndjson",
+                             headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
+
+
+@app.post("/diagnose/deep")
+def post_deep_diagnose(image: UploadFile = File(...), context: str = Form(""),
+                       material_id: str | None = Form(None), constraints: str = Form("{}")):
+    if not redesign_agent.status()["available"]:
+        return _error(503, redesign_agent.status()["message"])
+    data = image.file.read(MAX_UPLOAD_BYTES + 1)
+    if len(data) > MAX_UPLOAD_BYTES:
+        return _error(413, "Photo exceeds the 25 MB upload limit.")
+    if material_id:
+        materials.get(material_id)
+    try:
+        parsed = redesign_agent.Constraints.model_validate_json(constraints)
+    except ValueError:
+        return _error(422, "Invalid redesign constraints.")
+    return agent_stream(image=data, context=context, material_id=material_id, constraints=parsed)
+
+
+@app.post("/redesign")
+def post_redesign(request: RedesignRequest):
+    if not redesign_agent.status()["available"]:
+        return _error(503, redesign_agent.status()["message"])
+    if request.diagnosis.insufficient_image:
+        return _error(422, "A clear fracture photo is needed before proposing a redesign.")
+    return agent_stream(diagnosis=request.diagnosis, constraints=request.constraints)

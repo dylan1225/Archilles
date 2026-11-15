@@ -40,8 +40,8 @@ const SPECIMEN_LENGTH = 4;
 const MOUNT_HEIGHT = 0.35;
 const WALL_Z = -3.2;
 const FLOOR_Y = -1.4;
-const CAMERA_HOME = new THREE.Vector3(3.1, 3.3, 7.0);
-const TARGET_HOME = new THREE.Vector3(0, 1.05, -0.6);
+const CAMERA_HOME = new THREE.Vector3(2.4, 2.6, 6.2);
+const TARGET_HOME = new THREE.Vector3(0, 0.65, 0);
 const TWEEN_MS = 650;
 
 const clamp = (value, low, high) => Math.min(Math.max(value, low), high);

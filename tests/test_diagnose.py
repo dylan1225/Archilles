@@ -544,3 +544,11 @@ def test_unreadable_upload_fails_before_any_call():
     with pytest.raises(DiagnosisError, match="could not be read as an image"):
         diagnose.diagnose_with_meta(b"not an image", None, client=client)
     assert client.requests == []
+
+
+def test_rules_ask_for_units_and_leave_calculated_effects_to_the_system():
+    rules = diagnose.SYSTEM_RULES
+
+    assert "numbers with units" in rules
+    assert "slightly" in rules  # named as a banned vague size word
+    assert "Never state a change in weight, strength, stiffness or stress yourself" in rules.replace("\\\n", "")

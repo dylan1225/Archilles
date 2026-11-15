@@ -1,3 +1,33 @@
+# Postmortem — demo UI polish plan
+
+## Goal
+Keep the museum-inspired parchment, serif and orange identity while making the part, fix choices and controls easier to understand during a demo.
+
+## Implementation
+- [x] Replace clipped fix names with short labels based on the visual change. Keep full titles available. Wrap tabs on narrow screens; preserve arrow-key navigation.
+- [x] Move viewer controls below the scene. Style both controls consistently with the theme, use a Labels on/off toggle with accessible state, and retain Reset view.
+- [x] Bring the default camera closer to the specimen and lower its target. Verify original and modified parts at desktop and phone widths.
+- [x] Replace repeated cause text in the original-view panel with a short guide to inspecting the break. Label solution content What changes, Why it helps, and Tradeoffs, retaining the actual diagnosis and recommendation text.
+- [x] Condense the input column after results appear and add an Analyse another part action that restores input controls without discarding entered context.
+- [x] Verify all three bundled examples, fix selection, keyboard controls, labels, reset, and narrow-screen overflow. Run the existing offline tests and inspect browser errors.
+
+## Scope
+No model/provider changes, new API calls, altered saved diagnoses, or changes to mechanics calculations. Preserve the previous project plan below for reference.
+
+## Completion evidence
+Implemented in `static/index.html` and `static/viewer3d.js`.
+
+- Existing offline suite: **167 passed**.
+- Browser: all three collection examples loaded; original and fix states rendered; arrow-key selection, Labels on/off, Reset view, and Analyse another part checked.
+- Responsive check at 390 × 844: document width equals viewport width; every fix tab has matching content/client widths (no clipped text). Desktop and mobile layouts visually inspected.
+- Browser error log: empty. `git diff --check`: clean.
+- Preview: `docs/ui-polish.jpg`.
+- Live AI diagnosis was not invoked; backend/model behavior is unchanged.
+
+---
+
+# Previous project plan (retained)
+
 # Postmortem — plan: knowledge, proof and readability
 
 ## Context
