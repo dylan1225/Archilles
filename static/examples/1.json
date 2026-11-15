@@ -2,281 +2,118 @@
  "diagnosis": {
   "material": "wood",
   "primary_mode": "bending_overload_wood",
-  "confidence": "low",
+  "confidence": "high",
   "visual_evidence": [
-   "A light-tan round wooden dowel broken into two pieces near the bottom-right third of the frame",
-   "A long sharp wood splinter pulled out along the straight grain on the left side of the upper piece, still attached to the lower piece",
-   "A matching longitudinal split trough along the upper end of the lower piece where the splinter separated",
-   "A fairly flat transverse break on the right side of the upper piece opposite the splintered side",
-   "Straight, fine wood grain running lengthwise along both pieces with no knots, dark streaks, or decay visible"
+   "Cylindrical light-tan wooden dowel with straight longitudinal grain visible along the entire shaft.",
+   "Long, tapered splinter extending downwards along the grain from the left side of the upper piece's fracture surface (center of frame).",
+   "Matching longitudinal recessed groove along the left side of the lower piece where the splinter pulled out.",
+   "Relatively flat, jagged transverse break across the right half of the cross-section on both mating ends.",
+   "No knots, holes, notches, or discolouration visible at or near the fracture site."
   ],
-  "probable_cause": "A single bending load exceeded the dowel's bending capacity, crushing the compression side across the grain while pulling a long splinter along the grain on the tension side.",
+  "probable_cause": "Single-event bending overload exceeded the flexural capacity of the dowel. Tension-side wood fibres split and pulled out as a long splinter along the straight grain, while the opposite compression side snapped transversely.",
   "alternative_modes": [
    [
-    "split_along_grain_wood",
-    "Splitting along the grain leaves the piece separated lengthwise rather than snapped completely across into two angled halves."
+    "other",
+    "Brash (brittle) wood failure produces an abrupt, flat fracture across the entire section with very short or no splinters and often shows decay or severe cross-grain; here the wood looks sound with a long longitudinal splinter."
    ]
   ],
   "solutions": [
    {
-    "title": "Add an intermediate support to shorten the span",
-    "description": "Place an extra support bracket or collar near the middle of the ~240 mm dowel so the unsupported span drops to ~120 mm.",
+    "title": "Shorten the unsupported span or add a mid-span support",
+    "description": "Reduce the distance between supports or place an additional support near the point of maximum bending to directly cut the bending moment carried by the dowel.",
     "pros": [
-     "Reduces unsupported span from ~240 mm to ~120 mm",
-     "Reuses existing ~10 mm dowel stock and mating holes"
+     "Directly lowers the bending stress without changing the dowel diameter",
+     "Increases stiffness dramatically across the span"
     ],
     "cons": [
-     "Adds 1 support bracket and 2 fasteners",
-     "Requires a mounting surface near the midpoint of the span"
+     "Requires modifying the supporting structure or clearances",
+     "Adds a support component and assembly step"
     ],
     "effort": "moderate",
     "addresses_root_cause": true,
     "computed": null,
     "visual": {
      "kind": "add_support",
-     "label": "Add midpoint support"
-    },
-    "geometry": null,
-    "section_change": null,
-    "section_computed": null,
-    "span_change": {
-     "current_span_mm": 240.0,
-     "proposed_span_mm": 120.0,
-     "dimensions_source": "estimated_from_image"
-    },
-    "span_computed": {
-     "type": "span_change",
-     "calculated_by": "mechanics.py",
-     "inputs": {
-      "current_span_mm": 240.0,
-      "proposed_span_mm": 120.0,
-      "dimensions_source": "estimated_from_image"
-     },
-     "moment_ratio": 0.5,
-     "deflection_ratio": 0.12,
-     "stress_change_pct": -50.0,
-     "deflection_change_pct": -87.5,
-     "basis": "Idealised beam with the load at mid-span and simple supports at each end, same load and section. Peak bending moment M = F·L/4 grows with the span L, and so does the peak bending stress; deflection δ = F·L³/(48·E·I) grows with the span cubed. Real supports and loads differ, so treat these as ratios, not exact values.",
-     "working": [
-      {
-       "label": "Peak moment and stress ratio",
-       "formula": "L₂ / L₁  (M = F·L/4)",
-       "substituted": "120 mm / 240 mm",
-       "result": "×0.5",
-       "value": 0.5,
-       "source": null
-      },
-      {
-       "label": "Peak stress change",
-       "formula": "(L₂ / L₁ − 1) × 100",
-       "substituted": "(120 mm / 240 mm − 1) × 100",
-       "result": "−50 %",
-       "value": -50.0,
-       "source": null
-      },
-      {
-       "label": "Deflection ratio",
-       "formula": "(L₂ / L₁)³  (δ = F·L³ / 48EI)",
-       "substituted": "(120 mm / 240 mm)³",
-       "result": "×0.12",
-       "value": 0.12,
-       "source": null
-      },
-      {
-       "label": "Deflection change",
-       "formula": "((L₂ / L₁)³ − 1) × 100",
-       "substituted": "((120 mm / 240 mm)³ − 1) × 100",
-       "result": "−87.5 %",
-       "value": -87.5,
-       "source": null
-      }
-     ]
-    },
-    "proposed_material_id": null,
-    "material_comparison": null
+     "label": "Add intermediate support under span"
+    }
    },
    {
-    "title": "Move the applied load closer to the support",
-    "description": "Relocate the force or attachment point closer to the nearest end support to cut the bending moment on the dowel.",
+    "title": "Relocate the load closer to a support",
+    "description": "Move the point of load application closer to the nearest support or distribute the load over a wider bearing area to reduce peak bending moment.",
     "pros": [
-     "Shortens the lever arm without adding new structural parts",
-     "Keeps the existing ~10 mm dowel diameter"
+     "Reduces peak bending stress with no change to the dowel itself",
+     "Can eliminate point-load crushing on the wood surface"
     ],
     "cons": [
-     "Changes the linkage geometry or attachment position on the assembly"
+     "May require altering how mating parts engage the dowel"
     ],
     "effort": "moderate",
     "addresses_root_cause": true,
     "computed": null,
     "visual": {
      "kind": "move_load",
-     "label": "Move load to support"
-    },
-    "geometry": null,
-    "section_change": null,
-    "section_computed": null,
-    "span_change": null,
-    "span_computed": null,
-    "proposed_material_id": null,
-    "material_comparison": null
+     "label": "Shift load closer to support"
+    }
    },
    {
     "title": "Increase the dowel diameter",
-    "description": "Replace the ~10 mm dowel with a ~15 mm diameter straight-grained dowel.",
+    "description": "Replace the dowel with a thicker diameter (for example from ~12 mm up to 16 mm or 19 mm), since bending strength scales with diameter cubed for a round section.",
     "pros": [
-     "Uses standard off-the-shelf ~15 mm wood dowel stock",
-     "Needs no extra brackets along the span"
+     "Large gain in bending strength and stiffness from a modest diameter increase",
+     "Readily available in standard off-the-shelf dowel sizes"
     ],
     "cons": [
-     "Requires boring mating holes out from ~10 mm to ~15 mm",
-     "Increases part outer diameter by 5 mm"
+     "Requires enlarging matching holes or clamps in mating parts",
+     "Increases weight slightly"
     ],
-    "effort": "trivial",
+    "effort": "moderate",
     "addresses_root_cause": false,
     "computed": null,
     "visual": {
      "kind": "thicken_section",
-     "label": "Use 15 mm dowel"
-    },
-    "geometry": null,
-    "section_change": {
-     "shape": "round",
-     "current_diameter_mm": 10.0,
-     "proposed_diameter_mm": 15.0,
-     "current_width_mm": null,
-     "proposed_width_mm": null,
-     "current_thickness_mm": null,
-     "proposed_thickness_mm": null,
-     "length_mm": 240.0,
-     "dimensions_source": "estimated_from_image"
-    },
-    "section_computed": {
-     "type": "section_change",
-     "calculated_by": "mechanics.py",
-     "inputs": {
-      "shape": "round",
-      "current_diameter_mm": 10.0,
-      "proposed_diameter_mm": 15.0,
-      "current_width_mm": null,
-      "proposed_width_mm": null,
-      "current_thickness_mm": null,
-      "proposed_thickness_mm": null,
-      "length_mm": 240.0,
-      "dimensions_source": "estimated_from_image"
-     },
-     "weight_ratio": 2.25,
-     "strength_ratio": 3.38,
-     "stiffness_ratio": 5.06,
-     "area_mm2": [
-      78.54,
-      176.71
-     ],
-     "basis": "Same material, length and load. Weight scales with cross-section area. Bending strength scales with the section modulus (diameter cubed for a round section; width x thickness squared for a rectangle bent across its thickness). Stiffness scales with the second moment of area (diameter to the fourth; width x thickness cubed). These are ratios for the same load, not stress-concentration values: holes, notches and sharp corners are not included.",
-     "working": [
-      {
-       "label": "Weight ratio",
-       "formula": "(d₂ / d₁)²  (area of a circle ∝ d²)",
-       "substituted": "(15 / 10)²",
-       "result": "×2.25",
-       "value": 2.25,
-       "source": null
-      },
-      {
-       "label": "Bending strength ratio",
-       "formula": "(d₂ / d₁)³  (section modulus πd³/32)",
-       "substituted": "(15 / 10)³",
-       "result": "×3.38",
-       "value": 3.38,
-       "source": null
-      },
-      {
-       "label": "Stiffness ratio",
-       "formula": "(d₂ / d₁)⁴  (second moment πd⁴/64)",
-       "substituted": "(15 / 10)⁴",
-       "result": "×5.06",
-       "value": 5.06,
-       "source": null
-      }
-     ]
-    },
-    "span_change": null,
-    "span_computed": null,
-    "proposed_material_id": null,
-    "material_comparison": null
+     "label": "Increase dowel diameter"
+    }
    },
    {
-    "title": "Switch to a 6061-T6 aluminium rod",
-    "description": "Replace the ~10 mm wood dowel with a ~10 mm diameter aluminium 6061-T6 rod.",
+    "title": "Switch to a higher-strength hardwood or metal rod",
+    "description": "Substitute a straight-grained, high-modulus hardwood (such as ash or hickory) if wood is required, or a steel or aluminium rod if metallic parts are acceptable.",
     "pros": [
-     "Drops straight into existing ~10 mm mounting holes",
-     "Eliminates grain-direction sensitivity"
+     "Keeps the existing diameter and mating hole dimensions",
+     "Substantially raises failure load"
     ],
     "cons": [
-     "Costs more per ~240 mm length than wood dowel stock",
-     "Requires a hacksaw or bandsaw to cut to ~240 mm"
+     "Higher material cost",
+     "Metal rods increase weight and change surface friction and appearance"
     ],
     "effort": "trivial",
     "addresses_root_cause": false,
     "computed": null,
     "visual": {
      "kind": "change_material",
-     "label": "Use aluminium rod"
-    },
-    "geometry": null,
-    "section_change": null,
-    "section_computed": null,
-    "span_change": null,
-    "span_computed": null,
-    "proposed_material_id": "aluminium_6061_t6",
-    "material_comparison": null
+     "label": "Use stronger hardwood or metal"
+    }
    }
   ],
   "insufficient_image": false,
   "insufficient_reason": null,
   "specimen": {
    "shape": "round_rod",
-   "length_mm": 240.0,
-   "width_mm": 10.0,
-   "thickness_mm": 10.0,
-   "break_position": 0.75,
+   "length_mm": 220.0,
+   "width_mm": 12.0,
+   "thickness_mm": 12.0,
+   "break_position": 0.3,
    "feature": "none",
-   "load_case": "bending_span",
+   "load_case": "unknown",
    "dimensions_source": "estimated_from_image"
-  },
-  "is_failure_analysis_applicable": true,
-  "not_applicable_reason": null,
-  "geometric_features": [],
-  "rejected_alternative": {
-   "mode": "brash_failure_wood",
-   "visual_feature": "A long sharp wood splinter pulled out along the straight grain on the left side of the upper piece, still attached to the lower piece",
-   "reason": "Brash failure would show an abrupt, nearly flat break straight across the grain with short splinters or none, whereas this dowel has a long splinter torn along sound grain."
-  },
-  "consistency": {
-   "runs": 1,
-   "agreement": 1.0,
-   "modes_seen": {
-    "bending_overload_wood": 1
-   },
-   "consistent": false,
-   "failed_runs": 2
-  },
-  "warnings": [
-   "Only 1 of 3 runs completed, so consistency could not be checked. Confidence lowered to low."
-  ],
-  "mode_name": "Bending overload",
-  "mode_source": "USDA Forest Products Laboratory, Wood Handbook: Wood as an Engineering Material, FPL-GTR-282 (2021)",
-  "mode_status": "draft",
-  "summary": "The wooden dowel snapped under a single bending load that exceeded its strength, tearing a long splinter along the grain.",
-  "material_id": null,
-  "material_facts": null
+  }
  },
  "meta": {
   "model": "gemini-4-hydrogen",
-  "latency_s": 120.17,
+  "latency_s": 39.75,
   "attempts": 1,
-  "input_tokens": 11272,
-  "output_tokens": 1084,
-  "thinking_tokens": 1627,
-  "cost_usd": 0.037241
+  "input_tokens": 5461,
+  "output_tokens": 1154,
+  "thinking_tokens": 1276,
+  "cost_usd": 0.026416
  }
 }

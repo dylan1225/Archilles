@@ -553,7 +553,10 @@ function renderVerdict(d, meta = null, roundTripSeconds = null) {
   const strip = el("div", "summary");
   const material = d.material_facts ? d.material_facts.name : (MATERIAL_NAMES[d.material] || d.material);
   const c = d.consistency;
-  const runsNote = c ? `${Math.round(c.agreement * c.runs)} of ${c.runs} runs agreed` : null;
+  // Count failed runs too, so "1 of 1 agreed" can't hide two runs that never finished.
+  const runsNote = !c ? null
+    : c.failed_runs ? `${c.runs} of ${c.runs + c.failed_runs} runs completed`
+    : `${Math.round(c.agreement * c.runs)} of ${c.runs} runs agreed`;
   strip.append(
     summaryCell("Material", material, d.material_facts ? "as you picked" : "seen in the photo"),
     summaryCell("Failure mode", modeName(d), d.primary_mode),
