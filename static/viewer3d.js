@@ -16,15 +16,15 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-const ORANGE = 0xe77500;
-const LOAD_RED = 0x9b2226;
-const HOLE_DARK = 0x15130f;
-const FIXTURE = 0x3a332a;
-const BRASS = 0xa8843a;
-const GHOST = 0x2a2620;
-const WALL = 0xe9e1cd;
-const NICHE = 0xddd3bc;
-const STONE = 0xe2dac8;
+const ORANGE = 0x3d7fc4; // accent: marks the change (name kept for history)
+const LOAD_RED = 0xe0604c;
+const HOLE_DARK = 0x0f1a26;
+const FIXTURE = 0x2c3a4a;
+const BRASS = 0x8fa9c4;
+const GHOST = 0x22303e;
+const WALL = 0xe6eff8;
+const NICHE = 0xd6e5f3;
+const STONE = 0xdfe9f3;
 
 const MATERIAL_LOOKS = {
   wood: { color: 0xc9a576, roughness: 0.78, metalness: 0.0 },
@@ -32,8 +32,8 @@ const MATERIAL_LOOKS = {
   // Moderate metalness: the scene has no environment map, so a fully metallic
   // surface has nothing to reflect and renders near-black.
   metal: { color: 0xbcc1c8, roughness: 0.38, metalness: 0.45 },
-  other: { color: 0xb8b0a0, roughness: 0.6, metalness: 0.05 },
-  unclear: { color: 0xb8b0a0, roughness: 0.6, metalness: 0.05 },
+  other: { color: 0xb3bcc7, roughness: 0.6, metalness: 0.05 },
+  unclear: { color: 0xb3bcc7, roughness: 0.6, metalness: 0.05 },
 };
 
 const SPECIMEN_LENGTH = 4;
@@ -780,16 +780,16 @@ function stoneTexture() {
   canvas.width = size;
   canvas.height = size;
   const context = canvas.getContext("2d");
-  context.fillStyle = "#d8cfbb";
+  context.fillStyle = "#dbe6f1";
   context.fillRect(0, 0, size, size);
   let seed = 7;
   const random = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
   for (let i = 0; i < 2200; i++) {
     const shade = 190 + Math.floor(random() * 40);
-    context.fillStyle = `rgba(${shade}, ${shade - 8}, ${shade - 24}, 0.18)`;
+    context.fillStyle = `rgba(${shade - 24}, ${shade - 8}, ${shade}, 0.18)`;
     context.fillRect(random() * size, random() * size, 2 + random() * 5, 2 + random() * 5);
   }
-  context.strokeStyle = "rgba(120, 104, 80, 0.45)";
+  context.strokeStyle = "rgba(110, 140, 170, 0.35)";
   context.lineWidth = 3;
   for (let i = 0; i <= 2; i++) {
     const p = (i * size) / 2;
@@ -831,7 +831,7 @@ function buildGallery(scene) {
   wall.position.set(0, FLOOR_Y + 7, WALL_Z);
   scene.add(wall);
 
-  const molding = mesh(new THREE.ShapeGeometry(pointedArch(2.35, 3.4, 3.2, FLOOR_Y), 32), solid(0xcfc3a8, { roughness: 0.9 }), { cast: false, receive: true });
+  const molding = mesh(new THREE.ShapeGeometry(pointedArch(2.35, 3.4, 3.2, FLOOR_Y), 32), solid(0xc9dbec, { roughness: 0.9 }), { cast: false, receive: true });
   molding.position.z = WALL_Z + 0.005;
   const niche = mesh(new THREE.ShapeGeometry(pointedArch(2.15, 3.4, 2.95, FLOOR_Y), 32), solid(NICHE, { roughness: 0.95 }), { cast: false, receive: true });
   niche.position.z = WALL_Z + 0.01;
@@ -840,7 +840,7 @@ function buildGallery(scene) {
   [-3.0, 3.0].forEach((x) => {
     const shaft = mesh(new THREE.BoxGeometry(0.5, 9, 0.35), solid(STONE, { roughness: 0.9 }), { receive: true });
     shaft.position.set(x, FLOOR_Y + 4.5, WALL_Z + 0.18);
-    const plinth = mesh(new THREE.BoxGeometry(0.7, 0.5, 0.5), solid(0xd6cdb8, { roughness: 0.9 }), { receive: true });
+    const plinth = mesh(new THREE.BoxGeometry(0.7, 0.5, 0.5), solid(0xd3e1ee, { roughness: 0.9 }), { receive: true });
     plinth.position.set(x, FLOOR_Y + 0.25, WALL_Z + 0.25);
     scene.add(shaft, plinth);
   });
@@ -848,14 +848,14 @@ function buildGallery(scene) {
   const stone = solid(STONE, { roughness: 0.88, metalness: 0 });
   const pedestal = mesh(new THREE.BoxGeometry(5.0, 1.32, 2.3), stone, { receive: true });
   pedestal.position.set(0, FLOOR_Y + 0.14 + 0.66, 0);
-  const cap = mesh(new THREE.BoxGeometry(5.3, 0.1, 2.6), solid(0xebe4d4, { roughness: 0.8 }), { receive: true });
+  const cap = mesh(new THREE.BoxGeometry(5.3, 0.1, 2.6), solid(0xedf3f9, { roughness: 0.8 }), { receive: true });
   cap.position.set(0, -0.05, 0);
-  const foot = mesh(new THREE.BoxGeometry(5.3, 0.14, 2.6), solid(0xd3c9b3, { roughness: 0.9 }), { receive: true });
+  const foot = mesh(new THREE.BoxGeometry(5.3, 0.14, 2.6), solid(0xccdbe9, { roughness: 0.9 }), { receive: true });
   foot.position.set(0, FLOOR_Y + 0.07, 0);
   scene.add(pedestal, cap, foot);
 
-  scene.add(new THREE.HemisphereLight(0xfff8ec, 0x8c7a5e, 1.0));
-  const key = new THREE.DirectionalLight(0xfff1dc, 2.4);
+  scene.add(new THREE.HemisphereLight(0xf7fbff, 0x7a8ea4, 1.0));
+  const key = new THREE.DirectionalLight(0xfffaf3, 2.4);
   key.position.set(2.5, 7, 4.5);
   key.castShadow = true;
   key.shadow.mapSize.set(2048, 2048);
@@ -879,8 +879,8 @@ function hangPhoto(scene, url) {
     let height = width / aspect;
     if (height > 1.55) { height = 1.55; width = height * aspect; }
     const group = new THREE.Group();
-    const frame = mesh(new THREE.BoxGeometry(width + 0.3, height + 0.3, 0.08), solid(0x3b2a1c, { roughness: 0.6 }));
-    const mat = mesh(new THREE.BoxGeometry(width + 0.14, height + 0.14, 0.085), solid(0xf3eee2, { roughness: 0.95 }), { cast: false });
+    const frame = mesh(new THREE.BoxGeometry(width + 0.3, height + 0.3, 0.08), solid(0x1d2b3a, { roughness: 0.6 }));
+    const mat = mesh(new THREE.BoxGeometry(width + 0.14, height + 0.14, 0.085), solid(0xf7fafd, { roughness: 0.95 }), { cast: false });
     const photo = mesh(new THREE.PlaneGeometry(width, height), new THREE.MeshStandardMaterial({ map: texture, roughness: 0.7 }), { cast: false });
     photo.position.z = 0.046;
     group.add(frame, mat, photo);

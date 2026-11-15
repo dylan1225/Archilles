@@ -66,7 +66,141 @@ The result shows:
 - the visual evidence, probable cause and alternatives the model considered
 - a fourth fix, when there is one, under *Also considered*
 
-### How it works
+## Pre-failure interior review
+
+Open **http://localhost:8010/interiors** (or the **Explore building interiors**
+link in the header). The page reviews scanned interiors for early, visible
+signs of a weakness, before anything has failed, and shows in 3D what that
+weakness could lead to.
+
+The scans come from the Matterport Model API (the hackathon's CoStar /
+Matterport access): the public **Houston** and **Los Angeles** models available
+to your account.
+
+### What the page does
+
+1. **Flagged by the people who scanned them.** Scan technicians leave notes for
+   the listing team in the model description: "avoid master closet (ceiling
+   leak)", "mold, water damage". Those notes are searchable. The page searches
+   them across the whole collection and lists the buildings where a technician
+   wrote down an interior problem. Pick one, or any building in the collection.
+2. **A team of agents reviews the scan.** Built on the open source
+   [Deep Agents](https://github.com/langchain-ai/deepagents) framework:
+
+   ```
+   lead
+    ├─ room-surveyor  (one per room, in parallel)  opens each scan position,
+    │                 looks at all six directions including straight up,
+    │                 zooms where something looks wrong, flags candidates
+    ├─ skeptic        re-opens every flagged view without the surveyor's
+    │                 reasoning, checks a second scan position, confirms or rejects
+    └─ failure-analyst  ties the most serious confirmed ceiling finding to a
+                      modelled failure mechanism
+   ```
+
+   The technician's note is never shown to the agents, so when they confirm the
+   same kind of problem from the images, that is independent agreement.
+3. **The finding is placed on the building's real 3D model.** Each panorama has a
+   pose and the building has a downloadable mesh, in the same coordinates. A
+   flagged region of a ceiling photo is ray-cast onto the mesh, which gives its
+   true position, area and height above the floor.
+4. **What could happen, in 3D.** The room is the scan's own mesh with its
+   panoramas projected back onto it, so you are looking at the real surfaces.
+   A five-stage scenario plays on that geometry: as scanned, repeated wetting,
+   sag, detachment, aftermath. The numbers beside it (section area, drop, fall
+   time, speed, dry weight) are calculated from the scan's geometry by
+   `failure_scenarios.py`, with no model call.
+5. **What waiting costs.** Two bills side by side: the repair now (find the
+   leak, patch the flagged section) and the repair after the section falls
+   (the same two lines, plus drying the room, restoring the floor and possible
+   mould removal). The difference is the cost of waiting. Each line is a
+   published US cost-guide range applied to the scan's own areas, with its
+   source linked; it is a rough range, not a quote, and prices no injury or
+   damaged belongings.
+
+### Rules the agents cannot break
+
+The agents see pixels only through tools and change the review only through
+tools, and the tools hold the rules:
+
+- a finding must cite a view an agent actually zoomed into;
+- only the skeptic can confirm, only after opening the view itself, and it can
+  lower a finding's confidence but never raise it;
+- a forecast needs a confirmed moisture or structure finding located on a ceiling;
+- the report is assembled by code from what the tools recorded, never from an
+  agent's prose, and a half-finished review is not published.
+
+No agent has a filesystem, shell, network or credential tool.
+
+### Setup
+
+Add these to the server's `.env` (see `.env.example`):
+
+```dotenv
+MATTERPORT_API_KEY=your-token-id
+MATTERPORT_API_TOKEN=your-token-secret
+MATTERPORT_SDK_KEY=your-sdk-application-key
+MATTERPORT_SDK_DOMAINS=localhost
+
+# Vision model for the review. Every call goes through OpenRouter.
+OPENROUTER_API_KEY=your-openrouter-key
+```
+
+`HOUSE_ANALYSIS_MODEL` overrides the model. It accepts one model or a
+comma-separated list; later models take over when an earlier one runs out of
+quota or credit. Model ids are OpenRouter's `vendor/model` form. A full review
+makes roughly 45 model calls. When OpenRouter reports a per-minute limit, the
+agents queue behind it instead of failing.
+
+The Matterport key and token authenticate **only on the server**. The SDK
+application key is public and must be registered for the browser's hostname;
+the hackathon key supports `localhost` (use `localhost`, not `127.0.0.1`, for
+the Walkthrough, Dollhouse and Floor plan buttons).
+
+### Saved reviews
+
+When a live review completes, its report, the agents' activity log, the cited
+scan images and the trimmed mesh are written to `cache/` (git-ignored).
+Selecting that building again replays the saved review instantly with no model
+or Matterport call, which is what makes a demo dependable. **Run a fresh live
+review** replaces it.
+
+### What this is not
+
+A **screening of scan images on their capture date**, not a home inspection,
+engineering assessment or safety certificate. Nothing inside a ceiling or wall
+is seen. The 3D scenario illustrates a known failure mechanism at the flagged
+location; it is not a prediction that it will happen, or when. No finding in a
+room does not establish that it is sound.
+
+### API
+
+- `GET /api/interiors/models?q=&region=&offset=&page_size=`: the collection.
+- `GET /api/interiors/leads`: buildings flagged in technicians' field notes.
+- `GET /api/interiors/analysis-config`: provider, models, whether a key is set.
+- `POST /api/interiors/assessments` with `{ "model_id": "..." }`: start a live review.
+- `GET /api/interiors/assessments/{id}`: progress, live agent activity, report.
+- `GET /api/interiors/reviews/{model_id}`: the saved review, if any.
+- `GET /api/interiors/reviews/{model_id}/evidence/{view_id}`: a cited scan view.
+- `GET /api/interiors/models/{model_id}/mesh`: the cached interior mesh.
+
+### Files
+
+| File | Role |
+|---|---|
+| `interiors.py` | Collection search and field-note leads |
+| `building_evidence.py` | One building's survey: rooms, panoramas, mesh |
+| `scan_geometry.py` | Panorama pixel to 3D point: face convention, ray casting |
+| `house_analysis.py` | The Deep Agents team, its tools and rules, the report |
+| `failure_scenarios.py` | The ceiling scenario and its calculated numbers |
+| `house_inspections.py` | HTTP jobs, saved reviews, mesh and evidence endpoints |
+| `static/house-analysis.js` | Leads strip and review UI |
+| `static/forecast3d.js` | The 3D scenario view (three.js) |
+
+Jobs run in this server process (two at a time, 30 minute limit) and are lost
+on restart; saved reviews are not. Run one application worker.
+
+## How it works
 
 ```
 photo + note ─► diagnose.py   one Gemini call with the knowledge base, a strict JSON schema,

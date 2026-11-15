@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Forecast · Archilles</title>
+  <link rel="preload" href="/static/fonts/inter-tight-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/static/theme.css">
+  <style>
+    main { max-width: 1720px; padding: 132px var(--gutter) 40px; margin: 0 auto; }
+    .page-intro { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px 40px; align-items: end;
+      padding-bottom: clamp(32px, 4vw, 56px); margin-bottom: clamp(28px, 3vw, 44px); border-bottom: 1px solid var(--line); }
+    .page-intro h1 { margin-top: 18px; font: 300 var(--text-display)/.98 var(--font-sans); letter-spacing: -.045em; max-width: 16ch; }
+    .page-intro h1 em { font-style: normal; position: relative; white-space: nowrap; }
+    .page-intro h1 em::after { content: ""; position: absolute; left: 0; right: 0; bottom: .02em; height: .06em; border-radius: 1em; background: var(--flag); }
+    .description { margin-top: 18px; max-width: 54ch; font-size: 17px; color: var(--muted); }
+    .location { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border: 1px solid var(--line-strong); border-radius: 999px;
+      font: 500 11px/1 var(--font-mono); letter-spacing: .06em; color: var(--muted); white-space: nowrap; background: rgba(255, 255, 255, .6); }
+    .location i { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); }
+    .page-footer { display: flex; justify-content: space-between; gap: 16px; padding-top: 22px; color: var(--muted);
+      font: 500 11px/1.6 var(--font-mono); letter-spacing: .04em; }
+    building-interior-viewer { display: block; min-height: 650px; }
+    body { background: radial-gradient(60% 40% at 80% 0%, var(--mist), rgba(228, 239, 249, 0) 70%), var(--bg); background-repeat: no-repeat; }
+    @media (max-width: 760px) {
+      main { padding-top: 150px; }
+      .page-intro { grid-template-columns: 1fr; }
+      .location { justify-self: start; }
+      .page-footer { flex-direction: column; gap: 4px; }
+    }
+  </style>
+  <script type="importmap">
+  { "imports": { "three": "/static/vendor/three.module.min.js", "three/addons/": "/static/vendor/addons/" } }
+  </script>
+  <script type="module" src="/static/shell.js"></script>
+  <script type="module">
+    const viewer = document.querySelector('building-interior-viewer');
+    viewer.setAttribute('initial-search', new URLSearchParams(location.search).get('q') || '');
+    await import('/static/house-analysis.js');
+    await import('/static/building-interior-viewer.js');
+  </script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="wordmark" href="/">Archilles<i>.</i></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/#postmortem"><b>01</b>Postmortem</a>
+      <a href="/interiors" aria-current="page"><b>02</b>Forecast</a>
+      <a href="/#method"><b>03</b>Method</a>
+      <a href="/#collection"><b>04</b>Collection</a>
+    </nav>
+  </header>
+  <main>
+    <div class="page-intro">
+      <div>
+        <span class="index-label reveal"><b>02</b> Future tense · Forecast</span>
+        <h1 class="reveal">This hasn't broken yet. See the <em>weakness</em> before it fails.</h1>
+        <p class="description reveal">Scanned interiors across Houston and Los Angeles, reviewed by a team of agents for early signs of failure, then shown in 3D.</p>
+      </div>
+      <div class="location reveal"><i aria-hidden="true"></i> Houston, Texas <span aria-hidden="true"> / </span> Los Angeles, California</div>
+    </div>
+    <field-note-leads viewer="building-interior-viewer" api-base="/api/interiors"></field-note-leads>
+    <building-interior-viewer api-base="/api/interiors"></building-interior-viewer>
+    <house-analysis viewer="building-interior-viewer" api-base="/api/interiors"></house-analysis>
+    <footer class="page-footer"><span>Real spaces, captured in 3D. Availability depends on the building’s published tour.</span><span>Interior tours by Matterport</span></footer>
+  </main>
+</body>
+</html>
