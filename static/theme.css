@@ -178,6 +178,8 @@ img { max-width: 100%; }
 .site-footer { padding: clamp(64px, 10vw, 140px) var(--gutter) 28px; border-top: 1px solid var(--line); }
 .site-footer .giant { display: block; font: 300 clamp(52px, 15.5vw, 300px)/.8 var(--font-sans); letter-spacing: -.055em; color: var(--ink); }
 .site-footer .giant i { font-style: normal; color: var(--flag); }
+/* The arrow logo as an image: same footprint as the old text wordmark. */
+.site-footer .giant-logo { width: min(100%, 1600px); height: auto; }
 .site-footer .meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; margin-top: 36px;
   font: 500 11px/1.5 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .site-footer .meta a { text-decoration: none; }
