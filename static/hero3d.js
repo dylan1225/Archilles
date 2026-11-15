@@ -249,12 +249,12 @@ function buildScene(scene) {
   // Back: an I-beam lying across the water.
   const beam = iBeam();
   beam.rotation.y = Math.PI / 2 - 0.35;
-  beam.position.set(2.5, -0.5, -13);
+  beam.position.set(6, -0.85, -15); // kept low and off-centre so the headline has calm water behind it
   scene.add(beam);
 
   // Mid-field: a bolt standing upright.
   const standing = bolt();
-  standing.position.set(-2.4, 2.2, -7.5);
+  standing.position.set(-4.4, 2.2, -10.5); // rises behind the gear, clear of the centred type
   standing.rotation.set(0.05, 0.4, -0.06);
   scene.add(standing);
 
@@ -334,6 +334,7 @@ function start(container) {
     const x = (projected.x * 0.5 + 0.5) * container.clientWidth;
     const y = (-projected.y * 0.5 + 0.5) * container.clientHeight;
     callout.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
+    callout.dataset.fit = x > container.clientWidth - 300 ? "compact" : "full";
   }
 
   function render(time) {
