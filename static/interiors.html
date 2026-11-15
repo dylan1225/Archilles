@@ -4,35 +4,35 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-    <title>Pre-failure Review · Postmortem</title>
+  <title>Forecast · Archilles</title>
+  <link rel="preload" href="/static/fonts/inter-tight-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/static/theme.css">
   <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; background: #f3f0e9; color: #242720; font-family: system-ui, -apple-system, sans-serif; }
-    header { padding: 20px 4vw; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #d9d9ce; }
-    header a { color: inherit; text-decoration: none; }
-    .brand { font: 600 20px Georgia, serif; letter-spacing: .08em; }
-    .back { font-size: 12px; color: #5b6155; }
-    .back:hover { color: #20291b; text-decoration: underline; }
-    main { max-width: 1720px; padding: 38px 4vw 32px; margin: 0 auto; }
-    .intro { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
-    .eyebrow { margin: 0 0 12px; font: 600 10px/1.5 system-ui, sans-serif; letter-spacing: .19em; color: #5e6e4e; }
-    h1 { margin: 0; font: 400 clamp(34px, 4vw, 54px)/1.1 Georgia, serif; letter-spacing: -.04em; }
-    .description { margin: 12px 0 0; font-size: 15px; color: #697063; line-height: 1.6; }
-    .location { display: flex; align-items: center; gap: 9px; font-size: 11px; color: #526146; white-space: nowrap; padding-bottom: 6px; }
-    .location i { width: 7px; height: 7px; border-radius: 50%; background: #65784e; }
-    footer { display: flex; justify-content: space-between; gap: 16px; padding-top: 16px; color: #7b8175; font-size: 10px; line-height: 1.6; }
-    a:focus-visible { outline: 2px solid #5d7541; outline-offset: 5px; }
+    main { max-width: 1720px; padding: 132px var(--gutter) 40px; margin: 0 auto; }
+    .page-intro { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px 40px; align-items: end;
+      padding-bottom: clamp(32px, 4vw, 56px); margin-bottom: clamp(28px, 3vw, 44px); border-bottom: 1px solid var(--line); }
+    .page-intro h1 { margin-top: 18px; font: 300 var(--text-display)/.98 var(--font-sans); letter-spacing: -.045em; max-width: 16ch; }
+    .page-intro h1 em { font-style: normal; position: relative; white-space: nowrap; }
+    .page-intro h1 em::after { content: ""; position: absolute; left: 0; right: 0; bottom: .02em; height: .06em; border-radius: 1em; background: var(--flag); }
+    .description { margin-top: 18px; max-width: 54ch; font-size: 17px; color: var(--muted); }
+    .location { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border: 1px solid var(--line-strong); border-radius: 999px;
+      font: 500 11px/1 var(--font-mono); letter-spacing: .06em; color: var(--muted); white-space: nowrap; background: rgba(255, 255, 255, .6); }
+    .location i { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); }
+    .page-footer { display: flex; justify-content: space-between; gap: 16px; padding-top: 22px; color: var(--muted);
+      font: 500 11px/1.6 var(--font-mono); letter-spacing: .04em; }
     building-interior-viewer { display: block; min-height: 650px; }
-    @media (max-width: 650px) {
-      main { padding-top: 26px; }
-      .intro { display: block; }
-      .location { margin-top: 18px; }
-      footer { flex-direction: column; gap: 4px; }
+    body { background: radial-gradient(60% 40% at 80% 0%, var(--mist), rgba(228, 239, 249, 0) 70%), var(--bg); background-repeat: no-repeat; }
+    @media (max-width: 760px) {
+      main { padding-top: 150px; }
+      .page-intro { grid-template-columns: 1fr; }
+      .location { justify-self: start; }
+      .page-footer { flex-direction: column; gap: 4px; }
     }
   </style>
   <script type="importmap">
   { "imports": { "three": "/static/vendor/three.module.min.js", "three/addons/": "/static/vendor/addons/" } }
   </script>
+  <script type="module" src="/static/shell.js"></script>
   <script type="module">
     const viewer = document.querySelector('building-interior-viewer');
     viewer.setAttribute('initial-search', new URLSearchParams(location.search).get('q') || '');
@@ -41,23 +41,28 @@
   </script>
 </head>
 <body>
-  <header>
-    <a class="brand" href="/">Postmortem<span style="color:#7d8771"> / </span>Spaces</a>
-    <a class="back" href="/">← Back to analysis</a>
+  <header class="site-header">
+    <a class="wordmark" href="/">Archilles<i>.</i></a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/#postmortem"><b>01</b>Postmortem</a>
+      <a href="/interiors" aria-current="page"><b>02</b>Forecast</a>
+      <a href="/#method"><b>03</b>Method</a>
+      <a href="/#collection"><b>04</b>Collection</a>
+    </nav>
   </header>
   <main>
-    <div class="intro">
+    <div class="page-intro">
       <div>
-        <p class="eyebrow">LOOK CLOSER. PLAN AHEAD.</p>
-        <h1>See the weakness before it fails.</h1>
-        <p class="description">Scanned interiors across Houston and Los Angeles, reviewed by a team of agents for early signs of failure, then shown in 3D.</p>
+        <span class="index-label reveal"><b>02</b> Future tense · Forecast</span>
+        <h1 class="reveal">This hasn't broken yet. See the <em>weakness</em> before it fails.</h1>
+        <p class="description reveal">Scanned interiors across Houston and Los Angeles, reviewed by a team of agents for early signs of failure, then shown in 3D.</p>
       </div>
-      <div class="location"><i aria-hidden="true"></i> Houston, Texas <span aria-hidden="true"> / </span> Los Angeles, California</div>
+      <div class="location reveal"><i aria-hidden="true"></i> Houston, Texas <span aria-hidden="true"> / </span> Los Angeles, California</div>
     </div>
     <field-note-leads viewer="building-interior-viewer" api-base="/api/interiors"></field-note-leads>
     <building-interior-viewer api-base="/api/interiors"></building-interior-viewer>
     <house-analysis viewer="building-interior-viewer" api-base="/api/interiors"></house-analysis>
-    <footer><span>Real spaces, captured in 3D. Availability depends on the building’s published tour.</span><span>Interior tours by Matterport</span></footer>
+    <footer class="page-footer"><span>Real spaces, captured in 3D. Availability depends on the building’s published tour.</span><span>Interior tours by Matterport</span></footer>
   </main>
 </body>
 </html>

@@ -25,7 +25,7 @@ const DETACH_SIM_SECONDS = 1.7;
 const SAG_DEPTH = 0.13;
 const GRID = 6; // fragments per side of the falling section
 const G = 9.81;
-const ORANGE = 0xe77500;
+const ORANGE = 0xff7a63; // Archilles weak-point coral (name kept)
 
 const clamp01 = (value) => Math.min(Math.max(value, 0), 1);
 const smooth = (t) => t * t * (3 - 2 * t);
@@ -249,7 +249,7 @@ export async function createForecastViewer(container, { meshUrl, scenario, evide
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.setClearColor(0x1d211b);
+  renderer.setClearColor(0x0e1c2a);
   container.append(renderer.domElement);
   renderer.domElement.style.cssText = 'display:block;width:100%;height:100%;touch-action:none';
 
