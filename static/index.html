@@ -1,289 +1,103 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="gated">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Postmortem — fracture surface analysis</title>
+<meta name="color-scheme" content="light">
+<meta name="description" content="Archilles finds the weak point in a physical thing, before it breaks or after.">
+<title>Archilles — find the weak point</title>
+<link rel="preload" href="/static/fonts/inter-tight-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/theme.css">
+<link rel="stylesheet" href="/static/postmortem.css">
+<script>
+  // Skip the intro gate on a repeat visit in this session, before first paint.
+  try { if (sessionStorage.getItem("archilles-entered") === "1") document.documentElement.classList.remove("gated"); } catch {}
+</script>
 <script type="importmap">
 { "imports": { "three": "/static/vendor/three.module.min.js", "three/addons/": "/static/vendor/addons/" } }
 </script>
-<style>
-  :root {
-    /* Gallery palette: limestone, parchment, ink, one orange accent. */
-    --paper: #f3eee3; --card: #fbf8f1; --stone: #e8e0cd; --stone-2: #ded4bd;
-    --line: #d6cab0; --line-strong: #b4a581;
-    --ink: #1d1a16; --muted: #5d5548; --faint: #8b8170;
-    --orange: #e77500; --orange-ink: #a85000; --orange-wash: #fbebd7;
-    --calc: #3d6a58; --calc-bg: #ecf1ea; --calc-line: #b7cbbd;
-    --good: #2e7650; --warn: #9a5a00; --bad: #a3271f;
-    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
-    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    --shadow: 0 1px 0 rgba(29, 26, 22, .04), 0 6px 18px -10px rgba(29, 26, 22, .25);
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--sans); }
-  body { background-image: linear-gradient(180deg, var(--stone) 0, var(--paper) 340px); background-repeat: no-repeat; }
-  button, textarea, input { font: inherit; color: inherit; }
-  h1, h2, h3, p, ul, ol, figure { margin: 0; padding: 0; }
-  ul, ol { list-style: none; }
-  :focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
-
-  /* --- Header: dark band with an orange rule ----------------------------- */
-  header.site { display: flex; align-items: center; gap: 16px; padding: 14px 24px;
-    background: #141210; color: #f3eee3; border-bottom: 3px solid var(--orange); }
-  .wordmark { font: 600 20px/1 var(--serif); letter-spacing: .26em; }
-  .tagline { color: #bdb3a1; font: italic 14px/1.2 var(--serif); }
-  .interiors-link { margin-left: auto; color: #d9d0be; font-size: 12px; text-underline-offset: 4px; white-space: nowrap; }
-  .interiors-link + .status { margin-left: 0; }
-  @media (max-width: 560px) {
-    header.site { flex-wrap: wrap; gap: 10px 16px; }
-    .interiors-link { order: 3; flex-basis: 100%; margin-left: 0; }
-    .interiors-link + .status { margin-left: auto; }
-  }
-  .status { margin-left: auto; font: 600 11px/1 var(--mono); letter-spacing: .1em; padding: 6px 10px;
-    border: 1px solid #4a443b; border-radius: 2px; color: #bdb3a1; }
-  .status[data-state="busy"] { color: #f2b25c; border-color: #f2b25c; }
-  .status[data-state="done"] { color: #8fd1a8; border-color: #8fd1a8; }
-  .status[data-state="error"] { color: #f08c80; border-color: #f08c80; }
-
-  main { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 20px;
-    padding: 22px 24px 48px; max-width: 1440px; margin: 0 auto; align-items: start; }
-  @media (max-width: 920px) { main { grid-template-columns: minmax(0, 1fr); padding: 16px; }
-    header.site { padding: 12px 16px; } .tagline { display: none; } }
-
-  /* --- Panels: placard-like cards --------------------------------------- */
-  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 3px; box-shadow: var(--shadow); }
-  .panel > h2, .label { font: 600 11.5px/1.2 var(--serif); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
-  .panel > h2 { padding: 12px 16px 10px; border-bottom: 1px solid var(--line); }
-  .panel-body { padding: 14px 16px 16px; }
-  .stack > * + * { margin-top: 16px; }
-  .muted { color: var(--muted); }
-  [hidden] { display: none !important; }
-
-  /* --- Specimen form ------------------------------------------------------ */
-  .step { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; }
-  .step-n { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
-    border: 1px solid var(--line-strong); font: 600 13px/1 var(--serif); color: var(--muted); background: var(--paper); }
-  .step-title { font: 600 15px/26px var(--serif); }
-  .step-body { grid-column: 2; margin-top: 6px; }
-  .step-body > * + * { margin-top: 8px; }
-  .drop { display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 6px; min-height: 170px; padding: 14px; text-align: center; cursor: pointer;
-    border: 1.5px dashed var(--line-strong); border-radius: 3px; background: var(--paper); }
-  .drop:hover, .drop:focus-visible, .drop.over { border-color: var(--orange); background: var(--orange-wash); outline: none; }
-  .drop strong { font: 600 16px/1.3 var(--serif); }
-  .drop small { color: var(--muted); }
-  .drop img { max-width: 100%; max-height: 220px; border-radius: 2px; display: block; border: 6px solid #fff; box-shadow: var(--shadow); }
-  .file-name { font: 12px/1.3 var(--mono); color: var(--muted); word-break: break-all; }
-  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  textarea { width: 100%; min-height: 78px; resize: vertical; padding: 9px 10px;
-    background: #fff; border: 1px solid var(--line); border-radius: 2px; }
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px;
-    padding: 8px 14px; border: 1px solid var(--line-strong); border-radius: 2px; background: var(--card); cursor: pointer; }
-  .btn:hover:not(:disabled) { border-color: var(--ink); }
-  .btn:disabled { opacity: .45; cursor: not-allowed; }
-  .btn.wide { width: 100%; }
-  .btn.primary { width: 100%; min-height: 46px; font: 600 15px/1 var(--serif); letter-spacing: .14em; text-transform: uppercase;
-    background: var(--ink); color: var(--paper); border-color: var(--ink); }
-  .btn.primary:hover:not(:disabled) { background: var(--orange); border-color: var(--orange); color: #1b1006; }
-  .collection { display: grid; gap: 8px; }
-  .collection .btn { justify-content: flex-start; text-align: left; gap: 12px; }
-  .collection .numeral { font: 600 14px/1 var(--serif); color: var(--orange-ink); min-width: 26px; }
-  .collection .what { display: block; font-size: 13px; color: var(--muted); }
-
-  /* --- Empty / loading / errors ------------------------------------------ */
-  .empty, .loading { padding: 64px 24px; text-align: center; color: var(--muted); }
-  .empty strong, .loading strong { display: block; color: var(--ink); font: 600 20px/1.3 var(--serif); margin-bottom: 8px; }
-  .empty .arch { width: 64px; height: 84px; margin: 0 auto 18px; display: block; }
-  .bar { height: 3px; margin: 20px auto 0; max-width: 320px; background: var(--line); border-radius: 2px; overflow: hidden; }
-  .bar::after { content: ""; display: block; height: 100%; width: 35%; background: var(--orange); animation: slide 1.3s ease-in-out infinite; }
-  @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(290%); } }
-  @media (prefers-reduced-motion: reduce) { .bar::after { animation: none; width: 100%; opacity: .5; } }
-  .elapsed { font: 12px/1 var(--mono); margin-top: 10px; }
-  .banner { padding: 14px 16px; border: 1px solid var(--bad); border-left-width: 4px; border-radius: 3px; background: #fbeeeb; }
-  .banner .label { color: var(--bad); margin-bottom: 6px; display: block; }
-  .banner.insufficient { border-color: var(--warn); background: #fbf1df; }
-  .banner.insufficient .label { color: var(--warn); }
-  .banner.nothing { border-color: var(--ink); background: var(--card); }
-  .banner.nothing .label { color: var(--ink); }
-  .banner.nothing .headline { font: 600 22px/1.3 var(--serif); margin-bottom: 6px; }
-  .banner.checks { border-color: var(--warn); background: #fbf1df; }
-  .banner.checks .label { color: var(--warn); }
-  .banner.checks ul { margin-top: 4px; }
-  .banner.checks li + li { margin-top: 6px; }
-
-  /* --- Uncertainty checks -------------------------------------------------- */
-  .runs { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
-  .runs .agree { font: 600 17px/1.3 var(--serif); }
-  .runs .agree.ok { color: var(--good); } .runs .agree.split { color: var(--bad); }
-  .rejected .mode { font: 600 16px/1.3 var(--serif); text-decoration: line-through; text-decoration-color: var(--bad); }
-  .rejected .because { margin-top: 8px; }
-  .rejected .because b { font: 600 11.5px/1.2 var(--serif); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 2px; }
-
-  /* --- Summary strip ------------------------------------------------------ */
-  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
-  .summary > div { padding: 14px 16px; border-right: 1px solid var(--line); }
-  .summary > div:last-child { border-right: 0; }
-  .summary .value { margin-top: 6px; font: 600 19px/1.25 var(--serif); }
-  .summary .sub { font: 11px/1.3 var(--mono); color: var(--muted); margin-top: 3px; overflow-wrap: anywhere; }
-  .badge { display: inline-block; font: 600 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase;
-    padding: 5px 8px; border-radius: 2px; border: 1px solid; }
-  .badge.high { color: var(--good); } .badge.medium { color: var(--warn); } .badge.low { color: var(--bad); }
-
-  /* --- The exhibit -------------------------------------------------------- */
-  .exhibit-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 16px;
-    border-bottom: 1px solid var(--line); }
-  .exhibit-head h2 { font: 600 20px/1.2 var(--serif); }
-  .exhibit-head .kicker { display: block; font: 600 11px/1.2 var(--serif); letter-spacing: .18em; text-transform: uppercase; color: var(--orange-ink); }
-  .seg { display: inline-flex; margin-left: auto; border: 1px solid var(--line-strong); border-radius: 2px; background: var(--paper); }
-  .seg button { min-height: 40px; padding: 6px 14px; border: 0; border-right: 1px solid var(--line); background: transparent; cursor: pointer;
-    font: 600 13px/1.1 var(--serif); letter-spacing: .06em; color: var(--muted); }
-  .seg button:last-child { border-right: 0; }
-  .seg button:hover { color: var(--ink); background: var(--stone); }
-  .seg button[aria-checked="true"] { background: var(--ink); color: var(--paper); }
-  .seg button[aria-checked="true"].sol { background: var(--orange); color: #1b1006; }
-  .seg .short { display: none; }
-  @media (max-width: 560px) { .seg { margin-left: 0; width: 100%; } .seg button { flex: 1; padding: 6px 4px; }
-    .seg .long { display: none; } .seg .short { display: inline; } }
-
-  .exhibit-body { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
-  @media (max-width: 1120px) { .exhibit-body { grid-template-columns: minmax(0, 1fr); } }
-
-  .vitrine { padding: 16px; border-right: 1px solid var(--line); }
-  @media (max-width: 1120px) { .vitrine { border-right: 0; border-bottom: 1px solid var(--line); } }
-  /* Lancet-arch frame: an outer stone band and the stage inset within it. */
-  .arch-frame { --arch: polygon(0 9%, 5% 5.4%, 10% 3.9%, 17.5% 2.6%, 25% 1.6%, 35% .7%, 42.5% .27%, 50% 0,
-      57.5% .27%, 65% .7%, 75% 1.6%, 82.5% 2.6%, 90% 3.9%, 95% 5.4%, 100% 9%, 100% 100%, 0 100%);
-    position: relative; padding: 7px; background: var(--line-strong); clip-path: var(--arch); }
-  .stage { position: relative; height: clamp(320px, 54vh, 540px); background: #e9e1cd; clip-path: var(--arch); overflow: hidden; }
-  .v3d-canvas { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
-  .v3d-canvas:active { cursor: grabbing; }
-  .v3d-canvas:focus-visible { outline: 3px solid var(--orange); outline-offset: -3px; }
-  .v3d-fallback { display: grid; place-items: center; height: 100%; padding: 24px; text-align: center; color: var(--muted); }
-  .v3d-callout { position: absolute; left: 0; top: 0; pointer-events: none; }
-  .v3d-callout > i { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: var(--orange);
-    transform: translate(-50%, -50%); box-shadow: 0 0 0 4px rgba(231, 117, 0, .25); }
-  .v3d-callout > span { position: absolute; transform: translate(-50%, calc(-100% - 12px)); white-space: nowrap; max-width: 260px;
-    overflow: hidden; text-overflow: ellipsis; padding: 5px 9px; background: rgba(20, 18, 16, .9); color: #f7f2e7;
-    border-left: 3px solid var(--orange); font: 600 12px/1.2 var(--serif); letter-spacing: .04em; }
-  .v3d-callout[data-tone="fracture"] > i { background: #9b2226; box-shadow: 0 0 0 4px rgba(155, 34, 38, .22); }
-  .v3d-callout[data-tone="fracture"] > span { border-left-color: #c2453c; }
-  .stage-tools { position: absolute; left: 12px; right: 12px; bottom: 10px; display: flex; align-items: center; gap: 10px;
-    pointer-events: none; }
-  .stage-tools .hint { font: 12px/1.2 var(--sans); color: var(--muted); background: rgba(251, 248, 241, .85); padding: 4px 8px; border-radius: 2px; }
-  .stage-tools .btn { margin-left: auto; pointer-events: auto; min-height: 32px; padding: 4px 10px; font-size: 13px; background: rgba(251, 248, 241, .92); }
-  .vitrine figcaption { margin-top: 10px; font: italic 13px/1.4 var(--serif); color: var(--muted); }
-  .vitrine figcaption b { font-style: normal; font-weight: 600; color: var(--ink); }
-
-  .placard { padding: 20px 22px 22px; background: linear-gradient(180deg, var(--card), #f6f1e6); }
-  .placard .kicker { font: 600 11px/1.2 var(--serif); letter-spacing: .18em; text-transform: uppercase; color: var(--orange-ink); }
-  .placard h3 { margin-top: 6px; font: 600 23px/1.2 var(--serif); }
-  .placard .rule { width: 48px; height: 2px; background: var(--orange); margin: 12px 0 14px; }
-  .placard p { max-width: 62ch; }
-  .placard .section-label { margin: 16px 0 6px; }
-  .placard[data-state="found"] .kicker { color: #9b2226; }
-  .placard[data-state="found"] .rule { background: #9b2226; }
-
-  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 2px; }
-  .tag { font: 600 10.5px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase;
-    padding: 5px 7px; border: 1px solid var(--line-strong); border-radius: 2px; color: var(--muted); background: var(--card); }
-  .tag.root { color: var(--good); border-color: var(--good); }
-  .proscons { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
-  @media (max-width: 600px) { .proscons { grid-template-columns: 1fr; } }
-  .proscons > div { padding: 10px 12px; border: 1px solid var(--line); border-radius: 2px; background: var(--card); }
-  .proscons .label { margin-bottom: 6px; display: block; }
-  .proscons li { padding: 3px 0 3px 18px; position: relative; }
-  .proscons li::before { position: absolute; left: 0; font: 700 14px/1.5 var(--mono); }
-  .pros li::before { content: "+"; color: var(--good); }
-  .cons li::before { content: "\2212"; color: var(--bad); }
-
-  /* --- Evidence, cause, alternatives, other solutions ------------------- */
-  .two { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; }
-  @media (max-width: 1100px) { .two { grid-template-columns: minmax(0, 1fr); } }
-  .bullets li { position: relative; padding: 7px 0 7px 18px; border-bottom: 1px solid var(--line); }
-  .bullets li:last-child { border-bottom: 0; }
-  .bullets li::before { content: ""; position: absolute; left: 3px; top: 15px; width: 6px; height: 6px; transform: rotate(45deg); background: var(--orange); }
-  .alts li { padding: 8px 0; border-bottom: 1px solid var(--line); }
-  .alts li:last-child { border-bottom: 0; }
-  code { font: 12px/1.3 var(--mono); color: var(--ink); background: var(--stone); padding: 1px 4px; border-radius: 2px; }
-
-  .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font: 11px/1 var(--mono); color: var(--muted);
-    padding: 10px 16px; border-bottom: 1px solid var(--line); }
-  .swatch { display: inline-block; width: 9px; height: 9px; margin-right: 6px; vertical-align: -1px; background: var(--faint); }
-  .swatch.calc { background: var(--calc); }
-  .solution { display: grid; grid-template-columns: 52px minmax(0, 1fr); border-bottom: 1px solid var(--line); }
-  .solution:last-child { border-bottom: 0; }
-  .rank { font: 600 22px/1 var(--serif); color: var(--orange-ink); padding: 16px 0 0 16px; }
-  .solution-body { padding: 14px 16px 16px 0; }
-  .solution h3 { font: 600 17px/1.3 var(--serif); }
-
-  /* --- Calculated before/after: deliberately unlike the model's prose ----- */
-  .calc { margin-top: 16px; border: 2px solid var(--calc); border-radius: 3px; background: var(--calc-bg); color: #10241c;
-    container: calc / inline-size; }
-  .calc-body { display: grid; }
-  @container calc (min-width: 760px) {
-    .calc-body { grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr); }
-    .calc-figures { padding: 18px 22px 16px; }
-    .calc-try { border-top: 0; border-left: 1px solid var(--calc-line); align-content: start; padding: 18px 20px; }
-  }
-  .exhibit-calc { padding: 0 16px 18px; border-top: 1px solid var(--line); }
-  @container calc (max-width: 520px) {
-    .calc-row .what { font-size: 15px; }
-    .calc-row .kt { font-size: 26px; }
-    .calc-result { font-size: 21px; }
-  }
-  .calc-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 8px 14px;
-    background: var(--calc); color: #f2f7f3; }
-  .calc-head .mark { font: 700 12px/1 var(--mono); letter-spacing: .16em; background: #f2f7f3; color: var(--calc);
-    padding: 5px 7px; border-radius: 2px; }
-  .calc-head .src { font: 12px/1.2 var(--mono); }
-  .calc-figures { padding: 14px 14px 10px; }
-  .calc-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 4px 16px;
-    padding: 8px 0; border-bottom: 1px dashed var(--calc-line); }
-  .calc-row .what { font: 600 18px/1.25 var(--mono); }
-  .calc-row .what small { display: block; margin-top: 3px; font: 12px/1.3 var(--mono); color: #4a5d54; }
-  .calc-row .kt { font: 700 30px/1 var(--mono); white-space: nowrap; }
-  .calc-row.after .what, .calc-row.after .kt { color: var(--calc); }
-  .calc-result { margin-top: 12px; padding: 10px 12px; background: #fff; border-left: 5px solid var(--calc);
-    font: 700 24px/1.2 var(--mono); }
-  .calc-result.worse { border-left-color: var(--bad); color: var(--bad); }
-  .calc-note { margin-top: 10px; padding: 8px 10px; border: 1px solid #d9b56f; background: #fbf1df; color: #6b4200;
-    font: 600 13px/1.4 var(--sans); }
-  .calc-basis { margin-top: 10px; font: 12px/1.45 var(--sans); color: #4a5d54; }
-  .calc-error { font: 600 14px/1.4 var(--sans); color: var(--bad); }
-  .calc-ask { font: 15px/1.45 var(--sans); }
-  .calc-try { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; padding: 12px 14px 14px;
-    border-top: 1px solid var(--calc-line); background: #f6f9f6; }
-  .calc-try .try-title { flex-basis: 100%; font: 600 11.5px/1.2 var(--serif); letter-spacing: .14em; text-transform: uppercase; color: var(--calc); }
-  .calc-try label { display: grid; gap: 4px; font: 12px/1.2 var(--sans); color: #4a5d54; }
-  .calc-try input { width: 104px; min-height: 38px; padding: 6px 8px; border: 1px solid var(--calc-line); border-radius: 2px;
-    background: #fff; font: 600 16px/1 var(--mono); }
-  .calc-try input:focus-visible { outline: 2px solid var(--calc); outline-offset: 1px; }
-  .calc-try .reset { min-height: 38px; font-size: 13px; }
-  .calc-try .source { flex-basis: 100%; font: 12px/1.3 var(--mono); color: #4a5d54; }
-</style>
+<script type="module" src="/static/shell.js"></script>
+<script type="module" src="/static/hero3d.js"></script>
 </head>
 <body>
-<header class="site">
-  <span class="wordmark">POSTMORTEM</span>
-  <span class="tagline">Fracture surface analysis</span>
-  <a class="interiors-link" href="/interiors">Explore building interiors ↗</a>
+<div class="intro" id="intro" role="dialog" aria-label="Archilles">
+  <div class="intro-inner">
+    <div class="intro-word" aria-hidden="true">
+      <span style="--i:0">A</span><span style="--i:1">R</span><span style="--i:2">C</span><span style="--i:3">H</span><span style="--i:4">I</span><span style="--i:5">L</span><span style="--i:6">L</span><span style="--i:7">E</span><span style="--i:8" class="heel">S</span>
+    </div>
+    <p class="intro-line">Every physical thing has one weak point. We find it.</p>
+    <div class="intro-meta">
+      <span class="loading-count">(Loading) <span data-count>000</span></span>
+      <button class="btn solid" type="button" data-enter>Enter <span class="arrow" aria-hidden="true">↘</span></button>
+    </div>
+  </div>
+</div>
+
+<header class="site-header">
+  <a class="wordmark" href="/">Archilles<i>.</i></a>
+  <nav class="site-nav" aria-label="Main">
+    <a href="#postmortem"><b>01</b>Postmortem</a>
+    <a href="/interiors"><b>02</b>Forecast</a>
+    <a href="#method"><b>03</b>Method</a>
+    <a href="#collection"><b>04</b>Collection</a>
+  </nav>
   <span class="status" id="status" data-state="idle" role="status">READY</span>
 </header>
 
 <main>
-  <section class="stack" aria-label="Specimen">
-    <div class="panel">
-      <h2>New specimen</h2>
-      <div class="panel-body stack">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-stage" id="hero-stage" aria-hidden="true"></div>
+    <div class="hero-callout" id="hero-callout" aria-hidden="true"><i></i><b></b><span><em>●</em> Weak point · sharp inner corner</span></div>
+    <div class="hero-copy">
+      <p class="hero-kicker reveal">A weak-point finder for physical things</p>
+      <h1 id="hero-title" class="reveal">
+        <span class="line-mask"><span class="serif">We find the</span></span>
+        <span class="line-mask"><span class="sans" style="--delay:.1s"><em>weak point</em></span></span>
+      </h1>
+      <p class="hero-sub reveal" style="--delay:.25s">in a physical thing — before it breaks, or after.</p>
+      <a class="pill reveal" style="--delay:.35s" href="#modes">See the two modes <span class="arrow" aria-hidden="true">↘</span></a>
+    </div>
+    <a class="pill ghost hero-bottom reveal" style="--delay:.5s" href="#postmortem">Analyse a break</a>
+  </section>
+
+  <section class="modes" id="modes" aria-label="Two modes">
+    <a class="mode-card past reveal" href="#postmortem">
+      <span class="index-label"><b>01</b> Past tense · Postmortem</span>
+      <h2>This broke.</h2>
+      <p>Here's why: fatigue, overload, brittle fracture, layer delamination. Read straight from the fracture surface.</p>
+      <ul aria-label="What you get">
+        <li>Material</li><li>Failure mode</li><li>Visual evidence</li><li>Ranked fixes</li><li>Computed Kt</li>
+      </ul>
+      <span class="go">Analyse a break <span aria-hidden="true">↓</span></span>
+    </a>
+    <a class="mode-card future reveal" href="/interiors" style="--delay:.1s">
+      <span class="index-label"><b>02</b> Future tense · Forecast</span>
+      <h2>This hasn't broken yet.</h2>
+      <p>Here's where it will, and what to do now. Early signs found in a scanned building, played forward in 3D.</p>
+      <ul aria-label="What you get">
+        <li>Weak points in a scan</li><li>Failure scenario</li><li>Repair cost now vs later</li>
+      </ul>
+      <span class="go">Open Forecast <span aria-hidden="true">↗</span></span>
+    </a>
+  </section>
+
+  <section class="section" id="postmortem" aria-labelledby="postmortem-title">
+    <div class="section-head">
+      <span class="index-label reveal"><b>01</b> Postmortem</span>
+      <h2 id="postmortem-title" class="reveal">Photograph the break.</h2>
+      <p class="reveal">A close, sharp, well-lit photo of the broken surface. Archilles names the material and failure mode, shows the evidence it used, and ranks what to change.</p>
+    </div>
+
+    <div class="bench">
+      <div class="steps reveal" aria-label="New specimen">
         <div class="step">
-          <span class="step-n" aria-hidden="true">1</span>
+          <span class="step-n" aria-hidden="true">01</span>
           <span class="step-title">Photograph the break</span>
           <div class="step-body">
             <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose or drop a photo">
+              <span class="plus" aria-hidden="true">+</span>
               <strong>Drop a photo of the fracture surface</strong>
-              <small>or click to choose a file · JPEG, PNG, HEIC</small>
+              <small>or click to choose · JPEG, PNG, HEIC</small>
             </div>
             <input class="visually-hidden" type="file" id="file-any" accept="image/*,.heic,.heif" tabindex="-1">
             <input class="visually-hidden" type="file" id="file-camera" accept="image/*" capture="environment" tabindex="-1">
@@ -291,7 +105,7 @@
           </div>
         </div>
         <div class="step">
-          <span class="step-n" aria-hidden="true">2</span>
+          <span class="step-n" aria-hidden="true">02</span>
           <label class="step-title" for="context">Describe it <span class="muted">(optional)</span></label>
           <div class="step-body">
             <textarea id="context"
@@ -299,26 +113,50 @@
           </div>
         </div>
         <div class="step">
-          <span class="step-n" aria-hidden="true">3</span>
+          <span class="step-n" aria-hidden="true">03</span>
           <span class="step-title">Analyse</span>
           <div class="step-body">
-            <button class="btn primary" id="analyse" type="button" disabled>Analyse</button>
+            <button class="btn primary" id="analyse" type="button" disabled>Analyse <span class="arrow" aria-hidden="true">↘</span></button>
           </div>
         </div>
       </div>
+
+      <aside class="collection-wrap reveal" id="collection" style="--delay:.1s" aria-label="From the collection">
+        <span class="label">04 · Or open a piece from the collection</span>
+        <div class="collection">
+          <button class="btn" type="button" data-example="1"><img src="/static/examples/1.jpg" alt="" loading="lazy" width="92" height="72"><span><span class="numeral">I</span><span class="name">Wooden dowel</span><span class="what">Snapped in bending</span></span></button>
+          <button class="btn" type="button" data-example="2"><img src="/static/examples/2.jpg" alt="" loading="lazy" width="92" height="72"><span><span class="numeral">II</span><span class="name">Printed bars</span><span class="what">Broke through a hole</span></span></button>
+          <button class="btn" type="button" data-example="3"><img src="/static/examples/3.jpg" alt="" loading="lazy" width="92" height="72"><span><span class="numeral">III</span><span class="name">Craft stick</span><span class="what">Photo not good enough</span></span></button>
+        </div>
+      </aside>
     </div>
-    <div class="panel">
-      <h2>From the collection</h2>
-      <div class="panel-body collection">
-        <button class="btn" type="button" data-example="1"><span class="numeral">I</span><span>Wooden dowel<span class="what">Snapped in bending</span></span></button>
-        <button class="btn" type="button" data-example="2"><span class="numeral">II</span><span>Printed bars<span class="what">Broke through a hole</span></span></button>
-        <button class="btn" type="button" data-example="3"><span class="numeral">III</span><span>Craft stick<span class="what">Photo not good enough</span></span></button>
-      </div>
-    </div>
+
+    <section class="stack" id="output" aria-live="polite" aria-label="Diagnosis"></section>
   </section>
 
-  <section class="stack" id="output" aria-live="polite" aria-label="Diagnosis"></section>
+  <section class="section" id="method" aria-labelledby="method-title">
+    <div class="section-head">
+      <span class="index-label reveal"><b>03</b> Method</span>
+      <h2 id="method-title" class="reveal">Look. Doubt. Calculate.</h2>
+      <p class="reveal">The model describes. The checks doubt it. The numbers come from engineering charts, not from the model.</p>
+    </div>
+    <ol class="method-list">
+      <li class="reveal"><span class="n">01</span><h3>Look</h3><p>It lists what is visible on the surface before naming anything: beach marks, splinters, layer lines, a stress raiser.</p></li>
+      <li class="reveal"><span class="n">02</span><h3>Doubt</h3><p>Three independent runs must agree. The runner-up mode must be ruled out by a feature in the photo. A photo of nothing broken gets no diagnosis.</p></li>
+      <li class="reveal"><span class="n">03</span><h3>Calculate</h3><p>Geometry fixes get a stress concentration factor from Peterson's charts in mechanics.py, so before and after are numbers, not adjectives.</p></li>
+    </ol>
+    <p class="scale-line reveal">Scales from a 3D-printed bracket <span>to a crack in a building wall.</span></p>
+  </section>
 </main>
+
+<footer class="site-footer">
+  <span class="giant" aria-hidden="true">Archilles<i>.</i></span>
+  <div class="meta">
+    <span>Find the weak point · before or after</span>
+    <a href="/interiors">Forecast ↗</a>
+    <a href="https://github.com/dylan1225/Archilles">Source on GitHub ↗</a>
+  </div>
+</footer>
 
 <script type="module">
 "use strict";
@@ -408,17 +246,24 @@ function archIcon() {
   svg.setAttribute("class", "arch");
   svg.setAttribute("aria-hidden", "true");
   const path = document.createElementNS(svg.namespaceURI, "path");
-  path.setAttribute("d", "M4 82 V38 Q4 12 32 2 Q60 12 60 38 V82 Z M14 82 V42 Q14 22 32 13 Q50 22 50 42 V82");
+  // An L-bracket with its weak point: the sharp inner corner.
+  path.setAttribute("d", "M8 4 H24 V58 H58 V76 H8 Z");
   path.setAttribute("fill", "none");
-  path.setAttribute("stroke", "#b4a581");
+  path.setAttribute("stroke", "#a8cbe9");
   path.setAttribute("stroke-width", "2");
-  svg.append(path);
+  path.setAttribute("stroke-linejoin", "round");
+  const heel = document.createElementNS(svg.namespaceURI, "circle");
+  heel.setAttribute("cx", "24");
+  heel.setAttribute("cy", "58");
+  heel.setAttribute("r", "4");
+  heel.setAttribute("fill", "#ff8c7a");
+  svg.append(path, heel);
   return svg;
 }
 
 function showEmpty() {
   const box = el("div", "empty");
-  box.append(archIcon(), el("strong", "", "The gallery is empty"),
+  box.append(archIcon(), el("strong", "", "Nothing on the bench yet"),
     el("span", "", "Add a close, sharp, well-lit photo of the broken surface and press Analyse, or open a piece from the collection."));
   showOutput(panel("Diagnosis", box));
 }
@@ -786,7 +631,7 @@ function vitrineCaption(specimen, info) {
     ? "dimensions from your note" : "shape and dimensions estimated from the photo";
   caption.append(el("b", "", "Schematic reconstruction"), ` · ${source}`);
   if (info && info.exaggerated) caption.append(" · thin sections drawn thicker so they stay visible");
-  caption.append(". Orange marks the change; red arrows show the load.");
+  caption.append(". Blue marks the change; coral arrows show the load.");
   return caption;
 }
 
