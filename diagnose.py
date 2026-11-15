@@ -38,7 +38,9 @@ pillow_heif.register_heif_opener()
 PROJECT_DIR = Path(__file__).resolve().parent
 KNOWLEDGE_PATH = PROJECT_DIR / "knowledge" / "failure_modes.md"
 EXAMPLES_DIR = PROJECT_DIR / "knowledge" / "examples"
-CACHE_DIR = PROJECT_DIR / "cache" / "diagnoses"
+# POSTMORTEM_CACHE_DIR moves the cache to a writable place on read-only hosts
+# (Vercel: /tmp/...), matching building_evidence.cache_dir().
+CACHE_DIR = Path(os.getenv("POSTMORTEM_CACHE_DIR", "") or PROJECT_DIR / "cache") / "diagnoses"
 EXAMPLE_IMAGE_SUFFIXES =(".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp")
 
 MODEL = "gemini-4-hydrogen"
