@@ -28,6 +28,7 @@ from google import genai
 from PIL import Image, ImageOps, UnidentifiedImageError
 from pydantic import BaseModel, Field, ValidationError
 
+import materials
 import mechanics
 import uncertainty
 from uncertainty import Consistency
@@ -157,6 +158,12 @@ class Solution(BaseModel):
     computed: dict | None
     visual: Visual | None = None
     geometry: dict | None = None
+    section_change: dict | None = None
+    section_computed: dict | None = None
+    span_change: dict | None = None
+    span_computed: dict | None = None
+    proposed_material_id: str | None = None
+    material_comparison: dict | None = None
 
 
 class RejectedAlternative(BaseModel):
@@ -185,6 +192,15 @@ class Diagnosis(BaseModel):
     rejected_alternative: RejectedAlternative | None = None
     consistency: Consistency | None = None
     warnings: list[str] = []
+    # Copied from the knowledge base by code, never written by the model.
+    mode_name: str | None = None
+    mode_source: str | None = None
+    mode_status: str | None = None
+    # One plain sentence: what broke and why. None in results saved before it existed.
+    summary: str | None = None
+    # The material the user said the part is made of, and its reference data.
+    material_id: str | None = None
+    material_facts: dict | None = None
 
 
 @dataclass(frozen=True)
@@ -221,6 +237,28 @@ class _Geometry(BaseModel):
     dimensions_source: GeometrySource
 
 
+class _SpanChange(BaseModel):
+    current_span_mm: float | None = Field(description="Unsupported span now, in mm; null if unknown.")
+    proposed_span_mm: float | None = Field(description="Unsupported span after the fix, in mm; null if unknown.")
+    dimensions_source: GeometrySource
+
+
+class _SectionChange(BaseModel):
+    shape: Literal["round", "rectangular"]
+    current_diameter_mm: float | None = Field(description="round only; null if unknown.")
+    proposed_diameter_mm: float | None = Field(description="round only; null if unknown.")
+    current_width_mm: float | None = Field(description="rectangular only; null if unknown.")
+    proposed_width_mm: float | None = Field(description="rectangular only; null if unknown.")
+    current_thickness_mm: float | None = Field(
+        description="rectangular only, in the bending direction; null if unknown."
+    )
+    proposed_thickness_mm: float | None = Field(
+        description="rectangular only, in the bending direction; null if unknown."
+    )
+    length_mm: float | None = Field(description="Length of the part; null if unknown.")
+    dimensions_source: GeometrySource
+
+
 class _Specimen(BaseModel):
     shape: SpecimenShape = Field(description="Closest simple shape to the broken part.")
     length_mm: float = Field(description="Longest dimension of the intact part.")
@@ -236,7 +274,7 @@ class _Specimen(BaseModel):
 
 class _Visual(BaseModel):
     kind: VisualKind = Field(description="The change this solution makes to the part.")
-    label: str = Field(description="Caption of at most 6 words for the 3D callout.")
+    label: str = Field(description="Caption of at most 4 short words for the 3D callout.")
 
 
 class _ModelSolution(BaseModel):
@@ -251,6 +289,21 @@ class _ModelSolution(BaseModel):
             "Only when this solution adds or enlarges a fillet, increases a radius "
             "or softens a corner; else null."
         )
+    )
+    section_change: _SectionChange | None = Field(
+        description=(
+            "Only when this solution makes the section thicker, wider or larger in "
+            "diameter; else null."
+        )
+    )
+    proposed_material_id: str | None = Field(
+        description="Only when this solution switches material: an id from the list given; else null."
+    )
+    span_change: _SpanChange | None = Field(
+        default=None,
+        description=(
+            "Only when this solution adds a support or shortens the unsupported span; else null."
+        ),
     )
     visual: _Visual
 
@@ -305,6 +358,12 @@ class _ModelDiagnosis(BaseModel):
     confidence: Literal["high", "medium", "low"]
     probable_cause: str
     rejected_alternative: _RejectedAlternative | None
+    summary: str = Field(
+        description=(
+            "One plain sentence for a high-school robotics student: what broke and "
+            "why. Under 30 words."
+        )
+    )
     specimen: _Specimen | None = Field(
         description="Simplified shape of the part for a 3D sketch; null if the image is insufficient."
     )
@@ -381,6 +440,10 @@ allowed ids listed below. Use "other" when the surface is clear but no mode in \
 the knowledge base fits. Confidence is "high" only when the features that set \
 this mode apart from its most-confused neighbour are visible.
 
+   Then write summary: one plain sentence a high-school robotics student \
+would understand, saying what broke and why. Keep technical terms where they \
+are the right word; the page explains them.
+
 6. Name the single next most likely mode in rejected_alternative and rule it \
 out with evidence. visual_feature must be a specific feature you listed in \
 visual_evidence, with where it is (for example "long splinters pulled out along \
@@ -400,7 +463,14 @@ each with the reason it is less likely.
 or "use a stronger material" on its own is addresses_root_cause false. Pros and \
 cons must be real consequences for this part: weight, cost, print or machining \
 time, complexity, lead time, changes to mating parts. Do not invent a con for \
-balance.
+balance. Give pros and cons as numbers with units wherever you can read or \
+estimate them from the photo or the note: dimensions in mm, wall or perimeter \
+counts, infill percentage, temperatures in °C, numbers of fasteners or parts, \
+print or machining time (mark rough estimates with ~). Do not use vague size \
+words such as slightly, much, significantly or a lot; if you cannot put a number \
+on an effect, state it plainly with no size word. Never state a change in \
+weight, strength, stiffness or stress yourself: the system calculates those and \
+shows them next to your text.
 
 9. When a solution adds or enlarges a fillet, increases a radius or softens a \
 corner at a corner or notch, fill its geometry field: current radius (0 for a \
@@ -420,8 +490,26 @@ broke (0 to 1), what feature sits at the break, and how it was loaded. Take \
 dimensions from the user's note when given, otherwise estimate them from the \
 photo and say so in dimensions_source. For every solution, set visual.kind to \
 the change that best shows it on the part ("other" if none fits) and \
-visual.label to a caption of at most six words. When the image is \
+visual.label to a caption of at most four short words. When the image is \
 insufficient, specimen is null.
+
+8. When a solution makes the section thicker, wider or larger in diameter, fill \
+its section_change field: the shape of the cross-section (round or rectangular), \
+the current and proposed diameter (round) or width and thickness (rectangular, \
+thickness measured in the direction it bends), and the length of the part, in \
+millimetres. Use the user's note when it gives dimensions, otherwise estimate \
+from the photo; set any value you cannot estimate to null. Otherwise \
+section_change is null. Never state a weight or a strength gain yourself.
+
+9. When a solution switches to a different material, set proposed_material_id \
+to the closest id from the list of materials given below, or null if none fits. \
+Otherwise it is null.
+
+13. When a solution adds a support or otherwise shortens the unsupported span \
+of the part, fill its span_change field: the unsupported span now and after the \
+fix, in millimetres, from the note or estimated from the photo; null for any \
+value you cannot estimate. Never state the change in stress or deflection \
+yourself.
 """
 
 
@@ -439,6 +527,45 @@ def mode_ids(knowledge_base: str) -> list[str]:
     """Ids of the filled-in modes. TODO placeholders are not valid answers."""
     ids = re.findall(r"^## Mode:\s*(\S+)\s*$", knowledge_base, flags=re.MULTILINE)
     return [mode for mode in ids if not mode.upper().startswith("TODO")]
+
+
+MODE_NAMES_BUILT_IN = {
+    MODE_OTHER: "Not in the knowledge base",
+    MODE_UNDETERMINED: "Undetermined",
+}
+
+
+def mode_info(knowledge_base: str) -> dict[str, dict[str, str | None]]:
+    """Name, Material, Source and Status of each filled-in mode, by id.
+
+    Read from the `- **Field:** value` lines under each `## Mode:` heading.
+    A missing field is None, never guessed.
+    """
+    info: dict[str, dict[str, str | None]] = {}
+    blocks = re.split(r"^## Mode:\s*", knowledge_base, flags=re.MULTILINE)[1:]
+    for block in blocks:
+        mode_id = block.split(None, 1)[0].strip()
+        if mode_id.upper().startswith("TODO"):
+            continue
+        fields = dict(re.findall(r"^- \*\*(\w+):\*\*\s*(.+?)\s*$", block, flags=re.MULTILINE))
+        info[mode_id] = {
+            key: fields.get(key.capitalize()) for key in ("name", "material", "source", "status")
+        }
+    return info
+
+
+def with_mode_info(diagnosis: Diagnosis, knowledge_base: str | None = None) -> Diagnosis:
+    """Attach the mode's name, source and review status from the knowledge base."""
+    info = mode_info(knowledge_base if knowledge_base is not None else load_knowledge_base())
+    entry = info.get(diagnosis.primary_mode, {})
+    name = entry.get("name") or MODE_NAMES_BUILT_IN.get(diagnosis.primary_mode)
+    return diagnosis.model_copy(
+        update={
+            "mode_name": name,
+            "mode_source": entry.get("source"),
+            "mode_status": entry.get("status"),
+        }
+    )
 
 
 def load_examples(directory: Path = EXAMPLES_DIR) -> list[Example]:
@@ -495,10 +622,15 @@ def _text_block(text: str) -> dict[str, Any]:
     return {"type": "text", "text": text}
 
 
+def _material_list() -> str:
+    return ", ".join(f"{m.id} ({m.name})" for m in materials.load_materials().values())
+
+
 def _system_text(knowledge_base: str, allowed_modes: list[str]) -> str:
     return (
         f"{SYSTEM_RULES}\n"
         f"Allowed values for primary_mode: {', '.join(allowed_modes)}.\n"
+        f"Materials for proposed_material_id: {_material_list()}.\n"
         "Knowledge base blocks whose id starts with TODO are unfinished "
         "placeholders. Ignore them.\n\n"
         f"<knowledge_base>\n{knowledge_base}\n</knowledge_base>"
@@ -547,7 +679,7 @@ def config_fingerprint() -> str:
     """
     hasher = hashlib.sha256()
     sampling = f"samples={N_SAMPLES};temperature={SAMPLE_TEMPERATURE}"
-    for part in (MODEL, sampling, SYSTEM_RULES, load_knowledge_base()):
+    for part in (MODEL, sampling, SYSTEM_RULES, load_knowledge_base(), _material_list()):
         hasher.update(part.encode("utf-8") + b"\0")
     for example in load_examples():
         hasher.update(example.image_b64.encode("ascii") + b"\0")
@@ -737,6 +869,7 @@ def fillet_computed(
         "is_extrapolated": result["is_extrapolated"],
         "is_capped": result["is_capped"],
         "basis": result["basis"],
+        "working": result["working"],
     }
 
 
@@ -780,18 +913,158 @@ def _to_visual(raw: _Visual) -> Visual:
     return Visual(kind=raw.kind, label=label)
 
 
+SECTION_FIELDS = {
+    "round": ("diameter_mm",),
+    "rectangular": ("width_mm", "thickness_mm"),
+}
+
+
+def section_computed(
+    change: dict[str, Any],
+    density_g_cm3: tuple[float, float] | None = None,
+    density_source: str | None = None,
+) -> dict[str, Any]:
+    """Weight and strength ratios for a thicker section. Calculated by
+    mechanics.py, never by the model.
+
+    Missing dimensions are listed in `needs_input` rather than guessed; impossible
+    ones are reported in `error`. Grams need a length and a density.
+    """
+    shape = change.get("shape")
+    base = {"type": "section_change", "calculated_by": "mechanics.py", "inputs": dict(change)}
+    if shape not in SECTION_FIELDS:
+        return {**base, "error": f"Not calculated: unknown shape {shape!r}."}
+    needed = [f"{when}_{field}" for field in SECTION_FIELDS[shape] for when in ("current", "proposed")]
+    missing = [name for name in needed if change.get(name) is None]
+    if missing:
+        return {**base, "needs_input": missing}
+    pick = lambda when: {f: change[f"{when}_{f}"] for f in SECTION_FIELDS[shape]}  # noqa: E731
+    length = change.get("length_mm")
+    try:
+        result = mechanics.section_change(
+            shape, pick("current"), pick("proposed"),
+            length_mm=length if density_g_cm3 else None,
+            density_g_cm3=density_g_cm3 if length else None,
+            density_source=density_source,
+        )
+    except ValueError as exc:
+        logger.info("Section calculation rejected its inputs: %s", exc)
+        return {**base, "error": f"Not calculated: {exc}"}
+    return {**base, **result}
+
+
+def span_computed(change: dict[str, Any]) -> dict[str, Any]:
+    """Moment and deflection change for a shorter span. Calculated by
+    mechanics.py, never by the model."""
+    base = {"type": "span_change", "calculated_by": "mechanics.py", "inputs": dict(change)}
+    missing = [name for name in ("current_span_mm", "proposed_span_mm") if change.get(name) is None]
+    if missing:
+        return {**base, "needs_input": missing}
+    try:
+        result = mechanics.span_change(change["current_span_mm"], change["proposed_span_mm"])
+    except ValueError as exc:
+        return {**base, "error": f"Not calculated: {exc}"}
+    return {**base, **result}
+
+
+def _span_inputs(raw: _SpanChange) -> dict[str, Any]:
+    inputs = raw.model_dump()
+    if inputs["current_span_mm"] is None or inputs["proposed_span_mm"] is None:
+        inputs["dimensions_source"] = "unknown"
+    return inputs
+
+
+def part_volume_mm3(specimen: "Specimen | None") -> tuple[float, str] | None:
+    """Volume of the simplified part, with a note saying what it is. Used only to
+    turn a change of material into grams; the shape is the schematic one."""
+    if specimen is None:
+        return None
+    L, w, t = specimen.length_mm, specimen.width_mm, specimen.thickness_mm
+    if specimen.shape == "round_rod":
+        volume, shape = math.pi * w**2 / 4 * L, f"rod Ø{mechanics.fmt(w, 1)} × {mechanics.fmt(L, 1)} mm"
+    else:
+        volume, shape = w * t * L, f"{mechanics.fmt(w, 1)} × {mechanics.fmt(t, 1)} × {mechanics.fmt(L, 1)} mm"
+    source = "from your note" if specimen.dimensions_source == "user_context" else "estimated from the photo"
+    return volume, f"{shape}, {source}"
+
+
+def _section_inputs(raw: _SectionChange) -> dict[str, Any]:
+    inputs = raw.model_dump()
+    needed = [f"{w}_{f}" for f in SECTION_FIELDS[raw.shape] for w in ("current", "proposed")]
+    if any(inputs[name] is None for name in needed):
+        inputs["dimensions_source"] = "unknown"
+    return inputs
+
+
+def _known_material(material_id: str | None) -> str | None:
+    """A material id from the model, kept only if it is in the table."""
+    return material_id if material_id in materials.ids() else None
+
+
 def _to_solution(raw: _ModelSolution) -> Solution:
     geometry = raw.geometry
+    section = _section_inputs(raw.section_change) if raw.section_change else None
+    span = _span_inputs(raw.span_change) if raw.span_change else None
     return Solution(
-        **raw.model_dump(exclude={"geometry", "visual"}),
+        **raw.model_dump(exclude={"geometry", "visual", "section_change", "proposed_material_id", "span_change"}),
         computed=_geometry_computed(geometry) if geometry else None,
         visual=_to_visual(raw.visual),
         geometry=geometry.model_dump() if geometry else None,
+        section_change=section,
+        section_computed=section_computed(section) if section else None,
+        proposed_material_id=_known_material(raw.proposed_material_id),
+        span_change=span,
+        span_computed=span_computed(span) if span else None,
     )
 
 
 def _to_rejected(raw: _RejectedAlternative | None) -> RejectedAlternative | None:
     return RejectedAlternative(**raw.model_dump()) if raw else None
+
+
+def with_material(diagnosis: Diagnosis, material_id: str | None) -> Diagnosis:
+    """Attach reference data for the user's material, and everything that
+    depends on it: grams on thicker-section fixes and material comparisons.
+
+    Raises materials.MaterialError for an unknown id.
+    """
+    material = materials.get(material_id) if material_id else None
+    volume = part_volume_mm3(diagnosis.specimen)
+    solutions = []
+    for solution in diagnosis.solutions:
+        update: dict[str, Any] = {}
+        if solution.section_change:
+            if material:
+                update["section_change"] = {**solution.section_change, "material_id": material.id}
+            update["section_computed"] = section_computed(
+                update.get("section_change", solution.section_change),
+                material.density_g_cm3 if material else None,
+                material.source if material else None,
+            )
+        proposed = _known_material(solution.proposed_material_id)
+        if proposed:
+            update["material_comparison"] = (
+                materials.compare(material.id, proposed, *(volume or ())) if material
+                else {"from": None, "to": materials.facts(materials.get(proposed)),
+                      "calculated_by": "materials.py"}
+            )
+        solutions.append(solution.model_copy(update=update))
+    return diagnosis.model_copy(
+        update={
+            "solutions": solutions,
+            "material_id": material.id if material else None,
+            "material_facts": materials.facts(material) if material else None,
+        }
+    )
+
+
+SUMMARY_MAX_CHARS = 240
+
+
+def _one_line(text: str) -> str | None:
+    """The summary as one tidy line, capped; None if empty."""
+    line = " ".join(text.split())[:SUMMARY_MAX_CHARS]
+    return line or None
 
 
 def _to_diagnosis(raw: _ModelDiagnosis) -> Diagnosis:
@@ -816,6 +1089,7 @@ def _to_diagnosis(raw: _ModelDiagnosis) -> Diagnosis:
             confidence="low",
             visual_evidence=raw.visual_evidence,
             probable_cause=raw.probable_cause,
+            summary=_one_line(raw.summary),
             alternative_modes=[],
             solutions=[],
             insufficient_image=True,
@@ -827,6 +1101,7 @@ def _to_diagnosis(raw: _ModelDiagnosis) -> Diagnosis:
         confidence=raw.confidence,
         visual_evidence=raw.visual_evidence,
         probable_cause=raw.probable_cause,
+        summary=_one_line(raw.summary),
         alternative_modes=[(alt.mode, alt.why_less_likely) for alt in raw.alternative_modes],
         solutions=[_to_solution(s) for s in raw.solutions[:MAX_SOLUTIONS]],
         insufficient_image=False,
@@ -982,7 +1257,7 @@ def diagnose_with_meta(
         cost_usd=_cost_usd(usage),
         **usage,
     )
-    return uncertainty.geometry_cross_check(combined), meta
+    return with_mode_info(uncertainty.geometry_cross_check(combined)), meta
 
 
 def _cache_path(image_bytes: bytes, user_context: str | None, n_samples: int) -> Path:

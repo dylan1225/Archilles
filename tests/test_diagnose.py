@@ -49,6 +49,8 @@ def solution(**overrides) -> dict:
         "effort": "trivial",
         "addresses_root_cause": True,
         "geometry": None,
+        "section_change": None,
+        "proposed_material_id": None,
         "visual": {"kind": "add_fillet", "label": "Round the inside corner"},
     }
     return {**base, **overrides}
@@ -93,6 +95,7 @@ def payload(**overrides) -> dict:
         "confidence": "medium",
         "probable_cause": "Cyclic bending at a sharp corner.",
         "rejected_alternative": rejected(),
+        "summary": "Repeated bending cracked it at a sharp corner.",
         "specimen": specimen(),
         "alternative_modes": [
             {"mode": "other", "why_less_likely": "Two distinct zones are visible."}
@@ -372,13 +375,21 @@ def test_missing_specimen_still_gives_a_diagnosis():
     assert result.primary_mode == "fatigue_metal"
 
 
+def test_summary_is_tidied_to_one_line():
+    body = payload(summary="  It   broke\nat the corner.  ")
+
+    result, _ = run(FakeClient(response(body)))
+
+    assert result.summary == "It broke at the corner."
+
+
 def test_results_saved_before_the_3d_fields_still_load():
     old = payload()
     stored = {
         **{k: v for k, v in old.items() if k not in ("specimen", "solutions", "alternative_modes")},
         "alternative_modes": [["other", "why"]],
         "solutions": [
-            {k: v for k, v in solution().items() if k not in ("geometry", "visual")} | {"computed": None}
+            {k: v for k, v in solution().items() if k not in ("geometry", "visual", "section_change", "proposed_material_id")} | {"computed": None}
         ],
     }
 
@@ -581,3 +592,11 @@ def test_unreadable_upload_fails_before_any_call():
     with pytest.raises(DiagnosisError, match="could not be read as an image"):
         diagnose.diagnose_with_meta(b"not an image", None, client=client)
     assert client.requests == []
+
+
+def test_rules_ask_for_units_and_leave_calculated_effects_to_the_system():
+    rules = diagnose.SYSTEM_RULES
+
+    assert "numbers with units" in rules
+    assert "slightly" in rules  # named as a banned vague size word
+    assert "Never state a change in weight, strength, stiffness or stress yourself" in rules.replace("\\\n", "")

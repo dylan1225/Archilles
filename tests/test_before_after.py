@@ -62,6 +62,8 @@ def _model_answer(geometry):
         "effort": "trivial",
         "addresses_root_cause": True,
         "geometry": geometry,
+        "section_change": None,
+        "proposed_material_id": None,
         "visual": {"kind": "add_fillet", "label": "Round the corner"},
     }
     plain = {**solution, "title": "Thicker wall", "geometry": None, "addresses_root_cause": False}
@@ -82,6 +84,7 @@ def _model_answer(geometry):
             "reason": "A single brittle overload would leave one uniform granular "
                       "surface, not beach marks growing from the corner.",
         },
+        "summary": "Repeated bending cracked it at a sharp corner.",
         "specimen": None,
         "alternative_modes": [],
         "solutions": [solution, plain, plain],
