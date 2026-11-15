@@ -1,4 +1,15 @@
-# Postmortem
+# insomnia
+
+Two hackathon projects live in this repository:
+
+- **[Postmortem](#postmortem)**: photograph a broken mechanical part and get back
+  why it failed and what to change. Python app at the repository root.
+- **[Margin](#margin)**: a math whiteboard with live, hint-first feedback. Web
+  app in [`whiteboard/`](whiteboard/).
+
+---
+
+## Postmortem
 
 Photograph a broken part and find out how it failed and what to change.
 
@@ -16,7 +27,7 @@ fixes built in.
   part is rebuilt from a simple shape with estimated dimensions, and the page
   says so.
 
-## Quick start
+### Quick start
 
 Needs Python 3.12+ and a Gemini API key.
 
@@ -36,7 +47,7 @@ Command line:
 venv/bin/python diagnose.py photo.jpg --context "PETG bracket, 3 mm wall, snapped after two weeks"
 ```
 
-## Using it
+### Using it
 
 1. **Photograph the break.** Drop a photo or use the camera button: close up,
    sharp and well lit. JPEG, PNG and HEIC all work.
@@ -215,7 +226,7 @@ photo + note ─► diagnose.py   one Gemini call with the knowledge base, a str
 | `docs/demo-photo-guide.md` | How to shoot and bundle a fourth example that shows the calculated card. |
 | `eval/run_eval.py` | Accuracy run over `eval/labels.csv` + `eval/images/`, cached, with a few-shot leak check. |
 
-### 3D exhibit data
+#### 3D exhibit data
 
 Alongside the diagnosis, the model describes the part as a `specimen`
 (`round_rod`, `rect_bar`, `flat_plate` or `l_bracket`, plus dimensions, where it
@@ -226,7 +237,7 @@ a `visual` field: one of `add_support`, `move_load`, `thicken_section`,
 plus a short label. Out-of-range values are clamped, never retried. Saved
 results without these fields still load and show the plain text list.
 
-## Tests and evaluation
+### Tests and evaluation
 
 ```bash
 venv/bin/python -m pytest
@@ -237,9 +248,9 @@ venv/bin/python eval/run_eval.py
 rule enforcement, retries and timeouts, the cache, the 3D fields and the bundled
 examples. The eval needs `eval/labels.csv` and `eval/images/`.
 
-## Update log
+### Update log
 
-### 2026-11-14 — Uncertainty handling
+#### 2026-11-14 — Uncertainty handling
 Defences against a confident failure story the photo does not support
 (`uncertainty.py`, plus schema and prompt changes in `diagnose.py`).
 - **Self-consistency:** each photo is diagnosed 3 times in parallel at
@@ -264,7 +275,7 @@ Defences against a confident failure story the photo does not support
   null specimen `true_mode = not_applicable`; the run exits 1 unless every null
   specimen was declined. The eval now shares the app's diagnosis cache.
 
-### 2026-11-14 — Calculated before/after for geometry fixes
+#### 2026-11-14 — Calculated before/after for geometry fixes
 - Fixes that add or enlarge a fillet, increase a radius or soften a corner now
   carry a `geometry` block (current radius, proposed radius, section depth). The
   model must leave a value null rather than invent it.
@@ -279,7 +290,7 @@ Defences against a confident failure story the photo does not support
 - Fixes with no geometry show no card at all. Thicker walls or sections are not
   calculated: `mechanics.py` has no model for them yet.
 
-### 2026-11-14 — 3D exhibit and new UI (`655b3d8`)
+#### 2026-11-14 — 3D exhibit and new UI (`655b3d8`)
 - Interactive three.js exhibit: the part *as found* (broken) or with solution 1, 2
   or 3 applied, with orange callouts, load arrows and supports, and the source
   photo framed on the gallery wall.
@@ -293,22 +304,48 @@ Defences against a confident failure story the photo does not support
 - three.js vendored for offline use; bundled examples re-generated with 3D data;
   new tests for the 3D fields and bundled examples.
 
-### 2026-11-14 — Demo examples (`6ee41c4`, `f3737c8`)
+#### 2026-11-14 — Demo examples (`6ee41c4`, `f3737c8`)
 - Three bundled examples with real results: wooden dowel (bending overload),
   printed bars (fracture through a hole), craft stick (photo insufficient).
 - `GET /examples/{n}` serves them with no network access; demo hardening and tests.
 
-### 2026-11-14 — Gemini (`40a6af5`)
+#### 2026-11-14 — Gemini (`40a6af5`)
 - Model call moved from Anthropic to Gemini, with a hard wall-clock limit and
   clear messages for timeouts, rate limits and rejected keys.
 
-### 2026-11-14 — Evaluation (`7f30f8c`, `54a0eaf`)
+#### 2026-11-14 — Evaluation (`7f30f8c`, `54a0eaf`)
 - `eval/run_eval.py` with a result cache, per-mode accuracy and a confusion
   matrix; aborts if an eval photo is also a few-shot example.
 - Clear error when `.env` is a folder instead of a file.
 
-### 2026-11-14 — First working version (`a168f9f` … `2314760`)
+#### 2026-11-14 — First working version (`a168f9f` … `2314760`)
 - Project scaffold and failure-mode knowledge base template.
 - `mechanics.py`: stress concentration, fillet improvement, wall check.
 - `diagnose.py`: evidence-first vision diagnosis with schema and rule checks.
 - FastAPI app and single-file UI.
+
+---
+
+## Margin
+
+A math whiteboard with live, hint-first feedback from Gemini. The app is in [`whiteboard/`](whiteboard/).
+
+Students can draw with a stylus, touch, or mouse, or type their working. After a 1.6-second pause, Gemini reads the board and checks each step, flagging the first clear mistake. The board includes an eraser, colors, stroke undo/redo, PNG export, practice problems, and browser autosave.
+
+```sh
+cd whiteboard
+npm ci
+cp .env.example .dev.vars
+# Set GEMINI_API_KEY in .dev.vars (never commit this file).
+npm run dev
+```
+
+Use Node.js 22.13+ (22 LTS recommended). The provided key is configured as a hosted runtime secret; local development needs its own `.dev.vars` file. Optional `GEMINI_MODEL` defaults to `gemini-3.5-flash-lite`, which was verified on incorrect and corrected sample boards.
+
+```sh
+npx tsc --noEmit
+node --experimental-strip-types --test tests/review.test.ts
+npm run build
+```
+
+Uses the existing [Signature Pad](https://github.com/szimek/signature_pad) drawing library and [Gemini image understanding](https://ai.google.dev/gemini-api/docs/image-understanding), with a server-side API proxy. No extra OCR service is required. Image snapshots and the problem are sent to Gemini only when a check runs; work is stored locally in the student's browser. Disable live feedback for manual checks. AI feedback is fallible and may need a clearer handwritten step.
