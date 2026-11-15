@@ -20,21 +20,26 @@
 <script type="module" src="/static/hero3d.js"></script>
 </head>
 <body>
-<div class="intro" id="intro" role="dialog" aria-label="Archilles">
-  <div class="intro-inner">
-    <div class="intro-word" aria-hidden="true">
-      <span style="--i:0">A</span><span style="--i:1">R</span><span style="--i:2">C</span><span style="--i:3">H</span><span style="--i:4">I</span><span style="--i:5">L</span><span style="--i:6">L</span><span style="--i:7">E</span><span style="--i:8" class="heel">S</span>
-    </div>
-    <p class="intro-line">Every physical thing has one weak point. We find it.</p>
-    <div class="intro-meta">
-      <span class="loading-count">(Loading) <span data-count>000</span></span>
-      <button class="btn solid" type="button" data-enter>Enter <span class="arrow" aria-hidden="true">↘</span></button>
-    </div>
-  </div>
-</div>
+<div class="intro-veil" id="intro" aria-hidden="true"><small>Click or press any key to skip</small></div>
 
 <header class="site-header">
-  <a class="wordmark" href="/">Archilles<i>.</i></a>
+  <a class="brand" id="brand" href="/" aria-label="Archilles home">
+    <svg class="brand-glyph" viewBox="0 0 120 140" aria-hidden="true">
+      <g class="arch">
+        <path class="leg" pathLength="100" d="M20 140 V58 A40 40 0 0 1 60 18"></path>
+        <path class="leg" pathLength="100" d="M100 140 V58 A40 40 0 0 0 60 18"></path>
+        <path class="key" d="M48 19.9 A40 40 0 0 1 72 19.9"></path>
+        <rect class="heel" x="12" y="122" width="16" height="18"></rect>
+        <circle class="ring" cx="18" cy="133" r="7"></circle>
+        <g class="fly"><g class="quiver"><g transform="rotate(18 14 132)">
+          <path class="trail" d="M-76 132 H-230 M-76 125 H-190 M-76 139 H-205"></path>
+          <path class="arrow" stroke-width="6" d="M-6 132 H-70"></path>
+          <polygon class="head" points="14,132 -6,119 -6,145"></polygon>
+          <path class="arrow" stroke-width="5" d="M-52 132 L-64 120 M-52 132 L-64 144 M-64 132 L-76 120 M-64 132 L-76 144"></path>
+        </g></g></g>
+      </g>
+    </svg><span class="brand-word" aria-hidden="true"><span class="ch" style="--i:0">r</span><span class="ch" style="--i:1">c</span><span class="ch" style="--i:2">h</span><span class="ch" style="--i:3">i</span><span class="ch" style="--i:4">l</span><span class="ch" style="--i:5">l</span><span class="ch" style="--i:6">e</span><span class="ch" style="--i:7">s</span></span>
+  </a>
   <nav class="site-nav" aria-label="Main">
     <a href="#postmortem"><b>01</b>Postmortem</a>
     <a href="/interiors"><b>02</b>Forecast</a>

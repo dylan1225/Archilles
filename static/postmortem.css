@@ -2,22 +2,17 @@
 
 html.gated { overflow: hidden; }
 
-/* --- Intro gate ------------------------------------------------------------ */
-.intro { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: var(--gutter);
-  background: radial-gradient(70% 60% at 50% 45%, var(--mist), var(--bg) 70%);
-  clip-path: inset(0 0 0 0); transition: clip-path 1.3s var(--ease); }
-.intro.gone { clip-path: inset(0 0 100% 0); pointer-events: none; }
-.intro-inner { display: grid; justify-items: center; gap: 34px; text-align: center; }
-.intro-word { display: flex; gap: clamp(6px, 2.2vw, 30px); font: 300 clamp(40px, 10vw, 150px)/1 var(--font-sans); letter-spacing: -.02em; }
-.intro-word span { display: block; animation: rise 1.4s var(--ease) both; animation-delay: calc(var(--i) * 70ms); }
-.intro-word span.heel { color: var(--flag); }
-@keyframes rise { from { transform: translateY(60%); opacity: 0; } }
-.intro-line { font: 400 15px/1.5 var(--font-sans); color: var(--muted); max-width: 34ch; }
-.intro-meta { display: flex; align-items: center; gap: 22px; min-height: 46px; font: 500 12px/1 var(--font-mono); letter-spacing: .12em; color: var(--muted); }
-.intro [data-enter] { opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity .6s var(--ease), transform .6s var(--ease); }
-.intro.ready [data-enter] { opacity: 1; transform: none; pointer-events: auto; }
-.intro.ready .loading-count { opacity: .45; }
-
+/* --- Intro: the logo builds mid-screen on a veil, then docks into the header --- */
+.intro-veil { position: fixed; inset: 0; z-index: 90; cursor: pointer; transition: opacity .9s ease .15s;
+  background: radial-gradient(70% 60% at 50% 45%, var(--mist), var(--bg) 70%); }
+.intro-veil.gone { opacity: 0; pointer-events: none; }
+.intro-veil small { position: absolute; left: 0; right: 0; bottom: 28px; text-align: center; font: 500 11px/1 var(--font-mono);
+  letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+/* While the intro plays, the header rises above the veil but only the logo shows. */
+html.gated .site-header { z-index: 95; background: none; border-bottom-color: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+html.gated .site-nav, html.gated .status { opacity: 0; }
+.site-nav, .status { transition: opacity .8s var(--ease) .3s; }
+html.gated .brand:not(.placed) { visibility: hidden; }
 /* --- Hero: a full-bleed 3D room with centred type over it -------------------- */
 .hero { position: relative; min-height: 100svh; display: grid; place-items: center; padding: 120px var(--gutter) 110px;
   overflow: hidden; isolation: isolate; text-align: center;

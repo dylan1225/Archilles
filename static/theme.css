@@ -86,8 +86,42 @@ img { max-width: 100%; }
   border-bottom: 1px solid transparent; }
 .site-header[data-scrolled="true"] { background: rgba(245, 249, 253, .78); border-bottom-color: var(--line);
   -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2); }
-.wordmark { font: 600 13px/1 var(--font-sans); letter-spacing: .48em; text-decoration: none; text-transform: uppercase; white-space: nowrap; }
-.wordmark i { font-style: normal; color: var(--flag-ink); }
+/* --- Logo: an arch "A" with an arrow in its heel, then "rchilles" ------------
+   The resting state is the finished logo. The intro adds .playing to build it:
+   legs rise, keystone drops, the arrow strikes the heel, letters type in. */
+.brand { position: relative; z-index: 2; display: inline-flex; align-items: baseline; color: var(--ink); text-decoration: none;
+  font: 500 24px/1 var(--font-sans); letter-spacing: -.03em; transform-origin: 0 0; will-change: transform; }
+.brand-glyph { display: inline-block; height: .74em; width: .63em; margin: 0 .03em 0 .55em; overflow: visible; }
+.brand .ch { display: inline-block; }
+.brand .leg, .brand .key { fill: none; stroke: currentColor; stroke-width: 16; }
+.brand .leg { stroke-dasharray: 100; stroke-dashoffset: 8; }
+.brand .quiver { transform-box: view-box; transform-origin: 14px 132px; }
+.brand .arrow, .brand .trail { fill: none; stroke: var(--flag); stroke-linecap: round; }
+.brand .trail { stroke-width: 1.6; opacity: 0; }
+.brand .head { fill: var(--flag); }
+.brand .heel { fill: var(--flag); opacity: 0; }
+.brand .ring { fill: none; stroke: var(--flag); stroke-width: 3; opacity: 0; transform-box: fill-box; transform-origin: center; }
+/* Timeline: legs 0.2-2.1 s, keystone 2.15 s, arrow 3.0 s, strike 3.22 s, letters from 3.7 s. */
+.brand.playing .leg { animation: brand-build 1.9s cubic-bezier(.45, 0, .25, 1) .2s both; }
+.brand.playing .key { animation: brand-drop .55s cubic-bezier(.3, 1.35, .5, 1) 2.15s both; }
+.brand.playing .fly { animation: brand-shoot .22s linear 3s both; }
+.brand.playing .trail { animation: brand-streak .22s linear 3s both; }
+.brand.playing .quiver { animation: brand-quiver .75s ease-in-out 3.22s; }
+.brand.playing .arch { animation: brand-hit .45s linear 3.22s; }
+.brand.playing .heel { animation: brand-flash .7s ease-out 3.22s; }
+.brand.playing .ring { animation: brand-pulse .8s ease-out 3.22s; }
+.brand.playing .ch { animation: brand-type .3s cubic-bezier(.2, .7, .2, 1) calc(3.7s + var(--i) * .09s) both; }
+.brand.skip * { animation-duration: 0s !important; animation-delay: 0s !important; }
+@keyframes brand-build { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 8; } }
+@keyframes brand-drop { 0% { opacity: 0; transform: translateY(-90px); } 12% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+@keyframes brand-shoot { from { opacity: 1; transform: translate(-571px, -185px); } to { opacity: 1; transform: none; } }
+@keyframes brand-streak { 0%, 90% { opacity: .5; } 100% { opacity: 0; } }
+@keyframes brand-quiver { 10% { transform: rotate(-4.5deg); } 25% { transform: rotate(3.4deg); } 40% { transform: rotate(-2.4deg); }
+  55% { transform: rotate(1.6deg); } 70% { transform: rotate(-.9deg); } 85% { transform: rotate(.4deg); } }
+@keyframes brand-hit { 12% { transform: translate(2.4px, .8px); } 30% { transform: translate(-1.5px, -.5px); } 50% { transform: translate(1px, .3px); } 70% { transform: translate(-.5px, 0); } }
+@keyframes brand-flash { 0% { opacity: .9; } 100% { opacity: 0; } }
+@keyframes brand-pulse { 0% { opacity: .9; transform: scale(.3); } 100% { opacity: 0; transform: scale(4.5); } }
+@keyframes brand-type { from { opacity: 0; transform: translateY(.14em); } to { opacity: 1; transform: none; } }
 .site-nav { display: flex; gap: clamp(14px, 2.4vw, 34px); margin-left: auto; }
 .site-nav a { position: relative; display: inline-flex; gap: 8px; align-items: baseline; padding: 6px 0; text-decoration: none;
   font: 500 12px/1 var(--font-mono); letter-spacing: .06em; color: var(--muted); }
