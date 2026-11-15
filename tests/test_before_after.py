@@ -178,3 +178,11 @@ def test_missing_measurement_is_a_bad_request():
 
     assert response.status_code == 422
     assert "error" in response.json()
+
+
+def test_card_carries_the_reference_peak_stresses_from_mechanics():
+    computed = diagnose.fillet_computed(0.0, 3.0, 10.0, "user_context")
+
+    assert computed["reference_nominal_stress_mpa"] == 10.0
+    assert computed["peak_before_mpa"] == pytest.approx(computed["kt_before"] * 10.0)
+    assert computed["peak_after_mpa"] == pytest.approx(computed["kt_after"] * 10.0)

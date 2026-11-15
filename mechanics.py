@@ -24,6 +24,11 @@ RANGE_TOLERANCE = 1e-9  # Absorbs float error at the table edges (0.3 / 6 != 0.0
 KT_DECIMALS = 2
 RATIO_DECIMALS = 4
 PERCENT_DECIMALS = 1
+STRESS_DECIMALS = 1
+
+# A stated reference load for showing peak stress in MPa. The photo cannot give
+# the part's real load, so the card labels this as a reference, not a measurement.
+REFERENCE_NOMINAL_STRESS_MPA = 10.0
 
 FDM_PRACTICAL_MIN_WALL_MM = 1.2
 FDM_RELIABLE_PRINT_MIN_WALL_MM = 0.8
@@ -153,6 +158,9 @@ def fillet_improvement(
         "r_over_d_current": current["r_over_d"],
         "r_over_d_proposed": proposed["r_over_d"],
         "peak_stress_reduction_pct": round(reduction_pct, PERCENT_DECIMALS),
+        "reference_nominal_stress_mpa": REFERENCE_NOMINAL_STRESS_MPA,
+        "peak_stress_current_mpa": round(current["kt"] * REFERENCE_NOMINAL_STRESS_MPA, STRESS_DECIMALS),
+        "peak_stress_proposed_mpa": round(proposed["kt"] * REFERENCE_NOMINAL_STRESS_MPA, STRESS_DECIMALS),
         "reduction_is_lower_bound": is_lower_bound,
         "is_extrapolated": current["is_extrapolated"] or proposed["is_extrapolated"],
         "is_capped": current["is_capped"] or proposed["is_capped"],
