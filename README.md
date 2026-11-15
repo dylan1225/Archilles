@@ -234,11 +234,26 @@ venv/bin/python -m pytest
 venv/bin/python eval/run_eval.py
 ```
 
-306 offline tests with a fake model client cover the mechanics tables, schema and
+322 offline tests with a fake model client cover the mechanics tables, schema and
 rule enforcement, retries and timeouts, the cache, the 3D fields and the bundled
 examples. The eval needs `eval/labels.csv` and `eval/images/`.
 
 ## Update log
+
+### 2026-11-15 — Drawing-room redesign and supported numbers
+- New look: white page, one grotesque typeface (Helvetica Neue stack), pencil
+  rules, monochrome throughout. The landing page is an original pencil-sketch
+  drawing board; click it and it lifts to invite an upload, a camera photo or
+  one of the collection pieces.
+- Results: verdict, then the 3D simulation in a white studio, then a plain list
+  of suggested fixes that underline on hover and apply to the model on click.
+  Details sit at the bottom as headers with a + that opens each one.
+- Every calculated number shows its working on hover, focus or tap: formula,
+  values substituted, result and source (`working` steps from `mechanics.py`
+  and `materials.py`; tests check the steps equal the reported numbers).
+- New numbers: grams for a material swap (part volume × the two densities) and
+  a span calculation for fixes that add a support (`mechanics.span_change`,
+  `GET /mechanics/span`).
 
 ### 2026-11-14 — Readability redesign
 - Results lead with a **verdict card**: the failure mode, a one-sentence summary

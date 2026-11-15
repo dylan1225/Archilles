@@ -160,7 +160,9 @@ def get_section(
         "dimensions_source": diagnose.USER_MEASURED,
         "material_id": material.id if material else None,
     }
-    computed = diagnose.section_computed(change, material.density_g_cm3 if material else None)
+    computed = diagnose.section_computed(
+        change, material.density_g_cm3 if material else None, material.source if material else None
+    )
     if "error" in computed:
         return _error(400, computed["error"])
     return JSONResponse(computed)
@@ -173,6 +175,19 @@ GLOSSARY_PATH = PROJECT_DIR / "knowledge" / "glossary.json"
 def get_glossary() -> FileResponse:
     """Hand-written term definitions for the hover pop-ups. Never generated."""
     return FileResponse(GLOSSARY_PATH, media_type="application/json")
+
+
+@app.get("/mechanics/span")
+def get_span(current_span_mm: float, proposed_span_mm: float) -> JSONResponse:
+    """Recompute a support/span fix from spans the user typed. No model call."""
+    computed = diagnose.span_computed({
+        "current_span_mm": current_span_mm,
+        "proposed_span_mm": proposed_span_mm,
+        "dimensions_source": diagnose.USER_MEASURED,
+    })
+    if "error" in computed:
+        return _error(400, computed["error"])
+    return JSONResponse(computed)
 
 
 @app.get("/materials")

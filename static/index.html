@@ -8,438 +8,401 @@
 { "imports": { "three": "/static/vendor/three.module.min.js", "three/addons/": "/static/vendor/addons/" } }
 </script>
 <style>
+  /* --- Drawing-room theme: white paper, pencil ink, one grotesque typeface ---
+     Look modelled on a minimalist architecture portfolio; nothing is copied. */
   :root {
-    /* Gallery palette: limestone, parchment, ink, one orange accent. */
-    --paper: #f3eee3; --card: #fbf8f1; --stone: #e8e0cd; --stone-2: #ded4bd;
-    --line: #d6cab0; --line-strong: #b4a581;
-    --ink: #1d1a16; --muted: #554d41; --faint: #7d7362;
-    --orange: #e77500; --orange-ink: #a34d00; --orange-wash: #fbebd7;
-    --calc: #3d6a58; --calc-bg: #ecf1ea; --calc-line: #b7cbbd;
-    --ref: #34506f; --ref-bg: #eef2f7; --ref-line: #b9c6d6; --ref-muted: #4c5e74;
-    --good: #2e7650; --warn: #8f5300; --bad: #a3271f;
-    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
-    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --paper: #ffffff; --ink: #111111; --ink-2: #3a3a3a; --muted: #5f5f5f; --faint: #8c8c8c;
+    --rule: #111111; --hair: #d9d9d9; --wash: #f4f4f2;
+    --good: #1d1d1d; --warn: #1d1d1d; --bad: #1d1d1d;
+    --sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
     --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    --shadow: 0 1px 0 rgba(29, 26, 22, .04), 0 6px 18px -10px rgba(29, 26, 22, .25);
-    /* One type scale. Nothing on the page is smaller than --fs-xs (13 px). */
-    --fs-xs: 13px; --fs-sm: 14px; --fs-base: 16px; --fs-md: 18px;
-    --fs-lg: 21px; --fs-xl: 26px; --fs-2xl: 32px; --fs-num: 30px;
-    --measure: 65ch;
+    /* Type scale. Nothing on the page is smaller than --fs-xs (13 px). */
+    --fs-xs: 13px; --fs-sm: 15px; --fs-base: 18px; --fs-md: 21px; --fs-lg: 26px; --fs-xl: 30px; --fs-2xl: 44px; --fs-num: 30px;
+    --measure: 62ch;
+    /* A pencil line: a hairline with a little wobble, used for section rules. */
+    --pencil-rule: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='4' viewBox='0 0 600 4'%3E%3Cpath d='M0 2.1 C 60 1.4, 120 2.6, 190 1.9 S 330 2.5, 410 1.7 S 540 2.4, 600 1.9' fill='none' stroke='%23111' stroke-opacity='.75' stroke-width='1.1'/%3E%3C/svg%3E");
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--paper); color: var(--ink); font: var(--fs-base)/1.55 var(--sans); }
-  body { background-image: linear-gradient(180deg, var(--stone) 0, var(--paper) 340px); background-repeat: no-repeat; }
+  html, body { margin: 0; background: var(--paper); color: var(--ink); font: 400 var(--fs-base)/1.45 var(--sans);
+    -webkit-font-smoothing: antialiased; }
   button, textarea, input, select { font: inherit; color: inherit; }
-  h1, h2, h3, p, ul, ol, figure { margin: 0; padding: 0; }
+  h1, h2, h3, p, ul, ol, figure, dl { margin: 0; padding: 0; }
   ul, ol { list-style: none; }
   p, li { max-width: var(--measure); }
-  :focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+  a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
   [hidden] { display: none !important; }
   .muted { color: var(--muted); }
   .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .pencil { background: var(--pencil-rule) repeat-x left top / 600px 4px; }
 
-  /* --- Header: dark band with an orange rule ----------------------------- */
-  header.site { display: flex; align-items: center; gap: 16px; padding: 14px 24px;
-    background: #141210; color: #f3eee3; border-bottom: 3px solid var(--orange); }
-  .wordmark { font: 600 var(--fs-lg)/1 var(--serif); letter-spacing: .26em; }
-  .tagline { color: #c9bfad; font: italic var(--fs-base)/1.2 var(--serif); }
-  .status { margin-left: auto; font: 600 var(--fs-xs)/1 var(--mono); letter-spacing: .1em; padding: 7px 10px;
-    border: 1px solid #4a443b; border-radius: 2px; color: #c9bfad; }
-  .interiors-link { margin-left: auto; color: #d9d0be; font-size: 12px; text-underline-offset: 4px; white-space: nowrap; }
-  .interiors-link + .status { margin-left: 0; }
-  @media (max-width: 560px) {
-    header.site { flex-wrap: wrap; gap: 10px 16px; }
-    .interiors-link { order: 3; flex-basis: 100%; margin-left: 0; }
-    .interiors-link + .status { margin-left: auto; }
+  /* --- Header: wordmark left, status centre, + right --------------------- */
+  header.site { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px;
+    padding: 26px 44px 18px; position: sticky; top: 0; z-index: 20; background: rgba(255, 255, 255, .96); }
+  .wordmark { font: 700 var(--fs-xl)/1 var(--sans); letter-spacing: -.01em; text-decoration: none; justify-self: start; }
+  .site-nav { display: flex; align-items: baseline; gap: 28px; font: 400 var(--fs-xl)/1 var(--sans); }
+  .site-nav a { text-decoration: none; }
+  .site-nav a:hover { text-decoration: underline; }
+  .status { font: 400 var(--fs-xl)/1 var(--sans); }
+  .status[data-state="busy"]::after { content: "…"; }
+  .plus-btn { justify-self: end; width: 44px; height: 44px; border: 0; background: none; cursor: pointer;
+    font: 300 40px/1 var(--sans); color: var(--ink); }
+  .plus-btn[aria-expanded="true"] { transform: rotate(45deg); }
+  .about { max-width: 760px; margin: 0 auto 30px; padding: 0 44px; font-size: var(--fs-md); line-height: 1.4; }
+  .about p + p { margin-top: 12px; }
+  @media (max-width: 760px) {
+    header.site { grid-template-columns: 1fr auto; padding: 18px 18px 12px; position: static; }
+    .site-nav { grid-column: 1 / -1; grid-row: 2; font-size: var(--fs-md); gap: 18px; }
+    .status { font-size: var(--fs-md); }
+    .wordmark { font-size: var(--fs-lg); }
   }
-  .status[data-state="busy"] { color: #f2b25c; border-color: #f2b25c; }
-  .status[data-state="done"] { color: #8fd1a8; border-color: #8fd1a8; }
-  .status[data-state="error"] { color: #f08c80; border-color: #f08c80; }
 
-  main { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 22px;
-    padding: 22px 24px 56px; max-width: 1440px; margin: 0 auto; align-items: start; }
-  main.has-result { grid-template-columns: 260px minmax(0, 1fr); }
-  .has-result #camera, .has-result #analyse-step { display: none; }
-  .has-result .drop { min-height: 0; padding: 8px; }
-  .has-result .drop img { max-height: 170px; }
-  #another-part { display: none; }
-  .has-result #another-part { display: inline-flex; }
-  @media (max-width: 920px) { main.has-result { grid-template-columns: minmax(0, 1fr); } }
-  @media (max-width: 920px) { main { grid-template-columns: minmax(0, 1fr); padding: 16px; }
-    header.site { padding: 12px 16px; } .tagline { display: none; } }
-  .stack > * + * { margin-top: 18px; }
+  main { max-width: 1180px; margin: 0 auto; padding: 10px 44px 90px; }
+  @media (max-width: 760px) { main { padding: 6px 18px 70px; } }
+  .stack > * + * { margin-top: 44px; }
 
-  /* --- Panels ------------------------------------------------------------- */
-  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 3px; box-shadow: var(--shadow); }
-  .panel > h2, .label { font: 600 var(--fs-xs)/1.2 var(--serif); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
-  .panel > h2 { padding: 14px 18px 12px; border-bottom: 1px solid var(--line); }
-  .panel-body { padding: 16px 18px 18px; }
-
-  /* --- Drop-down rows (open in place, chevron on the right) -------------- */
-  .rows { overflow: hidden; }
-  .rows > h2 { padding: 14px 20px 12px; }
-  details.row { border-top: 1px solid var(--line); }
-  .rows > details.row:first-of-type { border-top: 0; }
-  details.row > summary, details.fold > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 14px; }
-  details.row > summary::-webkit-details-marker, details.fold > summary::-webkit-details-marker { display: none; }
-  details.row > summary { padding: 18px 20px; }
-  details.row > summary:hover .row-title, details.fold > summary:hover .fold-title { color: var(--orange-ink); }
-  .row-title { font: 600 var(--fs-md)/1.3 var(--serif); }
-  .row-count { font: 600 var(--fs-sm)/1 var(--mono); color: var(--muted); }
-  .row-preview { flex: 1; min-width: 0; color: var(--muted); font-size: var(--fs-sm);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .chev { flex: none; margin-left: auto; width: 12px; height: 12px; border-right: 2px solid var(--orange);
-    border-bottom: 2px solid var(--orange); transform: rotate(45deg) translate(-3px, -3px); transition: transform .4s ease; }
-  /* Opened content eases down into place instead of appearing at once. */
-  @keyframes row-open { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
-  details[open] > .row-body, details[open] > .step-body, details.fold[open] > .collection,
-  .placard details.mini[open] > ul { animation: row-open .45s ease; }
-  details[open] > summary .chev { transform: rotate(225deg) translate(-3px, -3px); }
-  details[open] > summary .row-preview { visibility: hidden; }
-  details.row[open] > summary .row-title { color: var(--orange-ink); }
-  .row-body { padding: 0 20px 20px; }
-  .row-body > * + * { margin-top: 12px; }
-  @media (prefers-reduced-motion: reduce) {
-    .chev { transition: none; }
-    details[open] > .row-body, details[open] > .step-body, details.fold[open] > .collection,
-    .placard details.mini[open] > ul { animation: none; }
+  /* --- Intake: the drawing board ------------------------------------------ */
+  .intake { display: grid; justify-items: center; text-align: center; }
+  .board { position: relative; width: min(560px, 92vw); aspect-ratio: 600 / 760; perspective: 1400px; }
+  .board svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .board .board-face { position: absolute; inset: 0; transform-origin: 50% 62%; transition: transform .45s cubic-bezier(.2, .7, .2, 1); }
+  .board.lifted .board-face { transform: translateY(-4%) rotateX(7deg) scale(1.035); }
+  .board.lifted .face-shadow { opacity: .55; transform: scaleX(1.06); }
+  .face-shadow { transition: opacity .45s ease, transform .45s ease; transform-origin: 50% 50%; transform-box: fill-box; opacity: .3; }
+  @media (prefers-reduced-motion: reduce) { .board .board-face, .face-shadow { transition: none; } }
+  /* The paper pinned to the board; positioned over the drawing's sheet. */
+  .sheet { position: absolute; left: 17.5%; top: 13.2%; width: 65%; height: 39.5%; display: grid; place-items: center;
+    padding: 4% 5%; text-align: center; }
+  .lift { position: absolute; inset: 0; z-index: 2; border: 0; background: transparent; cursor: pointer; }
+  .lift:hover + .board-face .sheet-hint, .lift:focus-visible + .board-face .sheet-hint { text-decoration: underline; }
+  .sheet-hint { font: 400 var(--fs-md)/1.25 var(--sans); }
+  .invite { display: grid; gap: 10px; justify-items: center; width: 100%; }
+  .invite-title { font: 700 var(--fs-md)/1.2 var(--sans); }
+  .invite-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; }
+  .text-btn { border: 0; padding: 4px 0; background: none; cursor: pointer; font: 400 var(--fs-sm)/1.3 var(--sans);
+    text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+  .text-btn:hover { text-decoration-thickness: 2px; }
+  .invite-or { font-size: var(--fs-xs); color: var(--muted); }
+  .examples { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 14px; }
+  .examples .text-btn { font-size: var(--fs-xs); }
+  /* On a narrow board the sheet is small: tighter invitation, no drag-and-drop hint. */
+  @media (max-width: 520px) {
+    .sheet { padding: 2% 3%; }
+    .invite { gap: 4px; }
+    .invite-title { font-size: var(--fs-sm); }
+    .invite-actions { gap: 2px 12px; }
+    .invite-actions .text-btn, .examples .text-btn { font-size: var(--fs-xs); padding: 2px 0; }
+    .invite-or .drop-hint { display: none; }
+    .examples { gap: 0 10px; }
   }
-  @media (max-width: 600px) { .row-preview { display: none; } details.row > summary { padding: 16px; } .row-body { padding: 0 16px 16px; } }
+  .sheet .pinned { position: relative; max-width: 100%; max-height: 100%; display: grid; place-items: center; }
+  .sheet .pinned img { max-width: 100%; max-height: 100%; display: block; box-shadow: 0 2px 0 rgba(0, 0, 0, .12); }
+  .sheet .pin { position: absolute; top: -6px; width: 10px; height: 10px; border-radius: 50%; background: #111; }
+  .sheet .pin.l { left: 8%; } .sheet .pin.r { right: 8%; }
+  .sheet-progress { display: grid; gap: 8px; justify-items: center; }
+  .sheet-progress strong { font: 700 var(--fs-sm)/1.3 var(--sans); }
+  .sheet-progress span { font: var(--fs-xs)/1 var(--mono); }
+  .board.over .sheet { outline: 2px dashed var(--ink); outline-offset: -6px; }
+  .board-caption { margin-top: 26px; font: 400 var(--fs-xl)/1.15 var(--sans); max-width: 26ch; }
+  .board-caption + .board-sub { margin-top: 10px; color: var(--muted); font-size: var(--fs-sm); }
+  .intake-options { width: min(560px, 100%); margin-top: 28px; text-align: left; display: grid; gap: 14px; }
+  .intake-options[hidden] { display: none; }
+  .file-name { font: var(--fs-xs)/1.3 var(--mono); color: var(--muted); word-break: break-all; text-align: center; }
 
-  /* --- Specimen form ------------------------------------------------------ */
-  .step { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; align-items: start; }
-  .step-n { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
-    border: 1px solid var(--line-strong); font: 600 var(--fs-sm)/1 var(--serif); color: var(--muted); background: var(--paper); }
-  .step-title { font: 600 var(--fs-md)/28px var(--serif); }
-  .step-body { grid-column: 2; margin-top: 6px; }
-  .step-body > * + * { margin-top: 10px; }
-  details.fold.step { display: block; }
-  details.fold.step > summary .step-n { flex: none; }
-  details.fold.step > .step-body { margin-left: 38px; margin-top: 8px; }
-  .drop { display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 6px; min-height: 170px; padding: 14px; text-align: center; cursor: pointer;
-    border: 1.5px dashed var(--line-strong); border-radius: 3px; background: var(--paper); }
-  .drop:hover, .drop:focus-visible, .drop.over { border-color: var(--orange); background: var(--orange-wash); outline: none; }
-  .drop strong { font: 600 var(--fs-md)/1.3 var(--serif); }
-  .drop small { color: var(--muted); font-size: var(--fs-sm); }
-  .drop img { max-width: 100%; max-height: 220px; border-radius: 2px; display: block; border: 6px solid #fff; box-shadow: var(--shadow); }
-  .file-name { font: var(--fs-xs)/1.3 var(--mono); color: var(--muted); word-break: break-all; }
-  textarea { width: 100%; min-height: 84px; resize: vertical; padding: 10px; background: #fff;
-    border: 1px solid var(--line); border-radius: 2px; font-size: var(--fs-base); }
-  .field-label { display: block; font: 600 var(--fs-base)/1.3 var(--serif); }
-  .field-label .muted { display: block; font: var(--fs-xs)/1.35 var(--sans); }
-  select#engine, select#material { width: 100%; min-height: 44px; margin-top: 6px; padding: 8px 10px; border: 1px solid var(--line);
-    border-radius: 2px; background: #fff; font-size: var(--fs-base); }
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px;
-    padding: 8px 14px; border: 1px solid var(--line-strong); border-radius: 2px; background: var(--card); cursor: pointer; font-size: var(--fs-base); }
-  .btn:hover:not(:disabled) { border-color: var(--ink); }
-  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  /* Compact strip once a result is showing. */
+  .intake.compact { grid-template-columns: auto 1fr auto; align-items: center; justify-items: start; text-align: left;
+    gap: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--rule); }
+  .intake.compact .board, .intake.compact .board-caption, .intake.compact .board-sub, .intake.compact .intake-options { display: none; }
+  .compact-thumb { width: 72px; height: 72px; object-fit: cover; border: 1px solid var(--rule); }
+  .compact-name { font-size: var(--fs-sm); color: var(--muted); }
+  .intake:not(.compact) .compact-only { display: none; }
+
+  /* --- Fields and buttons --------------------------------------------- */
+  details.fold > summary, details.row > summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 14px; }
+  details.fold > summary::-webkit-details-marker, details.row > summary::-webkit-details-marker { display: none; }
+  details.fold { border-top: 1px solid var(--rule); }
+  details.fold > summary { padding: 14px 0; font: 400 var(--fs-md)/1.2 var(--sans); }
+  details.fold > summary:hover .fold-title { text-decoration: underline; text-underline-offset: 4px; }
+  details.fold > .fold-body { padding: 0 0 18px; display: grid; gap: 12px; }
+  .plus { flex: none; margin-left: auto; width: 1em; text-align: center; font: 300 var(--fs-xl)/.8 var(--sans); }
+  .plus::before { content: "+"; }
+  details[open] > summary .plus::before { content: "−"; }
+  textarea, input[type="number"], select { width: 100%; min-height: 46px; padding: 10px 12px; background: #fff;
+    border: 1px solid var(--rule); border-radius: 0; font-size: var(--fs-sm); }
+  textarea { min-height: 96px; resize: vertical; }
+  .field-label { display: block; font: 700 var(--fs-sm)/1.3 var(--sans); }
+  .field-label .muted { display: block; font-weight: 400; font-size: var(--fs-xs); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 46px;
+    padding: 8px 18px; border: 1px solid var(--rule); border-radius: 0; background: #fff; cursor: pointer; font-size: var(--fs-sm); }
+  .btn:hover:not(:disabled) { background: var(--ink); color: #fff; }
+  .btn:disabled { opacity: .35; cursor: not-allowed; }
   .btn.wide { width: 100%; }
-  .btn.primary { width: 100%; min-height: 50px; font: 600 var(--fs-base)/1 var(--serif); letter-spacing: .14em; text-transform: uppercase;
-    background: var(--ink); color: var(--paper); border-color: var(--ink); }
-  .btn.primary:hover:not(:disabled) { background: var(--orange); border-color: var(--orange); color: #1b1006; }
-  details.fold.panel > summary { padding: 14px 18px; }
-  .fold-title { font: 600 var(--fs-xs)/1.2 var(--serif); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
-  details.fold.panel[open] > summary { border-bottom: 1px solid var(--line); }
-  .collection { display: grid; gap: 8px; }
-  .collection .btn { justify-content: flex-start; text-align: left; gap: 12px; }
-  .collection .numeral { font: 600 var(--fs-base)/1 var(--serif); color: var(--orange-ink); min-width: 26px; }
-  .collection .what { display: block; font-size: var(--fs-sm); color: var(--muted); }
+  .btn.primary { width: 100%; min-height: 56px; background: var(--ink); color: #fff; font: 700 var(--fs-md)/1 var(--sans); }
+  .btn.primary:hover:not(:disabled) { background: #fff; color: var(--ink); }
 
-  .agent-options { padding: 14px 18px; }
-  .agent-options label { display: block; margin: 12px 0 6px; font-size: var(--fs-sm); }
-  .agent-options input[type="number"] { width: 100%; min-height: 44px; padding: 8px; border: 1px solid var(--line); }
-  .agent-options input[type="checkbox"] { accent-color: var(--orange-ink); }
-  .agent-log { max-height: 240px; overflow: auto; padding-left: 20px; font-size: var(--fs-sm); }
-  .agent-panel .panel-body > * + * { margin-top: 12px; }
-  .agent-panel .btn { font-family: var(--serif); }
+  /* Teammate's Deep Agents options and panel, in the same style. */
+  .agent-options label { display: block; margin: 10px 0 6px; font-size: var(--fs-sm); }
+  .agent-options input[type="checkbox"] { accent-color: #111; width: 18px; height: 18px; vertical-align: -3px; margin-right: 8px; }
   #agent-availability { font-size: var(--fs-xs); color: var(--muted); }
-  /* --- Empty / loading / errors ------------------------------------------ */
-  .empty, .loading { padding: 64px 24px; text-align: center; color: var(--muted); }
-  .empty strong, .loading strong { display: block; color: var(--ink); font: 600 var(--fs-lg)/1.3 var(--serif); margin-bottom: 8px; }
-  .empty span, .loading span { display: block; max-width: 46ch; margin: 0 auto; }
-  .empty .arch { width: 64px; height: 84px; margin: 0 auto 18px; display: block; }
-  .bar { height: 3px; margin: 20px auto 0; max-width: 320px; background: var(--line); border-radius: 2px; overflow: hidden; }
-  .bar::after { content: ""; display: block; height: 100%; width: 35%; background: var(--orange); animation: slide 1.3s ease-in-out infinite; }
+  .agent-log { font: var(--fs-xs)/1.5 var(--mono); max-height: 240px; overflow: auto; border-left: 2px solid var(--ink); padding-left: 12px; }
+  .agent-panel .panel-body > * + * { margin-top: 12px; }
+
+  /* --- Section headings and plain panels --------------------------------- */
+  .panel { background: none; }
+  .panel > h2, .section-title { font: 400 var(--fs-xl)/1.15 var(--sans); padding: 0 0 16px; }
+  .label { font: 700 var(--fs-xs)/1.2 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); }
+  .panel-body { padding: 0; }
+
+  /* --- States ------------------------------------------------------------- */
+  .loading { padding: 30px 0; text-align: center; }
+  .loading strong { display: block; font: 400 var(--fs-lg)/1.3 var(--sans); }
+  .bar { height: 1px; margin: 22px auto 0; max-width: 320px; background: var(--hair); overflow: hidden; }
+  .bar::after { content: ""; display: block; height: 100%; width: 35%; background: var(--ink); animation: slide 1.3s ease-in-out infinite; }
   @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(290%); } }
-  @media (prefers-reduced-motion: reduce) { .bar::after { animation: none; width: 100%; opacity: .5; } }
+  @media (prefers-reduced-motion: reduce) { .bar::after { animation: none; width: 100%; } }
   .elapsed { font: var(--fs-xs)/1 var(--mono); margin-top: 10px; }
-  .banner { padding: 16px 18px; border: 1px solid var(--bad); border-left-width: 4px; border-radius: 3px; background: #fbeeeb; }
-  .banner .label { color: var(--bad); margin-bottom: 6px; display: block; }
-  .banner.insufficient { border-color: var(--warn); background: #fbf1df; }
-  .banner.insufficient .label { color: var(--warn); }
-  .banner.nothing { border-color: var(--ink); background: var(--card); }
-  .banner.nothing .label { color: var(--ink); }
-  .banner.nothing .headline { font: 600 22px/1.3 var(--serif); margin-bottom: 6px; }
-  .banner.checks { border-color: var(--warn); background: #fbf1df; }
-  .banner.checks .label { color: var(--warn); }
-  .banner.checks ul { margin-top: 4px; }
-  .banner.checks li + li { margin-top: 6px; }
+  .banner { padding: 18px 0 18px 18px; border-left: 3px solid var(--ink); }
+  .banner .label { display: block; margin-bottom: 8px; }
+  .banner .headline { font: 400 var(--fs-lg)/1.25 var(--sans); margin-bottom: 8px; }
+  .banner.checks ul { margin-top: 6px; } .banner.checks li + li { margin-top: 4px; }
+  .runs { display: grid; gap: 4px; }
+  .runs .agree { font: 700 var(--fs-md)/1.3 var(--sans); }
+  .rejected .mode { font: 700 var(--fs-md)/1.3 var(--sans); text-decoration: line-through; }
+  .rejected .because { margin-top: 10px; }
+  .rejected .because b { display: block; margin-bottom: 2px; font: 700 var(--fs-xs)/1.2 var(--sans); letter-spacing: .08em; text-transform: uppercase; }
 
-  /* --- Uncertainty checks -------------------------------------------------- */
-  .runs { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
-  .runs .agree { font: 600 17px/1.3 var(--serif); }
-  .runs .agree.ok { color: var(--good); } .runs .agree.split { color: var(--bad); }
-  .rejected .mode { font: 600 16px/1.3 var(--serif); text-decoration: line-through; text-decoration-color: var(--bad); }
-  .rejected .because { margin-top: 8px; }
-  .rejected .because b { font: 600 11.5px/1.2 var(--serif); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 2px; }
+  /* --- Verdict ------------------------------------------------------------- */
+  .verdict { padding-top: 8px; }
+  .verdict-meta { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: var(--fs-sm); color: var(--muted); }
+  .verdict-meta .kicker { color: var(--ink); font-weight: 700; }
+  .verdict > h2 { margin-top: 14px; font: 400 var(--fs-2xl)/1.05 var(--sans); letter-spacing: -.015em; }
+  .verdict-summary { margin-top: 18px; font: 400 var(--fs-lg)/1.3 var(--sans); max-width: 34ch; }
+  .gloss-hint { margin-top: 18px; font-size: var(--fs-xs); color: var(--muted); }
+  .gloss-hint .term-sample { color: var(--ink); text-decoration: underline dotted; text-underline-offset: 4px; }
+  .chip, .badge { all: unset; }
 
-  /* --- Verdict ------------------------------------------------------------ */
-  .verdict { padding: 22px 24px 20px; border-top: 4px solid var(--ink); }
-  .verdict-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
-  .verdict-meta .kicker { font: 600 var(--fs-xs)/1.2 var(--serif); letter-spacing: .18em; text-transform: uppercase; color: var(--orange-ink); }
-  .chip { font: 600 var(--fs-xs)/1 var(--mono); letter-spacing: .06em; padding: 6px 8px; border: 1px solid var(--line-strong);
-    border-radius: 2px; color: var(--muted); background: var(--paper); }
-  .badge { display: inline-block; font: 600 var(--fs-xs)/1 var(--mono); letter-spacing: .1em; text-transform: uppercase;
-    padding: 6px 8px; border-radius: 2px; border: 1px solid; }
-  .badge.high { color: var(--good); } .badge.medium { color: var(--warn); } .badge.low { color: var(--bad); }
-  .verdict > h2 { margin-top: 10px; padding: 0; border: 0; font: 600 var(--fs-2xl)/1.15 var(--serif);
-    letter-spacing: 0; text-transform: none; color: var(--ink); }
-  .verdict-summary { margin-top: 12px; font: var(--fs-lg)/1.45 var(--serif); }
-  .gloss-hint { margin-top: 14px; font-size: var(--fs-sm); color: var(--muted); }
-  .gloss-hint .term-sample { color: var(--orange-ink); text-decoration: underline dotted; text-underline-offset: 3px; }
+  /* --- Glossary terms, calculated numbers, and their pop-up -------------- */
+  .term { text-decoration: underline dotted 1.5px; text-underline-offset: 4px; cursor: help; }
+  .num { font-family: var(--mono); font-weight: 700; text-decoration: underline dotted 1.5px; text-underline-offset: 4px; cursor: help; }
+  .term:hover, .term[aria-describedby], .num:hover, .num[aria-describedby] { background: var(--wash); }
+  .gloss-pop { position: fixed; z-index: 50; width: min(400px, calc(100vw - 24px)); padding: 16px 18px; background: #fff; color: var(--ink);
+    border: 1px solid var(--ink); box-shadow: 6px 6px 0 rgba(0, 0, 0, .08); pointer-events: none; }
+  .gloss-pop strong { display: block; font: 700 var(--fs-md)/1.2 var(--sans); }
+  .gloss-pop .gp-def { margin-top: 6px; font: 400 var(--fs-sm)/1.45 var(--sans); }
+  .gloss-pop .gp-exp { margin-top: 8px; font: 400 var(--fs-xs)/1.5 var(--sans); color: var(--ink-2); }
+  .working-step + .working-step { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--hair); }
+  .working-step .ws-label { font: 700 var(--fs-xs)/1.3 var(--sans); letter-spacing: .06em; text-transform: uppercase; }
+  .working-step .ws-formula { margin-top: 4px; font: var(--fs-xs)/1.5 var(--mono); color: var(--ink-2); }
+  .working-step .ws-line { margin-top: 2px; font: var(--fs-xs)/1.5 var(--mono); }
+  .working-step .ws-line b { font-weight: 700; }
+  .working-step .ws-source, .working-step .ws-note { margin-top: 4px; font: var(--fs-xs)/1.45 var(--sans); color: var(--muted); }
 
-  /* --- Glossary terms and their pop-up ----------------------------------- */
-  .term { color: var(--orange-ink); text-decoration: underline dotted 1.5px; text-underline-offset: 3px; cursor: help; border-radius: 2px; }
-  .term:hover, .term[aria-describedby] { background: var(--orange-wash); }
-  .gloss-pop { position: fixed; z-index: 50; width: min(360px, calc(100vw - 24px)); padding: 14px 16px 15px;
-    background: #141210; color: #f3eee3; border-top: 3px solid var(--orange); border-radius: 2px;
-    box-shadow: 0 12px 32px -12px rgba(0, 0, 0, .55); pointer-events: none; }
-  .gloss-pop strong { display: block; font: 600 var(--fs-md)/1.2 var(--serif); color: #fff; }
-  .gloss-pop .gp-def { margin-top: 6px; font: 600 var(--fs-base)/1.45 var(--sans); }
-  .gloss-pop .gp-exp { margin-top: 8px; font: var(--fs-sm)/1.5 var(--sans); color: #d9cfbd; }
-
-  /* --- The exhibit -------------------------------------------------------- */
-  .exhibit-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; padding: 14px 18px;
-    border-bottom: 1px solid var(--line); }
-  .exhibit-head h2 { font: 600 var(--fs-lg)/1.2 var(--serif); }
-  .exhibit-head .kicker { display: block; font: 600 var(--fs-xs)/1.2 var(--serif); letter-spacing: .18em; text-transform: uppercase; color: var(--orange-ink); }
-  .seg { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
-  .seg button { flex: 1 1 auto; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line-strong);
-    border-radius: 2px; background: var(--paper); cursor: pointer;
-    font: 600 var(--fs-sm)/1.35 var(--serif); color: var(--ink); white-space: normal; overflow-wrap: anywhere; }
-  .seg button:hover { background: var(--orange-wash); border-color: var(--orange-ink); }
-  .seg button[aria-checked="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
-  .seg button[aria-checked="true"].sol { background: var(--orange); border-color: var(--orange); color: #1b1006; }
-  @media (max-width: 600px) { .seg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-
-  .exhibit-body { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
-  @media (max-width: 1120px) { .exhibit-body { grid-template-columns: minmax(0, 1fr); } }
-  .vitrine { padding: 18px; border-right: 1px solid var(--line); }
-  @media (max-width: 1120px) { .vitrine { border-right: 0; border-bottom: 1px solid var(--line); } }
-  /* Lancet-arch frame: an outer stone band and the stage inset within it. */
-  .arch-frame { --arch: polygon(0 9%, 5% 5.4%, 10% 3.9%, 17.5% 2.6%, 25% 1.6%, 35% .7%, 42.5% .27%, 50% 0,
-      57.5% .27%, 65% .7%, 75% 1.6%, 82.5% 2.6%, 90% 3.9%, 95% 5.4%, 100% 9%, 100% 100%, 0 100%);
-    position: relative; padding: 7px; background: var(--line-strong); clip-path: var(--arch); }
-  .stage { position: relative; height: clamp(320px, 54vh, 540px); background: #e9e1cd; clip-path: var(--arch); overflow: hidden; }
+  /* --- The simulation ------------------------------------------------------ */
+  .exhibit-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; padding-bottom: 14px; }
+  .exhibit-head h2 { font: 400 var(--fs-xl)/1.15 var(--sans); }
+  .exhibit-head .kicker { display: none; }
+  .vitrine { position: relative; }
+  .stage { position: relative; height: clamp(320px, 58vh, 600px); background: #fff; border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule); overflow: hidden; }
   .v3d-canvas { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
   .v3d-canvas:active { cursor: grabbing; }
-  .v3d-canvas:focus-visible { outline: 3px solid var(--orange); outline-offset: -3px; }
+  .v3d-canvas:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
   .v3d-fallback { display: grid; place-items: center; height: 100%; padding: 24px; text-align: center; color: var(--muted); }
   .v3d-callout { position: absolute; left: 0; top: 0; pointer-events: none; }
-  .v3d-callout > i { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: var(--orange);
-    transform: translate(-50%, -50%); box-shadow: 0 0 0 4px rgba(231, 117, 0, .25); }
-  /* Short label: wraps onto at most two lines instead of one long cut-off line. */
+  .v3d-callout > i { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--ink); transform: translate(-50%, -50%); }
   .v3d-callout > span { position: absolute; transform: translate(-50%, calc(-100% - 12px)); width: max-content; max-width: 190px;
     display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
-    padding: 5px 9px; background: rgba(20, 18, 16, .88); color: #f7f2e7;
-    border-left: 3px solid var(--orange); font: 600 var(--fs-xs)/1.3 var(--serif); letter-spacing: .02em; }
+    padding: 4px 8px; background: #fff; color: var(--ink); border: 1px solid var(--ink); font: 400 var(--fs-xs)/1.3 var(--sans); }
   .stage.labels-off .v3d-callout { display: none; }
-  .v3d-callout[data-tone="fracture"] > i { background: #9b2226; box-shadow: 0 0 0 4px rgba(155, 34, 38, .22); }
-  .v3d-callout[data-tone="fracture"] > span { border-left-color: #c2453c; }
-  .stage-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 0;
-    border-bottom: 1px solid var(--line); }
-  .stage-tools .hint { flex: 1 1 150px; font: var(--fs-xs)/1.45 var(--sans); color: var(--muted); }
-  .stage-tools .tool-group { display: flex; flex-wrap: wrap; gap: 8px; }
-  .stage-tools .btn { min-height: 44px; padding: 8px 12px; font: 600 var(--fs-sm)/1.2 var(--serif);
-    color: var(--ink); background: var(--paper); border: 1px solid var(--line-strong); }
-  .stage-tools .btn:hover { background: var(--orange-wash); border-color: var(--orange-ink); }
-  .stage-tools .btn[aria-pressed="true"] { color: var(--orange-ink); background: var(--orange-wash); border-color: var(--orange-ink); }
-  .vitrine figcaption { margin-top: 10px; font: italic var(--fs-sm)/1.45 var(--serif); color: var(--muted); }
-  .vitrine figcaption b { font-style: normal; font-weight: 600; color: var(--ink); }
+  .stage-tools { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 22px; padding: 10px 0; }
+  .stage-tools .hint { flex: 1 1 180px; font-size: var(--fs-xs); color: var(--muted); }
+  .stage-tools .tool-group { display: flex; gap: 22px; }
+  .stage-tools .btn { min-height: 0; padding: 4px 0; border: 0; background: none; font-size: var(--fs-sm);
+    text-decoration: underline; text-underline-offset: 4px; }
+  .stage-tools .btn:hover { background: none; color: var(--ink); text-decoration-thickness: 2px; }
+  .vitrine figcaption { margin-top: 2px; font-size: var(--fs-xs); color: var(--muted); }
+  .vitrine figcaption b { color: var(--ink); }
 
-  .placard { padding: 22px 24px 24px; background: linear-gradient(180deg, var(--card), #f6f1e6); }
-  .placard .kicker { font: 600 var(--fs-xs)/1.2 var(--serif); letter-spacing: .18em; text-transform: uppercase; color: var(--orange-ink); }
-  .placard h3 { margin-top: 6px; font: 600 var(--fs-xl)/1.2 var(--serif); }
-  .placard .rule { width: 48px; height: 2px; background: var(--orange); margin: 12px 0 14px; }
-  .placard > p + p { margin-top: 12px; }
-  .placard .hint-below { margin-top: 16px; color: var(--muted); font-size: var(--fs-sm); }
-  .placard[data-state="found"] .kicker { color: #9b2226; }
-  .placard[data-state="found"] .rule { background: #9b2226; }
-  .placard details.mini { margin-top: 12px; border: 1px solid var(--line); border-radius: 2px; background: var(--card); }
-  .placard details.mini > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+  /* Fix list (left) and description (right) under the model. */
+  .exhibit-body { display: grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: 40px; margin-top: 30px; }
+  @media (max-width: 860px) { .exhibit-body { grid-template-columns: minmax(0, 1fr); gap: 26px; } }
+  .fix-list { display: grid; gap: 4px; align-content: start; }
+  .fix-list .fix { display: grid; grid-template-columns: 1.6em minmax(0, 1fr); text-align: left; border: 0; padding: 6px 0; background: none;
+    cursor: pointer; font: 400 var(--fs-md)/1.25 var(--sans); color: var(--ink); text-decoration: none; }
+  .fix-list .fix .fix-n { color: var(--muted); }
+  .fix-list .fix:hover .fix-text, .fix-list .fix:focus-visible .fix-text { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; }
+  .fix-list .fix[aria-checked="true"] .fix-text { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; font-weight: 700; }
+  .fix-list .fix[aria-checked="true"] .fix-n { color: var(--ink); font-weight: 700; }
+  .fix-list .list-title { font: 700 var(--fs-xs)/1.2 var(--sans); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+
+  .placard .kicker { font: 700 var(--fs-xs)/1.2 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .placard h3 { margin-top: 8px; font: 400 var(--fs-xl)/1.15 var(--sans); }
+  .placard .rule { height: 1px; background: var(--rule); margin: 16px 0; }
+  .placard > p + p, .placard > p + .label, .placard > .label + p { margin-top: 10px; }
+  .placard .hint-below { margin-top: 16px; color: var(--muted); font-size: var(--fs-xs); }
+  .placard details.mini { margin-top: 14px; border-top: 1px solid var(--rule); }
+  .placard details.mini > summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 10px; padding: 10px 0; }
   .placard details.mini > summary::-webkit-details-marker { display: none; }
-  .placard details.mini > summary .label { margin: 0; }
-  .placard details.mini > ul { padding: 0 14px 12px; }
+  .placard details.mini > ul { padding-bottom: 6px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 8px; font-size: var(--fs-xs); color: var(--muted); }
+  .tag.root { color: var(--ink); font-weight: 700; }
 
-  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 2px; }
-  .tag { font: 600 var(--fs-xs)/1 var(--mono); letter-spacing: .06em; text-transform: uppercase;
-    padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: 2px; color: var(--muted); background: var(--card); }
-  .tag.root { color: var(--good); border-color: var(--good); }
-  .pros li, .cons li { padding: 4px 0 4px 20px; position: relative; }
-  .pros li::before, .cons li::before { position: absolute; left: 0; font: 700 var(--fs-base)/1.55 var(--mono); }
-  .pros li::before { content: "+"; color: var(--good); }
-  .cons li::before { content: "\2212"; color: var(--bad); }
-  /* Calculated figures inside Pros / Cons: monospace, green, tagged, never prose. */
-  .pros li.calc-item, .cons li.calc-item { margin: 4px 0; padding: 7px 10px 7px 30px; border-left: 3px solid var(--calc);
-    background: var(--calc-bg); color: #10241c; font: 600 var(--fs-sm)/1.45 var(--mono); }
-  .pros li.calc-item::before, .cons li.calc-item::before { left: 11px; top: 7px; line-height: 1.45; }
-  .calc-tag { display: inline-block; margin-right: 8px; padding: 2px 6px; border-radius: 2px; background: var(--calc);
-    color: #f2f7f3; font: 700 var(--fs-xs)/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; vertical-align: 1px; }
-  .proscons { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .pros li, .cons li { padding: 5px 0 5px 22px; position: relative; font-size: var(--fs-sm); }
+  .pros li::before, .cons li::before { position: absolute; left: 0; font: 400 var(--fs-sm)/1.45 var(--mono); }
+  .pros li::before { content: "+"; } .cons li::before { content: "\2212"; }
+  .pros li.calc-item, .cons li.calc-item { margin: 4px 0; padding: 8px 10px 8px 30px; border: 1px solid var(--ink); font: 400 var(--fs-xs)/1.5 var(--mono); }
+  .pros li.calc-item::before, .cons li.calc-item::before { left: 11px; top: 8px; }
+  .calc-tag { display: inline-block; margin-right: 8px; font: 700 var(--fs-xs)/1.3 var(--sans); letter-spacing: .08em; text-transform: uppercase; }
+  .proscons { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 14px; }
   @media (max-width: 600px) { .proscons { grid-template-columns: 1fr; } }
-  .proscons > div { padding: 12px 14px; border: 1px solid var(--line); border-radius: 2px; background: var(--card); }
-  .proscons .label { margin-bottom: 6px; display: block; }
+  .proscons .label { display: block; margin-bottom: 4px; }
 
-  /* --- Lists inside rows ---------------------------------------------- */
-  .bullets li { position: relative; padding: 8px 0 8px 20px; border-bottom: 1px solid var(--line); }
-  .bullets li:last-child { border-bottom: 0; }
-  .bullets li::before { content: ""; position: absolute; left: 3px; top: 17px; width: 6px; height: 6px; transform: rotate(45deg); background: var(--orange); }
-  .alts li { padding: 10px 0; border-bottom: 1px solid var(--line); }
-  .alts li:last-child { border-bottom: 0; }
-  .alts strong { font: 600 var(--fs-base)/1.3 var(--serif); }
-  code { font: var(--fs-xs)/1.3 var(--mono); color: var(--ink); background: var(--stone); padding: 2px 5px; border-radius: 2px; }
-  .facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 18px; }
-  .facts dt { font: 600 var(--fs-sm)/1.4 var(--serif); color: var(--muted); }
+  /* --- Details: headers only, + opens ------------------------------------- */
+  .rows > h2 { padding-bottom: 8px; }
+  details.row { background: var(--pencil-rule) repeat-x left top / 600px 4px; }
+  details.row:last-of-type { box-shadow: 0 1px 0 var(--rule); }
+  details.row > summary { padding: 18px 0 16px; }
+  .row-title { font: 400 var(--fs-lg)/1.2 var(--sans); }
+  details.row > summary:hover .row-title { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; }
+  .row-count { font: 400 var(--fs-sm)/1 var(--sans); color: var(--muted); }
+  .row-preview { display: none; }
+  .row-body { padding: 0 0 24px; }
+  .row-body > * + * { margin-top: 12px; }
+  @keyframes row-open { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  details[open] > .row-body, details.fold[open] > .fold-body, .placard details.mini[open] > ul { animation: row-open .4s ease; }
+  @media (prefers-reduced-motion: reduce) { details[open] > .row-body, details.fold[open] > .fold-body, .placard details.mini[open] > ul { animation: none; } }
+
+  .bullets li { position: relative; padding: 6px 0 6px 22px; }
+  .bullets li::before { content: "—"; position: absolute; left: 0; color: var(--muted); }
+  .alts li { padding: 8px 0; } .alts li + li { border-top: 1px solid var(--hair); }
+  .alts strong { font-weight: 700; }
+  code { font: var(--fs-xs)/1.3 var(--mono); color: var(--muted); }
+  .facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 22px; font-size: var(--fs-sm); }
+  .facts dt { color: var(--muted); }
   .facts dd { margin: 0; }
-  .reference { font: italic var(--fs-base)/1.5 var(--serif); color: var(--muted); }
-  .reference b { font-style: normal; font-weight: 600; color: var(--ink); }
-  .draft { font: 600 var(--fs-sm)/1.4 var(--sans); font-style: normal; color: var(--warn); }
+  .reference { font-size: var(--fs-sm); color: var(--ink-2); }
+  .draft { font-weight: 700; color: var(--ink); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: var(--fs-xs); color: var(--muted); }
+  .swatch { display: inline-block; width: 12px; height: 12px; margin-right: 6px; vertical-align: -1px; border: 1px solid var(--ink); }
+  .swatch.calc { background: var(--ink); } .swatch.ref { background: repeating-linear-gradient(45deg, #111 0 2px, #fff 2px 5px); }
+  .solution { display: grid; grid-template-columns: 44px minmax(0, 1fr); padding-top: 18px; }
+  .solution + .solution { border-top: 1px solid var(--hair); }
+  .rank { font: 400 var(--fs-md)/1.2 var(--sans); color: var(--muted); }
+  .solution h3 { font: 400 var(--fs-md)/1.25 var(--sans); }
+  .solution-body > p { margin-top: 8px; font-size: var(--fs-sm); }
 
-  .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font: var(--fs-xs)/1.2 var(--mono); color: var(--muted); }
-  .swatch { display: inline-block; width: 10px; height: 10px; margin-right: 6px; vertical-align: -1px; background: var(--faint); }
-  .swatch.calc { background: var(--calc); } .swatch.ref { background: var(--ref); }
-  .solution { display: grid; grid-template-columns: 48px minmax(0, 1fr); border-top: 1px solid var(--line); padding-top: 14px; }
-  .solution:first-of-type { border-top: 0; padding-top: 0; }
-  .rank { font: 600 var(--fs-lg)/1 var(--serif); color: var(--orange-ink); padding-top: 2px; }
-  .solution h3 { font: 600 var(--fs-md)/1.3 var(--serif); }
-  .solution-body > p { margin-top: 8px; }
-
-  /* --- Calculated cards: deliberately unlike the model's prose ---------- */
-  .exhibit-calc { padding: 0 18px 20px; border-top: 1px solid var(--line); }
-  .calc { margin-top: 18px; border: 2px solid var(--calc); border-radius: 3px; background: var(--calc-bg); color: #10241c;
-    container: calc / inline-size; }
-  .calc-head, .ref-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 9px 14px; }
-  .calc-head { background: var(--calc); color: #f2f7f3; }
-  .calc-head .mark, .ref-head .mark { font: 700 var(--fs-xs)/1 var(--mono); letter-spacing: .14em; padding: 5px 7px; border-radius: 2px; }
-  .calc-head .mark { background: #f2f7f3; color: var(--calc); }
-  .calc-head .src, .ref-head .src { font: var(--fs-xs)/1.2 var(--mono); }
+  /* --- Calculated and reference cards: monochrome, told apart by form ------ */
+  .exhibit-calc { margin-top: 30px; }
+  .calc, .refcard { margin-top: 22px; border: 1px solid var(--ink); background: #fff; }
+  .refcard { border-style: dashed; container: ref / inline-size; }
+  .calc { container: calc / inline-size; }
+  .calc-head, .ref-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding: 10px 16px; border-bottom: 1px solid var(--ink); }
+  .ref-head { border-bottom-style: dashed; }
+  .calc-head .mark, .ref-head .mark { font: 700 var(--fs-xs)/1.2 var(--sans); letter-spacing: .1em; text-transform: uppercase; }
+  .calc-head .src, .ref-head .src { font: var(--fs-xs)/1.2 var(--mono); color: var(--muted); }
   .calc-body { display: grid; }
   @container calc (min-width: 760px) {
     .calc-body { grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr); }
-    .calc-figures { padding: 18px 22px 16px; }
-    .calc-try { border-top: 0; border-left: 1px solid var(--calc-line); align-content: start; padding: 18px 20px; }
+    .calc-try { border-top: 0 !important; border-left: 1px solid var(--hair); align-content: start; }
   }
-  .calc-figures { padding: 14px 14px 12px; }
-  .calc-change { padding: 4px 0 8px; font: 700 var(--fs-lg)/1.2 var(--mono); }
-  .calc-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 4px 16px;
-    padding: 9px 0; border-bottom: 1px dashed var(--calc-line); }
-  .calc-row .what { font: 600 var(--fs-md)/1.25 var(--mono); }
-  .calc-row .what small { display: block; margin-top: 3px; font: var(--fs-xs)/1.35 var(--mono); color: #3f5249; }
+  .calc-figures { padding: 16px; }
+  .calc-change { padding: 0 0 8px; font: 700 var(--fs-md)/1.2 var(--mono); }
+  .calc-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 4px 18px; padding: 9px 0; border-bottom: 1px solid var(--hair); }
+  .calc-row .what { font: 400 var(--fs-sm)/1.3 var(--sans); }
+  .calc-row .what small { display: block; margin-top: 2px; font: var(--fs-xs)/1.35 var(--mono); color: var(--muted); }
   .calc-row .kt { font: 700 var(--fs-num)/1 var(--mono); white-space: nowrap; }
-  .calc-row.after .what, .calc-row.after .kt { color: var(--calc); }
-  .calc-row.weight .what, .calc-row.weight .kt { color: #10241c; }
-  .calc-result { margin-top: 12px; padding: 10px 12px; background: #fff; border-left: 5px solid var(--calc);
-    font: 700 var(--fs-xl)/1.2 var(--mono); }
-  .calc-result.worse { border-left-color: var(--bad); color: var(--bad); }
-  @container calc (max-width: 520px) {
-    .calc-row .what { font-size: var(--fs-base); }
-    .calc-row .kt { font-size: var(--fs-xl); }
-    .calc-result { font-size: var(--fs-lg); }
-  }
-  .calc-note { margin-top: 10px; padding: 9px 11px; border: 1px solid #d9b56f; background: #fbf1df; color: #5f3a00;
-    font: 600 var(--fs-sm)/1.45 var(--sans); }
-  .calc-basis { margin-top: 10px; font: var(--fs-xs)/1.5 var(--sans); color: #3f5249; }
-  .calc-error { font: 600 var(--fs-base)/1.45 var(--sans); color: var(--bad); }
-  .calc-ask { font: var(--fs-base)/1.5 var(--sans); }
-  .calc-try { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; padding: 12px 14px 14px;
-    border-top: 1px solid var(--calc-line); background: #f6f9f6; }
-  .calc-try .try-title { flex-basis: 100%; font: 600 var(--fs-xs)/1.2 var(--serif); letter-spacing: .14em; text-transform: uppercase; color: var(--calc); }
-  .calc-try label { display: grid; gap: 4px; font: var(--fs-xs)/1.25 var(--sans); color: #3f5249; }
-  .calc-try input { width: 112px; min-height: 40px; padding: 6px 8px; border: 1px solid var(--calc-line); border-radius: 2px;
-    background: #fff; font: 600 var(--fs-base)/1 var(--mono); }
-  .calc-try input:focus-visible { outline: 2px solid var(--calc); outline-offset: 1px; }
-  .calc-try .reset { min-height: 40px; font-size: var(--fs-sm); }
-  .calc-try .source { flex-basis: 100%; font: var(--fs-xs)/1.35 var(--mono); color: #3f5249; }
-
-  /* --- Reference data: slate blue, distinct from model text and Calculated --- */
-  .refcard { margin-top: 18px; border: 2px solid var(--ref); border-radius: 3px; background: var(--ref-bg); color: #142233;
-    container: ref / inline-size; }
-  .ref-head { background: var(--ref); color: var(--ref-bg); }
-  .ref-head .mark { background: var(--ref-bg); color: var(--ref); }
+  .calc-result { margin-top: 14px; font: 700 var(--fs-lg)/1.2 var(--mono); }
+  @container calc (max-width: 520px) { .calc-row .kt { font-size: var(--fs-lg); } .calc-result { font-size: var(--fs-md); } }
+  .calc-note { margin-top: 12px; padding: 8px 12px; border-left: 3px solid var(--ink); font-size: var(--fs-xs); }
+  .calc-basis { margin-top: 12px; font-size: var(--fs-xs); color: var(--muted); }
+  .calc-error { font-weight: 700; }
+  .calc-ask { font-size: var(--fs-sm); }
+  .calc-try { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px; padding: 16px; border-top: 1px solid var(--hair); }
+  .calc-try .try-title { flex-basis: 100%; font: 700 var(--fs-xs)/1.2 var(--sans); letter-spacing: .08em; text-transform: uppercase; }
+  .calc-try label { display: grid; gap: 4px; font-size: var(--fs-xs); color: var(--muted); }
+  .calc-try input { width: 116px; min-height: 42px; padding: 6px 8px; font: 700 var(--fs-sm)/1 var(--mono); }
+  .calc-try .reset { min-height: 42px; }
+  .calc-try .source { flex-basis: 100%; font: var(--fs-xs)/1.4 var(--mono); color: var(--muted); }
   .ref-scroll { overflow-x: auto; }
-  .ref-table { width: 100%; border-collapse: collapse; margin: 6px 0 0; }
-  .ref-table th, .ref-table td { padding: 10px 14px; text-align: left; border-bottom: 1px dashed var(--ref-line); vertical-align: top; }
-  .ref-table tr:first-child th { font: 600 var(--fs-xs)/1.2 var(--serif); letter-spacing: .08em; text-transform: uppercase; color: var(--ref); }
-  .ref-table th { font: 600 var(--fs-base)/1.3 var(--sans); }
-  .ref-table th small, .ref-table td small { display: block; margin-top: 2px; font: var(--fs-xs)/1.35 var(--sans); color: var(--ref-muted); }
-  .ref-table td { font: 600 var(--fs-md)/1.3 var(--mono); }
-  .ref-table td.change { color: var(--ref); }
-  @container ref (max-width: 520px) {
-    .ref-table th, .ref-table td { padding: 8px; }
-    .ref-table td { font-size: var(--fs-base); }
-    .ref-table th { font-size: var(--fs-sm); }
-  }
-  .refcard .calc-note, .refcard .calc-basis, .ref-ask { margin: 10px 14px 0; }
-  .ref-ask { font: var(--fs-base)/1.5 var(--sans); }
-  .ref-foot { padding: 10px 14px 14px; font: var(--fs-xs)/1.5 var(--sans); color: var(--ref-muted); }
+  .ref-table { width: 100%; border-collapse: collapse; }
+  .ref-table th, .ref-table td { padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--hair); vertical-align: top; }
+  .ref-table tr:first-child th { font: 700 var(--fs-xs)/1.2 var(--sans); letter-spacing: .06em; text-transform: uppercase; }
+  .ref-table th { font: 400 var(--fs-sm)/1.3 var(--sans); }
+  .ref-table th small, .ref-table td small { display: block; margin-top: 2px; font: var(--fs-xs)/1.35 var(--sans); color: var(--muted); }
+  .ref-table td { font: 700 var(--fs-sm)/1.3 var(--mono); }
+  @container ref (max-width: 520px) { .ref-table th, .ref-table td { padding: 8px; } }
+  .refcard .calc-note, .refcard .calc-basis, .ref-ask { margin: 12px 16px 0; }
+  .ref-foot { padding: 12px 16px 16px; font-size: var(--fs-xs); color: var(--muted); }
   .ref-foot p + p { margin-top: 6px; }
-  .ref-source b { color: #142233; }
 </style>
 </head>
 <body>
 <header class="site">
-  <span class="wordmark">POSTMORTEM</span>
-  <span class="tagline">Fracture surface analysis</span>
-  <a class="interiors-link" href="/interiors">Explore building interiors ↗</a>
-  <span class="status" id="status" data-state="idle" role="status">READY</span>
+  <a class="wordmark" href="/">Postmortem</a>
+  <nav class="site-nav" aria-label="Site">
+    <span class="status" id="status" data-state="idle" role="status">Ready</span>
+    <a href="/interiors">Interiors&nbsp;↗</a>
+  </nav>
+  <button class="plus-btn" id="about-toggle" type="button" aria-expanded="false" aria-controls="about" aria-label="How it works">+</button>
 </header>
+<section class="about" id="about" hidden aria-label="How it works">
+  <p>Photograph a broken part. Postmortem reads the fracture surface, names how it failed, and suggests fixes you can try on a 3D model of the part.</p>
+  <p>Every number on the page is calculated in code from cited reference data, never written by the model. Hover any underlined number to see the working.</p>
+</section>
 
-<main>
-  <section class="stack" aria-label="Specimen">
-    <div class="panel">
-      <h2>New specimen</h2>
-      <div class="panel-body stack">
-        <div class="step">
-          <span class="step-n" aria-hidden="true">1</span>
-          <span class="step-title">Photograph the break</span>
-          <div class="step-body">
-            <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose or drop a photo">
-              <strong>Drop a photo of the fracture surface</strong>
-              <small>or click to choose a file · JPEG, PNG, HEIC</small>
+<main class="stack">
+  <section class="intake" id="intake" aria-label="New specimen">
+    <img class="compact-thumb compact-only" id="compact-thumb" alt="Your photo">
+    <span class="compact-name compact-only" id="compact-name"></span>
+    <button class="btn compact-only" id="another-part" type="button">Analyse another part</button>
+
+    <div class="board" id="board">
+      <svg class="stand-art" id="stand-art" viewBox="0 0 600 760" aria-hidden="true"></svg>
+      <button class="lift" id="lift" type="button" aria-expanded="false" aria-controls="sheet">
+        <span class="visually-hidden">Lift the drawing board to add a photo</span>
+      </button>
+      <div class="board-face">
+        <svg class="face-art" id="face-art" viewBox="0 0 600 760" aria-hidden="true"></svg>
+        <div class="sheet" id="sheet">
+          <p class="sheet-hint" id="sheet-hint" aria-hidden="true">Click the board<br>to begin</p>
+          <div class="invite" id="invite" hidden>
+            <p class="invite-title">Pin a photo of the break</p>
+            <div class="invite-actions">
+              <button class="text-btn" id="upload" type="button">Upload a photo</button>
+              <button class="text-btn" id="camera" type="button">Take a photo</button>
             </div>
-            <input class="visually-hidden" type="file" id="file-any" accept="image/*,.heic,.heif" tabindex="-1">
-            <input class="visually-hidden" type="file" id="file-camera" accept="image/*" capture="environment" tabindex="-1">
-            <button class="btn wide" id="camera" type="button">Take a photo with the camera</button>
+            <p class="invite-or"><span class="drop-hint">or drop one here · </span>or try one:</p>
+            <div class="examples">
+              <button class="text-btn" type="button" data-example="1">Wooden dowel</button>
+              <button class="text-btn" type="button" data-example="2">Printed bars</button>
+              <button class="text-btn" type="button" data-example="3">Craft stick</button>
+            </div>
           </div>
-        </div>
-        <details class="fold step" id="describe" open>
-          <summary>
-            <span class="step-n" aria-hidden="true">2</span>
-            <span class="step-title fold-step-title">Describe it <span class="muted">(optional)</span></span>
-            <span class="chev" aria-hidden="true"></span>
-          </summary>
-          <div class="step-body">
-            <label class="visually-hidden" for="context">How it broke, dimensions, material</label>
-            <textarea id="context"
-              placeholder="How it broke, dimensions, material. e.g. PETG bracket, 3 mm wall, sharp inside corner, snapped after two weeks of vibration."></textarea>
-            <label class="field-label" for="material">Material <span class="muted">Optional. A photo can't tell PLA from PETG.</span></label>
-            <select id="material">
-              <option value="">Not sure / not listed</option>
-            </select>
-          </div>
-        </details>
-        <div class="step" id="analyse-step">
-          <span class="step-n" aria-hidden="true">3</span>
-          <span class="step-title">Analyse</span>
-          <div class="step-body">
-            <button class="btn primary" id="analyse" type="button" disabled>Analyse</button>
-          </div>
+          <div class="pinned" id="pinned" hidden></div>
+          <div class="sheet-progress" id="sheet-progress" hidden aria-live="polite"></div>
         </div>
       </div>
     </div>
-    <details class="panel agent-options" id="agent-options">
-      <summary>Design constraints &amp; analysis mode</summary>
+    <p class="board-caption">Fracture surface analysis</p>
+    <p class="board-sub">Pin a photo of a broken part. See how it failed and what to change.</p>
+
+    <div class="intake-options" id="intake-options" hidden>
+      <p class="file-name" id="file-name"></p>
+      <details class="fold" id="describe">
+        <summary><span class="fold-title">Add a note and material</span><span class="row-count">optional</span><span class="plus" aria-hidden="true"></span></summary>
+        <div class="fold-body">
+          <label class="field-label" for="context">Note <span class="muted">How it broke, dimensions, material.</span></label>
+          <textarea id="context"
+            placeholder="e.g. PETG bracket, 3 mm wall, sharp inside corner, snapped after two weeks of vibration."></textarea>
+          <label class="field-label" for="material">Material <span class="muted">A photo can't tell PLA from PETG.</span></label>
+          <select id="material">
+            <option value="">Not sure / not listed</option>
+          </select>
+        </div>
+      </details>
+      <details class="fold agent-options" id="agent-options">
+        <summary><span class="fold-title">Design constraints and analysis mode</span><span class="plus" aria-hidden="true"></span></summary>
+        <div class="fold-body">
       <label for="engine">Analysis mode</label>
       <select id="engine"><option value="gemini">Gemini · original pipeline</option><option value="deep" disabled>Deep Agents · Nemotron</option></select>
       <p id="agent-availability">Checking agent availability…</p>
@@ -449,16 +412,12 @@
       <input id="weight-limit" type="number" min="0" max="1000" placeholder="e.g. 30">
       <label><input id="keep-material" type="checkbox" checked> Keep the same material</label>
       <label><input id="allow-support" type="checkbox" checked> Additional supports allowed</label>
-    </details>
-    <button class="btn wide" id="another-part" type="button">Analyse another part</button>
-    <details class="panel fold" id="collection" open>
-      <summary><span class="fold-title">From the collection</span><span class="row-count">3</span><span class="chev" aria-hidden="true"></span></summary>
-      <div class="panel-body collection">
-        <button class="btn" type="button" data-example="1"><span class="numeral">I</span><span>Wooden dowel<span class="what">Snapped in bending</span></span></button>
-        <button class="btn" type="button" data-example="2"><span class="numeral">II</span><span>Printed bars<span class="what">Broke through a hole</span></span></button>
-        <button class="btn" type="button" data-example="3"><span class="numeral">III</span><span>Craft stick<span class="what">Photo not good enough</span></span></button>
-      </div>
-    </details>
+        </div>
+      </details>
+      <button class="btn primary" id="analyse" type="button" disabled>Analyse</button>
+    </div>
+    <input class="visually-hidden" type="file" id="file-any" accept="image/*,.heic,.heif" tabindex="-1">
+    <input class="visually-hidden" type="file" id="file-camera" accept="image/*" capture="environment" tabindex="-1">
   </section>
 
   <section class="stack" id="output" aria-live="polite" aria-label="Diagnosis"></section>
@@ -538,7 +497,8 @@ function body(...children) {
 
 function setStatus(state, text) {
   statusChip.dataset.state = state;
-  statusChip.textContent = text;
+  const words = String(text).toLowerCase();
+  statusChip.textContent = words.charAt(0).toUpperCase() + words.slice(1);
 }
 
 function setBusy(value) {
@@ -556,35 +516,23 @@ function showOutput(...parts) {
 
 // --- States ---------------------------------------------------------------
 
-function archIcon() {
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 64 84");
-  svg.setAttribute("class", "arch");
-  svg.setAttribute("aria-hidden", "true");
-  const path = document.createElementNS(svg.namespaceURI, "path");
-  path.setAttribute("d", "M4 82 V38 Q4 12 32 2 Q60 12 60 38 V82 Z M14 82 V42 Q14 22 32 13 Q50 22 50 42 V82");
-  path.setAttribute("fill", "none");
-  path.setAttribute("stroke", "#b4a581");
-  path.setAttribute("stroke-width", "2");
-  svg.append(path);
-  return svg;
-}
-
+/** No result yet: the board is the whole page. */
 function showEmpty() {
-  const box = el("div", "empty");
-  box.append(archIcon(), el("strong", "", "The gallery is empty"),
-    el("span", "", "Add a close, sharp, well-lit photo of the broken surface and press Analyse, or open a piece from the collection."));
-  showOutput(panel("Diagnosis", box));
+  showOutput();
 }
 
+/** While analysing, progress replaces the invitation on the pinned sheet. */
 function showLoading() {
   const started = Date.now();
   const title = el("strong", "", PROGRESS_STEPS[0][1]);
-  const elapsed = el("div", "elapsed", "0 s");
-  const box = el("div", "loading");
-  box.append(title, el("span", "", "Do not close this page."), el("div", "bar"), elapsed);
-  showOutput(panel("Diagnosis", box));
-  setStatus("busy", "ANALYSING");
+  const elapsed = el("span", "", "0 s");
+  const progress = $("sheet-progress");
+  progress.replaceChildren(title, el("div", "bar"), elapsed);
+  setSheet("progress");
+  $("intake").classList.remove("compact");
+  liftBoard(false);
+  showOutput();
+  setStatus("busy", "Analysing");
   clearInterval(timer);
   timer = setInterval(() => {
     const seconds = Math.floor((Date.now() - started) / 1000);
@@ -597,11 +545,136 @@ function showLoading() {
 
 function showError(message) {
   clearInterval(timer);
+  setSheet($("pinned").childElementCount ? "pinned" : "invite");
   const box = el("div", "banner");
   box.setAttribute("role", "alert");
   box.append(el("span", "label", "Analysis failed"), el("div", "", message));
   showOutput(box);
-  setStatus("error", "ERROR");
+  setStatus("error", "Error");
+}
+
+// --- The drawing board: an original pencil sketch, drawn in code ------------------
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+/** Seeded random numbers, so the sketch is identical on every load. */
+function seeded(seed) {
+  let state = seed;
+  return () => ((state = (state * 16807) % 2147483647) / 2147483647);
+}
+
+function svgEl(tag, attrs) {
+  const node = document.createElementNS(SVG_NS, tag);
+  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
+  return node;
+}
+
+/**
+ * Pencil strokes: each line is drawn twice with a slight wobble, like a quick
+ * graphite sketch. Hatching fills a region with short diagonal strokes.
+ */
+function pencil(random) {
+  const jitter = (amount) => (random() - 0.5) * amount;
+  const wobblyLine = (x1, y1, x2, y2, wobble = 1.6) => {
+    const mx = (x1 + x2) / 2 + jitter(wobble * 2);
+    const my = (y1 + y2) / 2 + jitter(wobble * 2);
+    return `M${(x1 + jitter(wobble)).toFixed(1)} ${(y1 + jitter(wobble)).toFixed(1)} `
+      + `Q${mx.toFixed(1)} ${my.toFixed(1)} ${(x2 + jitter(wobble)).toFixed(1)} ${(y2 + jitter(wobble)).toFixed(1)}`;
+  };
+  return {
+    line(x1, y1, x2, y2, weight = 1) {
+      return [wobblyLine(x1, y1, x2, y2), weight > 0.6 ? wobblyLine(x1, y1, x2, y2, 2.4) : ""].join(" ");
+    },
+    box(x, y, w, h, weight = 1) {
+      return [this.line(x, y, x + w, y, weight), this.line(x + w, y, x + w, y + h, weight),
+        this.line(x + w, y + h, x, y + h, weight), this.line(x, y + h, x, y, weight)].join(" ");
+    },
+    hatch(x, y, w, h, spacing = 7, slope = 0.9) {
+      const parts = [];
+      for (let offset = -h; offset < w; offset += spacing + jitter(3)) {
+        const startX = x + offset;
+        const x1 = Math.max(x, startX);
+        const y1 = y + h - (x1 - startX) / slope;
+        const x2 = Math.min(x + w, startX + h * slope);
+        const y2 = y + h - (x2 - startX) / slope;
+        if (x2 - x1 < 3 || random() < 0.12) continue;
+        parts.push(wobblyLine(x1, Math.min(y1, y + h), x2, Math.max(y2, y), 0.8));
+      }
+      return parts.join(" ");
+    },
+  };
+}
+
+function strokePath(d, width, opacity) {
+  return svgEl("path", { d, fill: "none", stroke: "#111", "stroke-width": width, "stroke-opacity": opacity,
+    "stroke-linecap": "round", "stroke-linejoin": "round", filter: "url(#graphite)" });
+}
+
+/** Builds the stand (static) and the board face (which lifts) into their two SVGs. */
+function buildBoardArt() {
+  const random = seeded(19);
+  const pen = pencil(random);
+  const stand = $("stand-art");
+  const face = $("face-art");
+  const defs = svgEl("defs", {});
+  const filter = svgEl("filter", { id: "graphite", x: "-5%", y: "-5%", width: "110%", height: "110%" });
+  filter.append(svgEl("feTurbulence", { type: "fractalNoise", baseFrequency: "0.9", numOctaves: "2", seed: "3", result: "grain" }),
+    svgEl("feDisplacementMap", { in: "SourceGraphic", in2: "grain", scale: "1.6" }));
+  defs.append(filter);
+  stand.append(defs);
+
+  // Stand: floor shadow, tray ledge, three legs with hatching.
+  stand.append(svgEl("ellipse", { class: "face-shadow", cx: 300, cy: 748, rx: 210, ry: 9, fill: "#000", opacity: ".3" }));
+  stand.append(strokePath(pen.line(70, 752, 530, 750, 0.4), 0.7, 0.35));
+  stand.append(strokePath([pen.line(300, 478, 300, 722), pen.line(310, 478, 309, 722)].join(" "), 1, 0.45));
+  for (const [top, bottom, sign] of [[[205, 478], [118, 744], -1], [[395, 478], [482, 744], 1]]) {
+    const [tx, ty] = top; const [bx, by] = bottom;
+    stand.append(strokePath([pen.line(tx, ty, bx, by), pen.line(tx + 16, ty, bx + 16, by),
+      pen.line(bx, by, bx + 16, by, 0.4)].join(" "), 1.5, 0.9));
+    // Shade inside the leg only: short strokes across its width, denser toward the shadow side.
+    const shade = [];
+    for (let f = 0.06; f < 0.96; f += 0.035 + random() * 0.02) {
+      const x = tx + (bx - tx) * f;
+      const y = ty + (by - ty) * f;
+      const reach = sign > 0 ? 9 + random() * 6 : 6 + random() * 5;
+      shade.push(pen.line(x + (sign > 0 ? 16 - reach : 1), y, x + (sign > 0 ? 15 : reach), y + 6, 0.3));
+    }
+    stand.append(strokePath(shade.join(" "), 0.6, 0.5));
+  }
+  stand.append(strokePath(pen.box(54, 452, 492, 26), 1.5, 0.95));
+  stand.append(strokePath(pen.hatch(56, 466, 488, 11, 6, 1.2), 0.6, 0.55));
+
+  // Face: mast and clamp, the board with its thickness, the pinned sheet,
+  // a parallel rule, a set square and a pencil.
+  face.append(svgEl("rect", { x: 70, y: 60, width: 460, height: 392, fill: "#fff" }));
+  face.append(strokePath(pen.box(290, 6, 20, 52), 1.4, 0.9));
+  face.append(strokePath([pen.line(258, 70, 342, 70), pen.line(258, 70, 268, 50), pen.line(268, 50, 332, 50),
+    pen.line(332, 50, 342, 70)].join(" "), 1.5, 0.95));
+  face.append(strokePath(pen.hatch(262, 52, 76, 16, 4, 1.6), 0.6, 0.6));
+  face.append(strokePath(pen.box(70, 70, 460, 380), 1.8, 0.95));
+  face.append(strokePath([pen.line(70, 450, 76, 460), pen.line(76, 460, 536, 460), pen.line(536, 460, 530, 450),
+    pen.line(530, 450, 536, 460), pen.line(536, 460, 536, 76), pen.line(536, 76, 530, 70)].join(" "), 1.3, 0.85));
+  face.append(strokePath(pen.hatch(531, 76, 5, 382, 4, 0.15), 0.6, 0.6));
+  // Shading on the board margins, heavier at the lower left and upper right, like a quick sketch.
+  face.append(strokePath(pen.hatch(74, 360, 26, 86, 6, 0.8), 0.6, 0.45));
+  face.append(strokePath(pen.hatch(440, 74, 86, 22, 6, 1.2), 0.6, 0.4));
+  face.append(strokePath(pen.hatch(500, 300, 26, 100, 7, 0.8), 0.6, 0.35));
+  // The sheet (HTML sits on top of this area) with corner pins.
+  face.append(svgEl("rect", { x: 105, y: 100, width: 390, height: 300, fill: "#fff" }));
+  face.append(strokePath(pen.box(105, 100, 390, 300), 1, 0.75));
+  for (const [x, y] of [[112, 107], [488, 107], [112, 393], [488, 393]]) {
+    face.append(svgEl("circle", { cx: x, cy: y, r: 3.2, fill: "#111", opacity: ".85" }));
+  }
+  // Parallel rule across the board, with tick marks.
+  face.append(strokePath(pen.box(80, 412, 440, 14), 1.4, 0.9));
+  const ticks = [];
+  for (let x = 92; x < 512; x += 10) ticks.push(pen.line(x, 412, x, x % 50 === 2 ? 420 : 416, 0.4));
+  face.append(strokePath(ticks.join(" "), 0.6, 0.6));
+  // Set square resting on the rule, and a pencil.
+  face.append(strokePath([pen.line(418, 410, 512, 410), pen.line(512, 410, 512, 336), pen.line(512, 336, 418, 410),
+    pen.line(448, 400, 500, 400, 0.4), pen.line(500, 400, 500, 360, 0.4), pen.line(500, 360, 448, 400, 0.4)].join(" "), 1.2, 0.85));
+  face.append(strokePath([pen.line(96, 438, 236, 433), pen.line(96, 444, 236, 439), pen.line(236, 433, 250, 437, 0.5),
+    pen.line(236, 439, 250, 437, 0.5)].join(" "), 1.1, 0.85));
 }
 
 // --- Glossary: coloured terms with hover definitions ---------------------------
@@ -676,14 +749,49 @@ let glossTarget = null;
 let glossShowTimer = null;
 let glossHideTimer = null;
 
+/** Calculated numbers and the working behind each, from the server. */
+const WORKING = new WeakMap();
+
+/**
+ * A calculated figure that shows its working on hover, focus or tap. The steps
+ * come from the server next to the number; the page never re-derives them.
+ */
+function num(text, steps) {
+  if (!steps || !steps.length) return document.createTextNode(text);
+  const node = el("span", "num", text);
+  node.tabIndex = 0;
+  WORKING.set(node, steps);
+  return node;
+}
+
+function workingContent(steps) {
+  return steps.map((item) => {
+    const box = el("div", "working-step");
+    const line = el("p", "ws-line");
+    line.append(`= ${item.substituted} = `, el("b", "", item.result));
+    box.append(el("p", "ws-label", item.label), el("p", "ws-formula", item.formula), line);
+    if (item.note) box.append(el("p", "ws-note", item.note));
+    if (item.source) box.append(el("p", "ws-source", `Source: ${item.source}`));
+    return box;
+  });
+}
+
+/** Steps whose label is in `labels`, in that order. */
+function stepsFor(computed, ...labels) {
+  const working = (computed && computed.working) || [];
+  return labels.map((label) => working.find((item) => item.label === label)).filter(Boolean);
+}
+
 function showGloss(term) {
-  const entry = GLOSSARY && GLOSSARY.byId.get(term.dataset.gloss);
-  if (!entry) return;
+  const steps = WORKING.get(term);
+  const entry = !steps && GLOSSARY && GLOSSARY.byId.get(term.dataset.gloss);
+  if (!steps && !entry) return;
   clearTimeout(glossHideTimer);
   if (glossTarget && glossTarget !== term) glossTarget.removeAttribute("aria-describedby");
   glossTarget = term;
   term.setAttribute("aria-describedby", "gloss-pop");
-  glossPop.replaceChildren(el("strong", "", entry.term), el("p", "gp-def", entry.definition), el("p", "gp-exp", entry.explanation));
+  if (steps) glossPop.replaceChildren(el("strong", "", "How this is calculated"), ...workingContent(steps));
+  else glossPop.replaceChildren(el("strong", "", entry.term), el("p", "gp-def", entry.definition), el("p", "gp-exp", entry.explanation));
   glossPop.hidden = false;
   const rect = term.getBoundingClientRect();
   const width = glossPop.offsetWidth;
@@ -703,14 +811,14 @@ function hideGloss() {
 }
 
 document.addEventListener("pointerover", (event) => {
-  const term = event.target.closest?.(".term");
+  const term = event.target.closest?.(".term, .num");
   if (!term || event.pointerType !== "mouse") return;
   clearTimeout(glossHideTimer);
   clearTimeout(glossShowTimer);
   glossShowTimer = setTimeout(() => showGloss(term), 120);
 });
 document.addEventListener("pointerout", (event) => {
-  const term = event.target.closest?.(".term");
+  const term = event.target.closest?.(".term, .num");
   if (!term || event.pointerType !== "mouse" || term.contains(event.relatedTarget)) return;
   clearTimeout(glossShowTimer);
   glossHideTimer = setTimeout(hideGloss, 80);
@@ -718,24 +826,24 @@ document.addEventListener("pointerout", (event) => {
 // Touch screens have no hover: a tap on a term toggles it, a tap elsewhere closes it.
 document.addEventListener("pointerup", (event) => {
   if (event.pointerType === "mouse") return;
-  const term = event.target.closest?.(".term");
+  const term = event.target.closest?.(".term, .num");
   if (term) { glossTarget === term ? hideGloss() : showGloss(term); }
   else if (glossTarget) hideGloss();
 });
 document.addEventListener("focusin", (event) => {
-  const term = event.target.closest?.(".term");
+  const term = event.target.closest?.(".term, .num");
   if (term) showGloss(term);
 });
 document.addEventListener("focusout", (event) => {
-  if (event.target.closest?.(".term")) hideGloss();
+  if (event.target.closest?.(".term, .num")) hideGloss();
 });
 document.addEventListener("keydown", (event) => { if (event.key === "Escape" && glossTarget) hideGloss(); });
 window.addEventListener("scroll", () => { if (glossTarget) hideGloss(); }, { passive: true });
 
 function glossHint() {
   const hint = el("p", "gloss-hint");
-  hint.append(`${CAN_HOVER ? "Hover over" : "Tap"} a `, el("span", "term-sample", "coloured word"),
-    " for its meaning.");
+  hint.append(`${CAN_HOVER ? "Hover over" : "Tap"} an `, el("span", "term-sample", "underlined"),
+    " word for its meaning, or an underlined number for its working.");
   return hint;
 }
 
@@ -780,11 +888,11 @@ function referenceNote(d) {
 
 /** The always-visible answer: mode, one-sentence summary, confidence, material. */
 function renderVerdict(d) {
-  const box = el("section", "panel verdict");
+  const box = el("section", "verdict");
   box.setAttribute("aria-label", "Verdict");
   const meta = el("div", "verdict-meta");
-  meta.append(el("span", "kicker", "Diagnosis"), el("span", `badge ${d.confidence}`, `${d.confidence} confidence`),
-    el("span", "chip", d.material_facts ? d.material_facts.name : (MATERIAL_NAMES[d.material] || d.material)));
+  const material = d.material_facts ? d.material_facts.name : (MATERIAL_NAMES[d.material] || d.material);
+  meta.append(el("span", "kicker", "Diagnosis"), el("span", "", `${humanise(d.confidence)} confidence`), el("span", "", material));
   box.append(meta, el("h2", "", modeName(d)), glossed("p", "verdict-summary", summaryText(d)));
   if (GLOSSARY) box.append(glossHint());
   return box;
@@ -801,7 +909,7 @@ function row(title, { count, preview, open = false } = {}, ...content) {
   summary.append(el("span", "row-title", title));
   if (count !== undefined) summary.append(el("span", "row-count", `(${count})`));
   if (preview) summary.append(el("span", "row-preview", preview));
-  summary.append(el("span", "chev"));
+  summary.append(Object.assign(el("span", "plus"), { ariaHidden: "true" }));
   const bodyBox = el("div", "row-body");
   bodyBox.append(...content);
   details.append(summary, bodyBox);
@@ -914,11 +1022,13 @@ function afterText(before, after) {
   return before === 0 ? `→ add a ${plain(after, 1)} mm fillet` : `→ enlarge to r ≈ ${plain(after, 1)} mm`;
 }
 
-function calcRow(className, what, detail, kt, figure) {
+function calcRow(className, what, detail, kt, figure, steps) {
   const row = el("div", `calc-row ${className}`);
   const label = el("div", "what", what);
   label.append(glossed("small", "", detail));
-  row.append(label, el("div", "kt", figure ?? `Kt ≈ ${plain(kt)}`));
+  const value = el("div", "kt");
+  value.append(num(figure ?? `Kt ≈ ${plain(kt)}`, steps));
+  row.append(label, value);
   return row;
 }
 
@@ -937,15 +1047,17 @@ function calcFigures(computed) {
   const inputs = computed.inputs;
   const depth = `d = ${plain(inputs.section_depth_mm, 1)} mm`;
   box.append(
-    calcRow("before", beforeText(inputs.current_radius_mm), `${depth} · r/d ${plain(computed.r_over_d_before, 3)}`, computed.kt_before),
+    calcRow("before", beforeText(inputs.current_radius_mm), `${depth} · r/d ${plain(computed.r_over_d_before, 3)}`,
+      computed.kt_before, null, stepsFor(computed, "r/d now", "Kt now")),
     calcRow("after", afterText(inputs.current_radius_mm, inputs.proposed_radius_mm),
-      `${depth} · r/d ${plain(computed.r_over_d_after, 3)}`, computed.kt_after),
+      `${depth} · r/d ${plain(computed.r_over_d_after, 3)}`, computed.kt_after, null, stepsFor(computed, "r/d proposed", "Kt proposed")),
   );
   const pct = computed.stress_reduction_pct;
   const result = el("div", pct < 0 ? "calc-result worse" : "calc-result");
-  result.textContent = pct > 0
-    ? `Peak stress drops ${computed.reduction_is_lower_bound ? "≥ " : "~"}${Math.round(pct)}%`
-    : pct < 0 ? `Peak stress rises ~${Math.round(-pct)}%` : "No change in peak stress";
+  const change = stepsFor(computed, "Kt now", "Kt proposed", "Peak stress change");
+  if (pct > 0) result.append("Peak stress drops ", num(`${computed.reduction_is_lower_bound ? "≥ " : "≈ "}${Math.round(pct)} %`, change));
+  else if (pct < 0) result.append("Peak stress rises ", num(`≈ ${Math.round(-pct)} %`, change));
+  else result.textContent = "No change in peak stress";
   box.append(result);
   if (computed.is_capped) {
     box.append(el("div", "calc-note",
@@ -993,16 +1105,24 @@ function sectionFigures(computed) {
   if (notice) { box.append(notice); return box; }
   const inputs = computed.inputs;
   box.append(el("div", "calc-change", `${sectionText(inputs, "current")}  →  ${sectionText(inputs, "proposed")}`));
-  const grams = computed.mass_added_g
-    ? `≈ +${span(computed.mass_added_g)} g in ${materialName(inputs.material_id)}`
-    : "Pick the material in step 2, with a length, to see grams";
   const weight = el("div", "calc-row weight");
   const label = el("div", "what", "Weight");
-  label.append(el("small", "", grams));
-  weight.append(label, el("div", "kt", times(computed.weight_ratio)));
+  const grams = el("small");
+  if (computed.mass_added_g) {
+    grams.append(num(`${signedSpan(computed.mass_added_g)} g`, stepsFor(computed, "Mass now", "Mass after", "Added mass")),
+      ` (${span(computed.mass_before_g)} → ${span(computed.mass_after_g)} g) in ${materialName(inputs.material_id)}`);
+  } else {
+    grams.textContent = "Pick the material and give a length to see grams";
+  }
+  label.append(grams);
+  const weightValue = el("div", "kt");
+  weightValue.append(num(times(computed.weight_ratio), stepsFor(computed, "Weight ratio")));
+  weight.append(label, weightValue);
   box.append(
-    calcRow("after", "Bending strength", "same load and material", null, times(computed.strength_ratio)),
-    calcRow("after", "Stiffness", "how much less it bends", null, times(computed.stiffness_ratio)),
+    calcRow("after", "Bending strength", "same load and material", null, times(computed.strength_ratio),
+      stepsFor(computed, "Bending strength ratio")),
+    calcRow("after", "Stiffness", "how much less it bends", null, times(computed.stiffness_ratio),
+      stepsFor(computed, "Stiffness ratio")),
     weight,
   );
   if (computed.basis) box.append(glossed("p", "calc-basis", computed.basis));
@@ -1098,6 +1218,34 @@ function renderComputed(computed) {
   });
 }
 
+/** The numbers part of the support / span card. */
+function spanFigures(computed) {
+  const box = el("div", "calc-figures");
+  const notice = calcNotice(computed);
+  if (notice) { box.append(notice); return box; }
+  const inputs = computed.inputs;
+  box.append(el("div", "calc-change",
+    `Span ${plain(inputs.current_span_mm, 1)} mm  →  ${plain(inputs.proposed_span_mm, 1)} mm`));
+  const signed = (pct) => `${pct > 0 ? "+" : pct < 0 ? "−" : ""}${plain(Math.abs(pct), 1)} %`;
+  box.append(
+    calcRow("after", "Peak bending stress", `moment ×${plain(computed.moment_ratio)}`, null,
+      signed(computed.stress_change_pct), stepsFor(computed, "Peak moment and stress ratio", "Peak stress change")),
+    calcRow("after", "Deflection", `×${plain(computed.deflection_ratio)}`, null,
+      signed(computed.deflection_change_pct), stepsFor(computed, "Deflection ratio", "Deflection change")),
+  );
+  if (computed.basis) box.append(glossed("p", "calc-basis", computed.basis));
+  return box;
+}
+
+/** Card for a fix that adds a support or shortens the span. */
+function renderSpan(computed) {
+  return liveCalcCard(computed, {
+    label: "Bending stress and deflection change", src: "mechanics.py · beam formulas",
+    fields: [["current_span_mm", "Span now (mm)"], ["proposed_span_mm", "Span after (mm)"]],
+    endpoint: "/mechanics/span", figures: spanFigures,
+  });
+}
+
 /** Weight and strength card for a thicker-section fix. */
 function renderSection(computed) {
   const inputs = computed.inputs || {};
@@ -1186,6 +1334,7 @@ function renderMaterialComparison(c) {
   if (c.from) head.append(el("th", "", "Change"));
   table.append(head);
   const ratios = c.from ? [c.strength_ratio, c.stiffness_ratio, null, c.weight_ratio] : [];
+  const ratioSteps = [stepsFor(c, "Strength ratio"), stepsFor(c, "Stiffness ratio"), [], stepsFor(c, "Weight ratio")];
   PROPERTY_ROWS.forEach(([label, value, note], index) => {
     const row = el("tr");
     const name = el("th", "", label);
@@ -1200,9 +1349,24 @@ function renderMaterialComparison(c) {
     };
     if (c.from) row.append(cell(c.from));
     row.append(cell(c.to));
-    if (c.from) row.append(el("td", "change", ratios[index] ? `×${span(ratios[index], 2)}` : ""));
+    if (c.from) {
+      const change = el("td", "change");
+      if (ratios[index]) change.append(num(`×${span(ratios[index], 2)}`, ratioSteps[index]));
+      row.append(change);
+    }
     table.append(row);
   });
+  // Grams for this part, from its (schematic) volume and the two densities.
+  if (c.from && c.mass_g) {
+    const row = el("tr");
+    const name = el("th", "", "Mass of this part");
+    name.append(el("small", "", `${plain(c.mass_g.volume_cm3)} cm³, size estimated`));
+    const change = el("td", "change");
+    change.append(num(`${signedSpan(c.mass_g.change)} g`,
+      stepsFor(c, `Mass in ${c.from.name}`, `Mass in ${c.to.name}`, "Mass change")));
+    row.append(name, el("td", "", `${span(c.mass_g.before)} g`), el("td", "", `${span(c.mass_g.after)} g`), change);
+    table.append(row);
+  }
   box.append(scrollWrap(table));
   if (!c.from) {
     box.append(el("p", "ref-ask", "Pick the part's current material in step 2 to compare the two."));
@@ -1219,6 +1383,7 @@ function solutionCards(solution) {
   const cards = [];
   if (solution.computed) cards.push(renderComputed(solution.computed));
   if (solution.section_computed) cards.push(renderSection(solution.section_computed));
+  if (solution.span_computed) cards.push(renderSpan(solution.span_computed));
   if (solution.material_comparison) cards.push(renderMaterialComparison(solution.material_comparison));
   return cards;
 }
@@ -1254,36 +1419,58 @@ function better(range, higherIsBetter) {
 function calculatedEffects(solution) {
   const pros = [];
   const cons = [];
-  const put = (good, text) => (good ? pros : cons).push(text);
+  // Each item: what it is, the figure (hoverable for its working), and context.
+  const put = (good, label, figure, rest, steps) => (good ? pros : cons).push({ label, figure, rest, steps });
 
   const fillet = solution.computed;
   if (fillet && !fillet.error && !fillet.needs_input && typeof fillet.stress_reduction_pct === "number") {
     const pct = fillet.stress_reduction_pct;
     const bound = fillet.reduction_is_lower_bound ? "≥" : "≈";
-    put(pct >= 0, `Peak stress ${pct >= 0 ? "down" : "up"} ${bound} ${Math.round(Math.abs(pct))} % `
-      + `(Kt ${plain(fillet.kt_before)} → ${plain(fillet.kt_after)}, d = ${plain(fillet.inputs.section_depth_mm, 1)} mm)`);
+    put(pct >= 0, `Peak stress ${pct >= 0 ? "down" : "up"} `, `${bound} ${Math.round(Math.abs(pct))} %`,
+      ` (Kt ${plain(fillet.kt_before)} → ${plain(fillet.kt_after)}, d = ${plain(fillet.inputs.section_depth_mm, 1)} mm)`,
+      stepsFor(fillet, "Kt now", "Kt proposed", "Peak stress change"));
   }
 
   const section = solution.section_computed;
   if (section && !section.error && !section.needs_input) {
     const change = `${sectionText(section.inputs, "current")} → ${sectionText(section.inputs, "proposed")}`;
-    put(section.strength_ratio >= 1, `Bending strength ×${plain(section.strength_ratio)}, `
-      + `stiffness ×${plain(section.stiffness_ratio)} (${change})`);
-    const grams = section.mass_added_g
-      ? ` (${signedSpan(section.mass_added_g)} g: ${span(section.mass_before_g)} → ${span(section.mass_after_g)} g)`
-      : " (pick a material and length for grams)";
-    put(section.weight_ratio <= 1, `Weight ×${plain(section.weight_ratio)}${grams}`);
+    put(section.strength_ratio >= 1, "Bending strength ", `×${plain(section.strength_ratio)}`,
+      `, stiffness ×${plain(section.stiffness_ratio)} (${change})`, stepsFor(section, "Bending strength ratio", "Stiffness ratio"));
+    if (section.mass_added_g) {
+      put(section.weight_ratio <= 1, "Weight ", `${signedSpan(section.mass_added_g)} g`,
+        ` (×${plain(section.weight_ratio)}: ${span(section.mass_before_g)} → ${span(section.mass_after_g)} g)`,
+        stepsFor(section, "Weight ratio", "Mass now", "Mass after", "Added mass"));
+    } else {
+      put(section.weight_ratio <= 1, "Weight ", `×${plain(section.weight_ratio)}`,
+        " (pick a material and give a length for grams)", stepsFor(section, "Weight ratio"));
+    }
+  }
+
+  const spanFix = solution.span_computed;
+  if (spanFix && !spanFix.error && !spanFix.needs_input) {
+    const signed = (pct) => `${pct > 0 ? "+" : pct < 0 ? "−" : ""}${plain(Math.abs(pct), 1)} %`;
+    const spans = ` (span ${plain(spanFix.inputs.current_span_mm, 1)} → ${plain(spanFix.inputs.proposed_span_mm, 1)} mm)`;
+    put(spanFix.stress_change_pct <= 0, "Peak bending stress ", signed(spanFix.stress_change_pct), spans,
+      stepsFor(spanFix, "Peak moment and stress ratio", "Peak stress change"));
+    put(spanFix.deflection_change_pct <= 0, "Deflection ", signed(spanFix.deflection_change_pct), "",
+      stepsFor(spanFix, "Deflection ratio", "Deflection change"));
   }
 
   const swap = solution.material_comparison;
   if (swap && swap.from) {
-    put(better(swap.strength_ratio, true), `Strength ×${span(swap.strength_ratio, 2)} `
-      + `(${span(swap.from.strength_mpa, 0)} → ${span(swap.to.strength_mpa, 0)} MPa`
-      + `${swap.strength_like_for_like ? "" : ", measured differently"})`);
-    put(better(swap.stiffness_ratio, true), `Stiffness ×${span(swap.stiffness_ratio, 2)} `
-      + `(${span(swap.from.modulus_gpa)} → ${span(swap.to.modulus_gpa)} GPa)`);
-    put(better(swap.weight_ratio, false), `Weight ×${span(swap.weight_ratio, 2)} `
-      + `(density ${span(swap.from.density_g_cm3, 2)} → ${span(swap.to.density_g_cm3, 2)} g/cm³)`);
+    put(better(swap.strength_ratio, true), "Strength ", `×${span(swap.strength_ratio, 2)}`,
+      ` (${span(swap.from.strength_mpa, 0)} → ${span(swap.to.strength_mpa, 0)} MPa`
+      + `${swap.strength_like_for_like ? "" : ", measured differently"})`, stepsFor(swap, "Strength ratio"));
+    put(better(swap.stiffness_ratio, true), "Stiffness ", `×${span(swap.stiffness_ratio, 2)}`,
+      ` (${span(swap.from.modulus_gpa)} → ${span(swap.to.modulus_gpa)} GPa)`, stepsFor(swap, "Stiffness ratio"));
+    if (swap.mass_g) {
+      put(swap.mass_g.change[0] + swap.mass_g.change[1] <= 0, "Weight ", `${signedSpan(swap.mass_g.change)} g`,
+        ` (${span(swap.mass_g.before)} → ${span(swap.mass_g.after)} g for this part)`,
+        stepsFor(swap, `Mass in ${swap.from.name}`, `Mass in ${swap.to.name}`, "Mass change"));
+    } else {
+      put(better(swap.weight_ratio, false), "Weight ", `×${span(swap.weight_ratio, 2)}`,
+        ` (density ${span(swap.from.density_g_cm3, 2)} → ${span(swap.to.density_g_cm3, 2)} g/cm³)`, stepsFor(swap, "Weight ratio"));
+    }
   }
   return { pros, cons };
 }
@@ -1291,10 +1478,10 @@ function calculatedEffects(solution) {
 /** The model's items, led by any calculated items, which are marked as such. */
 function effectList(modelItems, calcItems, className) {
   const list = el("ul", className);
-  for (const text of calcItems) {
-    const item = el("li", "calc-item");
-    item.append(el("span", "calc-tag", "Calculated"), text);
-    list.append(item);
+  for (const item of calcItems) {
+    const li = el("li", "calc-item");
+    li.append(el("span", "calc-tag", "Calculated"), item.label, num(item.figure, item.steps), item.rest);
+    list.append(li);
   }
   modelItems.forEach((text) => list.append(glossed("li", "", text)));
   return list;
@@ -1316,7 +1503,7 @@ function miniRow(title, items, className, calcItems = []) {
   const details = el("details", "mini");
   details.open = true;
   const summary = el("summary");
-  summary.append(el("span", "label", `${title} (${items.length + calcItems.length})`), el("span", "chev"));
+  summary.append(el("span", "label", `${title} (${items.length + calcItems.length})`), Object.assign(el("span", "plus"), { ariaHidden: "true" }));
   details.append(summary, effectList(items, calcItems, className));
   return details;
 }
@@ -1380,7 +1567,7 @@ function placardAsFound(d) {
     el("div", "kicker", "As found · before any change"),
     el("h3", "", modeName(d)),
     el("div", "rule"),
-    el("p", "", "The red marker shows the break in this schematic. Rotate the part to inspect it, then choose a fix above to compare the change."),
+    el("p", "", "The black marker shows the break in this schematic. Turn the part to inspect it, then pick a suggested fix to see it applied."),
     el("p", "hint-below", "Open “What the photo shows” below to explore the evidence behind the diagnosis."),
   ];
 }
@@ -1397,7 +1584,7 @@ function placardSolution(solution, index, total) {
     miniRow("Why it helps", solution.pros, "pros", calc.pros),
     miniRow("Tradeoffs", solution.cons, "cons", calc.cons),
   ];
-  if (solution.computed || solution.section_computed || solution.material_comparison) {
+  if (solution.computed || solution.section_computed || solution.span_computed || solution.material_comparison) {
     parts.push(el("p", "hint-below", "Calculated and reference figures for this fix are below the model."));
   }
   return parts;
@@ -1409,7 +1596,7 @@ function vitrineCaption(specimen, info) {
     ? "dimensions from your note" : "shape and dimensions estimated from the photo";
   caption.append(el("b", "", "Schematic reconstruction"), ` · ${source}`);
   if (info && info.exaggerated) caption.append(" · thin sections drawn thicker so they stay visible");
-  caption.append(". Orange marks the change; red arrows show the load.");
+  caption.append(". Black marks the change; grey arrows show the load.");
   return caption;
 }
 
@@ -1426,32 +1613,30 @@ function fixLabel(solution, specimen) {
 
 function renderExhibit(d) {
   const shown = d.solutions.slice(0, EXHIBIT_SOLUTIONS);
-  const section = el("section", "panel exhibit");
-  section.setAttribute("aria-label", "3D exhibit");
+  const section = el("section", "exhibit");
+  section.setAttribute("aria-label", "Simulation");
 
   const head = el("div", "exhibit-head");
-  const titleBox = el("div");
-  titleBox.append(el("span", "kicker", "The exhibit"), el("h2", "", "See each fix on the part"));
-  const seg = el("div", "seg");
-  seg.setAttribute("role", "radiogroup");
-  seg.setAttribute("aria-label", "Show the part as found or with a fix applied");
-  const options = [{ index: null, text: "Original" },
-    ...shown.map((solution, i) => ({ index: i, text: `${i + 1} · ${fixLabel(solution, d.specimen)}` }))];
+  head.append(el("h2", "", "Simulation"));
+
+  // The fixes as a plain list: underline on hover, click to apply to the model.
+  const list = el("div", "fix-list");
+  list.setAttribute("role", "radiogroup");
+  list.setAttribute("aria-label", "Show the part as found or with a suggested fix applied");
+  list.append(el("p", "list-title", "Suggested fixes"));
+  const options = [{ index: null, n: "", text: "As found" },
+    ...shown.map((solution, i) => ({ index: i, n: String(i + 1), text: solution.title }))];
   const buttons = options.map((option) => {
-    const button = el("button", option.index === null ? "" : "sol", option.text);
+    const button = el("button", "fix");
     button.type = "button";
     button.setAttribute("role", "radio");
-    if (option.index !== null) button.title = `Fix ${option.index + 1}: ${shown[option.index].title}`;
-    seg.append(button);
+    button.append(el("span", "fix-n", option.n), el("span", "fix-text", option.text));
+    list.append(button);
     return button;
   });
-  head.append(titleBox, seg);
 
-  const exhibitBody = el("div", "exhibit-body");
   const figure = el("figure", "vitrine");
-  const frame = el("div", "arch-frame");
   const stage = el("div", "stage");
-  frame.append(stage);
   const tools = el("div", "stage-tools");
   const reset = el("button", "btn", "Reset view");
   reset.type = "button";
@@ -1460,9 +1645,8 @@ function renderExhibit(d) {
   labelToggle.type = "button";
   const setLabels = (hidden) => {
     stage.classList.toggle("labels-off", hidden);
-    labelToggle.textContent = hidden ? "Labels: off" : "Labels: on";
-    labelToggle.setAttribute("aria-label", "Show labels");
-    labelToggle.setAttribute("aria-pressed", String(!hidden));
+    labelToggle.textContent = hidden ? "Show labels" : "Hide labels";
+    labelToggle.setAttribute("aria-pressed", String(hidden));
     try { localStorage.setItem(LABELS_KEY, hidden ? "hidden" : "shown"); } catch { /* private mode: not remembered */ }
   };
   let labelsHidden = false;
@@ -1471,17 +1655,16 @@ function renderExhibit(d) {
   labelToggle.addEventListener("click", () => setLabels(!stage.classList.contains("labels-off")));
   const toolGroup = el("div", "tool-group");
   toolGroup.append(labelToggle, reset);
-  tools.append(el("span", "hint", "Drag to rotate · scroll or pinch to zoom"), toolGroup);
-  const stageWrap = el("div");
-  stageWrap.style.position = "relative";
-  stageWrap.append(frame, tools);
-  figure.append(stageWrap);
-  const placard = el("aside", "placard");
+  tools.append(el("span", "hint", "Drag to turn it all the way round · scroll or pinch to zoom"), toolGroup);
+  figure.append(stage, tools);
+
+  const placard = el("div", "placard");
   placard.setAttribute("aria-live", "polite");
-  exhibitBody.append(figure, placard);
-  // Full-width band for the calculated before/after, filled only for fixes that have one.
+  const exhibitBody = el("div", "exhibit-body");
+  exhibitBody.append(list, placard);
+  // Calculated and reference cards for the chosen fix, full width below.
   const calcSlot = el("div", "exhibit-calc");
-  section.append(head, exhibitBody, calcSlot);
+  section.append(head, figure, exhibitBody, calcSlot);
 
   let active = null;
   function choose(index, focus = false) {
@@ -1530,11 +1713,14 @@ function renderExhibit(d) {
   return section;
 }
 
-/** Fold the left column once a result is showing, so the result has the room. */
+/** Once a result is showing, the board folds into a small strip at the top. */
 function foldInputs() {
-  document.querySelector("main").classList.add("has-result");
+  const intake = $("intake");
+  intake.classList.add("compact");
+  $("compact-thumb").src = photoUrl || "";
+  $("compact-thumb").hidden = !photoUrl;
+  $("compact-name").textContent = photoName;
   $("describe").open = false;
-  $("collection").open = false;
 }
 
 function showDiagnosis(d, meta, roundTripSeconds, agentReport = null) {
@@ -1723,59 +1909,97 @@ function analyse() {
 
 // --- Specimen input -------------------------------------------------------
 
+// --- Intake: lifting the board, pinning a photo -----------------------------------
+
+/** Which layer the sheet shows: the hint, the invitation, the pinned photo, or progress. */
+function setSheet(view) {
+  $("sheet-hint").hidden = view !== "hint";
+  $("invite").hidden = view !== "invite";
+  $("pinned").hidden = view !== "pinned";
+  $("sheet-progress").hidden = view !== "progress";
+}
+
+/** Lift the board: it rises toward the viewer and the sheet invites a photo. */
+function liftBoard(focus = true) {
+  const board = $("board");
+  if (!board.classList.contains("lifted")) {
+    board.classList.add("lifted");
+    $("lift").hidden = true;
+    $("lift").setAttribute("aria-expanded", "true");
+  }
+  $("intake-options").hidden = false;
+  if ($("sheet-hint").hidden === false) setSheet("invite");
+  if (focus) $("upload").focus();
+}
+
+let photoName = "";
+
 function showPreview(source, name, missingText) {
-  const drop = $("drop");
-  const caption = el("div", "file-name", name);
+  photoName = name;
   const image = el("img");
-  image.alt = "Selected specimen photo";
-  image.onerror = () => image.replaceWith(el("small", "", missingText));
+  image.alt = "Your photo, pinned to the board";
+  image.onerror = () => image.replaceWith(el("p", "invite-or", missingText));
   image.src = source;
-  drop.replaceChildren(image, caption);
+  const pinned = $("pinned");
+  pinned.replaceChildren(el("span", "pin l"), el("span", "pin r"), image);
+  const change = el("button", "text-btn", "Change photo");
+  change.type = "button";
+  change.addEventListener("click", () => setSheet("invite"));
+  $("file-name").replaceChildren(name, " · ", change);
+  liftBoard(false);
+  setSheet("pinned");
 }
 
 function selectFile(file) {
   if (!file) return;
-  document.querySelector("main").classList.remove("has-result");
-  $("describe").open = true;
+  $("intake").classList.remove("compact");
   selectedFile = file;
   if (photoUrl && photoUrl.startsWith("blob:")) URL.revokeObjectURL(photoUrl);
   photoUrl = URL.createObjectURL(file);
   showPreview(photoUrl, `${file.name} · ${(file.size / 1048576).toFixed(1)} MB`,
     "Preview not available for this format. It will still be analysed.");
   $("analyse").disabled = busy;
+  $("analyse").scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
 
 $("another-part").addEventListener("click", () => {
-  document.querySelector("main").classList.remove("has-result");
-  $("describe").open = true;
-  $("collection").open = true;
-  $("drop").focus();
-  $("drop").scrollIntoView({ block: "center" });
+  $("intake").classList.remove("compact");
+  showOutput();
+  setStatus("idle", "Ready");
+  liftBoard(false);
+  setSheet($("pinned").childElementCount ? "pinned" : "invite");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  $("upload").focus({ preventScroll: true });
 });
 
-const drop = $("drop");
-drop.addEventListener("click", () => $("file-any").click());
-drop.addEventListener("keydown", (event) => {
-  if (event.key === "Enter" || event.key === " ") { event.preventDefault(); $("file-any").click(); }
+$("lift").addEventListener("click", () => liftBoard());
+$("upload").addEventListener("click", () => $("file-any").click());
+$("camera").addEventListener("click", () => $("file-camera").click());
+$("about-toggle").addEventListener("click", () => {
+  const open = $("about").hidden;
+  $("about").hidden = !open;
+  $("about-toggle").setAttribute("aria-expanded", String(open));
 });
-["dragenter", "dragover"].forEach((name) => drop.addEventListener(name, (event) => {
+
+// Drag a photo anywhere onto the board.
+const board = $("board");
+["dragenter", "dragover"].forEach((name) => board.addEventListener(name, (event) => {
   event.preventDefault();
-  drop.classList.add("over");
+  board.classList.add("over");
 }));
-["dragleave", "drop"].forEach((name) => drop.addEventListener(name, (event) => {
+["dragleave", "drop"].forEach((name) => board.addEventListener(name, (event) => {
   event.preventDefault();
-  drop.classList.remove("over");
+  board.classList.remove("over");
 }));
-drop.addEventListener("drop", (event) => selectFile(event.dataTransfer.files[0]));
+board.addEventListener("drop", (event) => selectFile(event.dataTransfer.files[0]));
 $("file-any").addEventListener("change", (event) => selectFile(event.target.files[0]));
 $("file-camera").addEventListener("change", (event) => selectFile(event.target.files[0]));
-$("camera").addEventListener("click", () => $("file-camera").click());
 $("analyse").addEventListener("click", analyse);
 document.querySelectorAll("[data-example]").forEach((button) => {
   button.addEventListener("click", () => {
     const n = button.dataset.example;
     photoUrl = `/static/examples/${n}.jpg`;
-    showPreview(photoUrl, `Collection piece ${n}`, "Example photo not bundled yet.");
+    showPreview(photoUrl, `Collection piece ${n}: ${button.textContent}`, "Example photo not bundled yet.");
     selectedFile = null;
     $("analyse").disabled = true;
     const material = $("material").value;
@@ -1805,6 +2029,7 @@ async function loadMaterials() {
   }
 }
 
+buildBoardArt();
 loadMaterials();
 loadGlossary();
 showEmpty();

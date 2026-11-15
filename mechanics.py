@@ -56,22 +56,67 @@ def _line_through(
     return y0 + (y1 - y0) * (x - x0) / (x1 - x0)
 
 
-def _kt_from_table(r_over_d: float) -> tuple[float, bool]:
-    """Return (kt, is_extrapolated) for a given r/d."""
+def _chart_segment(r_over_d: float) -> tuple[tuple[float, float], tuple[float, float], bool]:
+    """The two chart points Kt is read between (or extended from) for this r/d,
+    and whether r/d lies outside the chart."""
     lowest, highest = KT_TABLE[0][0], KT_TABLE[-1][0]
-
     if r_over_d < lowest - RANGE_TOLERANCE:
-        return _line_through(KT_TABLE[0], KT_TABLE[1], r_over_d), True
-
+        return KT_TABLE[0], KT_TABLE[1], True
     if r_over_d > highest + RANGE_TOLERANCE:
-        kt = _line_through(KT_TABLE[-2], KT_TABLE[-1], r_over_d)
-        return max(kt, KT_FLOOR), True
-
+        return KT_TABLE[-2], KT_TABLE[-1], True
     clamped = min(max(r_over_d, lowest), highest)
     for p0, p1 in zip(KT_TABLE, KT_TABLE[1:]):
         if clamped <= p1[0]:
-            return _line_through(p0, p1, clamped), False
-    return KT_TABLE[-1][1], False
+            return p0, p1, False
+    return KT_TABLE[-2], KT_TABLE[-1], False
+
+
+def _kt_from_table(r_over_d: float) -> tuple[float, bool]:
+    """Return (kt, is_extrapolated) for a given r/d."""
+    p0, p1, outside = _chart_segment(r_over_d)
+    lowest, highest = KT_TABLE[0][0], KT_TABLE[-1][0]
+    x = r_over_d if outside else min(max(r_over_d, lowest), highest)
+    kt = _line_through(p0, p1, x)
+    return (max(kt, KT_FLOOR) if r_over_d > highest else kt), outside
+
+
+def fmt(value: float, digits: int = 2) -> str:
+    """A number for the shown working: rounded, no trailing zeros."""
+    text = f"{value:.{digits}f}".rstrip("0").rstrip(".")
+    return "0" if text in ("-0", "") else text.replace("-", "−")
+
+
+def fmt_range(values, digits: int = 2) -> str:
+    low, high = values
+    return fmt(low, digits) if fmt(low, digits) == fmt(high, digits) else f"{fmt(low, digits)}–{fmt(high, digits)}"
+
+
+def step(label: str, formula: str, substituted: str, value, unit: str = "",
+         digits: int = 2, source: str | None = None) -> dict:
+    """One line of shown working. `value` is the very number the result reports."""
+    shown = fmt_range(value, digits) if isinstance(value, (list, tuple)) else fmt(value, digits)
+    return {
+        "label": label,
+        "formula": formula,
+        "substituted": substituted,
+        "result": f"×{shown}" if unit == "×" else f"{shown} {unit}".strip(),
+        "value": list(value) if isinstance(value, (list, tuple)) else value,
+        "source": source,
+    }
+
+
+_PETERSON = "Peterson's Stress Concentration Factors, notched flat bar in bending (chart values)"
+
+
+def _kt_step(label: str, r_over_d: float, kt: float) -> dict:
+    (x0, y0), (x1, y1), outside = _chart_segment(r_over_d)
+    how = "extended past the chart" if outside else "read between chart points"
+    return step(
+        label,
+        f"Kt {how}: Kt = Kt₀ + (Kt₁ − Kt₀) · (r/d − x₀) / (x₁ − x₀)",
+        f"{fmt(y0)} + ({fmt(y1)} − {fmt(y0)}) · ({fmt(r_over_d, 4)} − {fmt(x0)}) / ({fmt(x1)} − {fmt(x0)})",
+        kt, source=_PETERSON,
+    )
 
 
 def stress_concentration_factor(
@@ -147,7 +192,21 @@ def fillet_improvement(
             "the real reduction is at least the figure shown."
         )
 
+    working = [
+        step("r/d now", "r / d", f"{fmt(current_radius_mm, 2)} mm / {fmt(section_depth_mm, 2)} mm",
+             current["r_over_d"], digits=4),
+        _kt_step("Kt now", current["r_over_d"], current["kt"]),
+        step("r/d proposed", "r / d", f"{fmt(proposed_radius_mm, 2)} mm / {fmt(section_depth_mm, 2)} mm",
+             proposed["r_over_d"], digits=4),
+        _kt_step("Kt proposed", proposed["r_over_d"], proposed["kt"]),
+        step("Peak stress change", "(1 − Kt proposed / Kt now) × 100",
+             f"(1 − {fmt(proposed['kt'])} / {fmt(current['kt'])}) × 100",
+             round(reduction_pct, PERCENT_DECIMALS), "%", digits=1),
+    ]
+    if current["is_capped"]:
+        working[1]["note"] = "A sharp corner (r = 0) has no finite Kt; this is a capped lower bound."
     return {
+        "working": working,
         "kt_current": current["kt"],
         "kt_proposed": proposed["kt"],
         "r_over_d_current": current["r_over_d"],
@@ -195,18 +254,42 @@ def _require_positive(name: str, value: float) -> None:
         raise ValueError(f"{name} must be > 0, got {value}")
 
 
+def _section_steps(shape: str, current: dict, proposed: dict, result: dict) -> list[dict]:
+    if shape == "round":
+        d1, d2 = current["diameter_mm"], proposed["diameter_mm"]
+        ratio = f"({fmt(d2)} / {fmt(d1)})"
+        return [
+            step("Weight ratio", "(d₂ / d₁)²  (area of a circle ∝ d²)", f"{ratio}²", result["weight_ratio"], "×"),
+            step("Bending strength ratio", "(d₂ / d₁)³  (section modulus πd³/32)", f"{ratio}³",
+                 result["strength_ratio"], "×"),
+            step("Stiffness ratio", "(d₂ / d₁)⁴  (second moment πd⁴/64)", f"{ratio}⁴",
+                 result["stiffness_ratio"], "×"),
+        ]
+    b1, h1 = current["width_mm"], current["thickness_mm"]
+    b2, h2 = proposed["width_mm"], proposed["thickness_mm"]
+    return [
+        step("Weight ratio", "(b₂·h₂) / (b₁·h₁)  (area b·h)",
+             f"({fmt(b2)}·{fmt(h2)}) / ({fmt(b1)}·{fmt(h1)})", result["weight_ratio"], "×"),
+        step("Bending strength ratio", "(b₂·h₂²) / (b₁·h₁²)  (section modulus b·h²/6)",
+             f"({fmt(b2)}·{fmt(h2)}²) / ({fmt(b1)}·{fmt(h1)}²)", result["strength_ratio"], "×"),
+        step("Stiffness ratio", "(b₂·h₂³) / (b₁·h₁³)  (second moment b·h³/12)",
+             f"({fmt(b2)}·{fmt(h2)}³) / ({fmt(b1)}·{fmt(h1)}³)", result["stiffness_ratio"], "×"),
+    ]
+
+
 def section_change(
     shape: str,
     current: dict,
     proposed: dict,
     length_mm: float | None = None,
     density_g_cm3: tuple[float, float] | None = None,
+    density_source: str | None = None,
 ) -> dict:
     """Weight, bending strength and stiffness ratios for a change of section.
 
     current / proposed hold diameter_mm (round) or width_mm and thickness_mm
     (rectangular, bent across its thickness). With a length and a density range,
-    masses are added in grams as ranges.
+    masses are added in grams as ranges. `working` shows every step.
     """
     area0, modulus0, inertia0 = _section_properties(shape, current)
     area1, modulus1, inertia1 = _section_properties(shape, proposed)
@@ -217,6 +300,7 @@ def section_change(
         "area_mm2": [round(area0, 2), round(area1, 2)],
         "basis": _SECTION_BASIS,
     }
+    result["working"] = _section_steps(shape, current, proposed, result)
     if length_mm is not None and density_g_cm3 is not None:
         _require_positive("length_mm", length_mm)
         low, high = density_g_cm3
@@ -230,7 +314,54 @@ def section_change(
         result["mass_before_g"] = grams(area0)
         result["mass_after_g"] = grams(area1)
         result["mass_added_g"] = grams(area1 - area0)
+        rho = f"{fmt_range(density_g_cm3)} g/cm³"
+        length = f"{fmt(length_mm, 1)} mm"
+        result["working"] += [
+            step("Mass now", "A₁ · L · ρ ÷ 1000  (mm³ → cm³)",
+                 f"{fmt(area0, 1)} mm² · {length} · {rho} ÷ 1000", result["mass_before_g"], "g", 1, density_source),
+            step("Mass after", "A₂ · L · ρ ÷ 1000",
+                 f"{fmt(area1, 1)} mm² · {length} · {rho} ÷ 1000", result["mass_after_g"], "g", 1, density_source),
+            step("Added mass", "(A₂ − A₁) · L · ρ ÷ 1000",
+                 f"({fmt(area1, 1)} − {fmt(area0, 1)}) mm² · {length} · {rho} ÷ 1000",
+                 result["mass_added_g"], "g", 1, density_source),
+        ]
     return result
+
+
+SPAN_RATIO_DECIMALS = 2
+_SPAN_BASIS = (
+    "Idealised beam with the load at mid-span and simple supports at each end, same "
+    "load and section. Peak bending moment M = F·L/4 grows with the span L, and so "
+    "does the peak bending stress; deflection δ = F·L³/(48·E·I) grows with the span "
+    "cubed. Real supports and loads differ, so treat these as ratios, not exact values."
+)
+
+
+def span_change(current_span_mm: float, proposed_span_mm: float) -> dict:
+    """How the peak bending moment (and stress) and the deflection change when the
+    unsupported span changes, for an idealised centre-loaded beam."""
+    _require_positive("current_span_mm", current_span_mm)
+    _require_positive("proposed_span_mm", proposed_span_mm)
+    ratio = proposed_span_mm / current_span_mm
+    moment_ratio = round(ratio, SPAN_RATIO_DECIMALS)
+    deflection_ratio = round(ratio**3, SPAN_RATIO_DECIMALS)
+    stress_change_pct = round((ratio - 1) * 100, PERCENT_DECIMALS)
+    deflection_change_pct = round((ratio**3 - 1) * 100, PERCENT_DECIMALS)
+    spans = f"{fmt(proposed_span_mm, 1)} mm / {fmt(current_span_mm, 1)} mm"
+    return {
+        "moment_ratio": moment_ratio,
+        "deflection_ratio": deflection_ratio,
+        "stress_change_pct": stress_change_pct,
+        "deflection_change_pct": deflection_change_pct,
+        "basis": _SPAN_BASIS,
+        "working": [
+            step("Peak moment and stress ratio", "L₂ / L₁  (M = F·L/4)", spans, moment_ratio, "×"),
+            step("Peak stress change", "(L₂ / L₁ − 1) × 100", f"({spans} − 1) × 100", stress_change_pct, "%", 1),
+            step("Deflection ratio", "(L₂ / L₁)³  (δ = F·L³ / 48EI)", f"({spans})³", deflection_ratio, "×"),
+            step("Deflection change", "((L₂ / L₁)³ − 1) × 100", f"(({spans})³ − 1) × 100",
+                 deflection_change_pct, "%", 1),
+        ],
+    }
 
 
 def min_wall_thickness_check(measured_mm: float, process: str = "fdm") -> dict:

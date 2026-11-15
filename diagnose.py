@@ -158,6 +158,8 @@ class Solution(BaseModel):
     geometry: dict | None = None
     section_change: dict | None = None
     section_computed: dict | None = None
+    span_change: dict | None = None
+    span_computed: dict | None = None
     proposed_material_id: str | None = None
     material_comparison: dict | None = None
 
@@ -233,6 +235,12 @@ class _Geometry(BaseModel):
     dimensions_source: GeometrySource
 
 
+class _SpanChange(BaseModel):
+    current_span_mm: float | None = Field(description="Unsupported span now, in mm; null if unknown.")
+    proposed_span_mm: float | None = Field(description="Unsupported span after the fix, in mm; null if unknown.")
+    dimensions_source: GeometrySource
+
+
 class _SectionChange(BaseModel):
     shape: Literal["round", "rectangular"]
     current_diameter_mm: float | None = Field(description="round only; null if unknown.")
@@ -288,6 +296,12 @@ class _ModelSolution(BaseModel):
     )
     proposed_material_id: str | None = Field(
         description="Only when this solution switches material: an id from the list given; else null."
+    )
+    span_change: _SpanChange | None = Field(
+        default=None,
+        description=(
+            "Only when this solution adds a support or shortens the unsupported span; else null."
+        ),
     )
     visual: _Visual
 
@@ -488,6 +502,12 @@ section_change is null. Never state a weight or a strength gain yourself.
 9. When a solution switches to a different material, set proposed_material_id \
 to the closest id from the list of materials given below, or null if none fits. \
 Otherwise it is null.
+
+13. When a solution adds a support or otherwise shortens the unsupported span \
+of the part, fill its span_change field: the unsupported span now and after the \
+fix, in millimetres, from the note or estimated from the photo; null for any \
+value you cannot estimate. Never state the change in stress or deflection \
+yourself.
 """
 
 
@@ -844,6 +864,7 @@ def fillet_computed(
         "is_extrapolated": result["is_extrapolated"],
         "is_capped": result["is_capped"],
         "basis": result["basis"],
+        "working": result["working"],
     }
 
 
@@ -894,7 +915,9 @@ SECTION_FIELDS = {
 
 
 def section_computed(
-    change: dict[str, Any], density_g_cm3: tuple[float, float] | None = None
+    change: dict[str, Any],
+    density_g_cm3: tuple[float, float] | None = None,
+    density_source: str | None = None,
 ) -> dict[str, Any]:
     """Weight and strength ratios for a thicker section. Calculated by
     mechanics.py, never by the model.
@@ -917,11 +940,47 @@ def section_computed(
             shape, pick("current"), pick("proposed"),
             length_mm=length if density_g_cm3 else None,
             density_g_cm3=density_g_cm3 if length else None,
+            density_source=density_source,
         )
     except ValueError as exc:
         logger.info("Section calculation rejected its inputs: %s", exc)
         return {**base, "error": f"Not calculated: {exc}"}
     return {**base, **result}
+
+
+def span_computed(change: dict[str, Any]) -> dict[str, Any]:
+    """Moment and deflection change for a shorter span. Calculated by
+    mechanics.py, never by the model."""
+    base = {"type": "span_change", "calculated_by": "mechanics.py", "inputs": dict(change)}
+    missing = [name for name in ("current_span_mm", "proposed_span_mm") if change.get(name) is None]
+    if missing:
+        return {**base, "needs_input": missing}
+    try:
+        result = mechanics.span_change(change["current_span_mm"], change["proposed_span_mm"])
+    except ValueError as exc:
+        return {**base, "error": f"Not calculated: {exc}"}
+    return {**base, **result}
+
+
+def _span_inputs(raw: _SpanChange) -> dict[str, Any]:
+    inputs = raw.model_dump()
+    if inputs["current_span_mm"] is None or inputs["proposed_span_mm"] is None:
+        inputs["dimensions_source"] = "unknown"
+    return inputs
+
+
+def part_volume_mm3(specimen: "Specimen | None") -> tuple[float, str] | None:
+    """Volume of the simplified part, with a note saying what it is. Used only to
+    turn a change of material into grams; the shape is the schematic one."""
+    if specimen is None:
+        return None
+    L, w, t = specimen.length_mm, specimen.width_mm, specimen.thickness_mm
+    if specimen.shape == "round_rod":
+        volume, shape = math.pi * w**2 / 4 * L, f"rod Ø{mechanics.fmt(w, 1)} × {mechanics.fmt(L, 1)} mm"
+    else:
+        volume, shape = w * t * L, f"{mechanics.fmt(w, 1)} × {mechanics.fmt(t, 1)} × {mechanics.fmt(L, 1)} mm"
+    source = "from your note" if specimen.dimensions_source == "user_context" else "estimated from the photo"
+    return volume, f"{shape}, {source}"
 
 
 def _section_inputs(raw: _SectionChange) -> dict[str, Any]:
@@ -940,14 +999,17 @@ def _known_material(material_id: str | None) -> str | None:
 def _to_solution(raw: _ModelSolution) -> Solution:
     geometry = raw.geometry
     section = _section_inputs(raw.section_change) if raw.section_change else None
+    span = _span_inputs(raw.span_change) if raw.span_change else None
     return Solution(
-        **raw.model_dump(exclude={"geometry", "visual", "section_change", "proposed_material_id"}),
+        **raw.model_dump(exclude={"geometry", "visual", "section_change", "proposed_material_id", "span_change"}),
         computed=_geometry_computed(geometry) if geometry else None,
         visual=_to_visual(raw.visual),
         geometry=geometry.model_dump() if geometry else None,
         section_change=section,
         section_computed=section_computed(section) if section else None,
         proposed_material_id=_known_material(raw.proposed_material_id),
+        span_change=span,
+        span_computed=span_computed(span) if span else None,
     )
 
 
@@ -962,6 +1024,7 @@ def with_material(diagnosis: Diagnosis, material_id: str | None) -> Diagnosis:
     Raises materials.MaterialError for an unknown id.
     """
     material = materials.get(material_id) if material_id else None
+    volume = part_volume_mm3(diagnosis.specimen)
     solutions = []
     for solution in diagnosis.solutions:
         update: dict[str, Any] = {}
@@ -971,11 +1034,12 @@ def with_material(diagnosis: Diagnosis, material_id: str | None) -> Diagnosis:
             update["section_computed"] = section_computed(
                 update.get("section_change", solution.section_change),
                 material.density_g_cm3 if material else None,
+                material.source if material else None,
             )
         proposed = _known_material(solution.proposed_material_id)
         if proposed:
             update["material_comparison"] = (
-                materials.compare(material.id, proposed) if material
+                materials.compare(material.id, proposed, *(volume or ())) if material
                 else {"from": None, "to": materials.facts(materials.get(proposed)),
                       "calculated_by": "materials.py"}
             )

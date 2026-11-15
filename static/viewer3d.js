@@ -16,24 +16,26 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-const ORANGE = 0xe77500;
-const LOAD_RED = 0x9b2226;
-const HOLE_DARK = 0x15130f;
-const FIXTURE = 0x3a332a;
-const BRASS = 0xa8843a;
-const GHOST = 0x2a2620;
-const WALL = 0xe9e1cd;
-const NICHE = 0xddd3bc;
-const STONE = 0xe2dac8;
+// Monochrome studio: the part in pale graphite greys, the applied change in
+// solid black, loads in mid grey. Names kept from the earlier colour scheme.
+const ORANGE = 0x121212;     // the applied change
+const LOAD_RED = 0x7a7a7a;   // load arrows
+const HOLE_DARK = 0x1a1a1a;
+const FIXTURE = 0x4d4d4d;
+const BRASS = 0x9a9a9a;
+const GHOST = 0x2a2a2a;
+const WALL = 0xffffff;
+const NICHE = 0xf4f4f2;
+const STONE = 0xf1f1ef;
 
 const MATERIAL_LOOKS = {
-  wood: { color: 0xc9a576, roughness: 0.78, metalness: 0.0 },
-  fdm_print: { color: 0x7b8794, roughness: 0.55, metalness: 0.0 },
+  wood: { color: 0xd9d3c9, roughness: 0.8, metalness: 0.0 },
+  fdm_print: { color: 0xc4c7cb, roughness: 0.6, metalness: 0.0 },
   // Moderate metalness: the scene has no environment map, so a fully metallic
   // surface has nothing to reflect and renders near-black.
-  metal: { color: 0xbcc1c8, roughness: 0.38, metalness: 0.45 },
-  other: { color: 0xb8b0a0, roughness: 0.6, metalness: 0.05 },
-  unclear: { color: 0xb8b0a0, roughness: 0.6, metalness: 0.05 },
+  metal: { color: 0xc8cbcf, roughness: 0.4, metalness: 0.4 },
+  other: { color: 0xcfcfcf, roughness: 0.65, metalness: 0.05 },
+  unclear: { color: 0xcfcfcf, roughness: 0.65, metalness: 0.05 },
 };
 
 const SPECIMEN_LENGTH = 4;
@@ -774,88 +776,32 @@ function buildSolution(lay, look, solution) {
 
 // --- Gallery ----------------------------------------------------------------
 
-function stoneTexture() {
-  const size = 512;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const context = canvas.getContext("2d");
-  context.fillStyle = "#d8cfbb";
-  context.fillRect(0, 0, size, size);
-  let seed = 7;
-  const random = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  for (let i = 0; i < 2200; i++) {
-    const shade = 190 + Math.floor(random() * 40);
-    context.fillStyle = `rgba(${shade}, ${shade - 8}, ${shade - 24}, 0.18)`;
-    context.fillRect(random() * size, random() * size, 2 + random() * 5, 2 + random() * 5);
-  }
-  context.strokeStyle = "rgba(120, 104, 80, 0.45)";
-  context.lineWidth = 3;
-  for (let i = 0; i <= 2; i++) {
-    const p = (i * size) / 2;
-    context.beginPath(); context.moveTo(p, 0); context.lineTo(p, size); context.stroke();
-    context.beginPath(); context.moveTo(0, p); context.lineTo(size, p); context.stroke();
-  }
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(7, 7);
-  texture.anisotropy = 4;
-  return texture;
-}
-
-function pointedArch(halfWidth, spring, radius, bottom) {
-  const shape = new THREE.Shape();
-  const apexAngle = Math.acos((halfWidth - radius) / radius);
-  shape.moveTo(-halfWidth, bottom);
-  shape.lineTo(-halfWidth, spring);
-  shape.absarc(-halfWidth + radius, spring, radius, Math.PI, apexAngle, true);
-  shape.absarc(halfWidth - radius, spring, radius, Math.PI - apexAngle, 0, true);
-  shape.lineTo(halfWidth, bottom);
-  shape.closePath();
-  return shape;
-}
-
 function buildGallery(scene) {
-  const floor = mesh(
-    new THREE.PlaneGeometry(40, 40),
-    new THREE.MeshStandardMaterial({ map: stoneTexture(), roughness: 0.9 }),
-    { cast: false, receive: true },
-  );
+  // A white photography studio: seamless white floor and backdrop, a low white plinth.
+  const floor = mesh(new THREE.PlaneGeometry(40, 40), solid(0xffffff, { roughness: 1, metalness: 0 }),
+    { cast: false, receive: true });
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = FLOOR_Y;
   scene.add(floor);
 
-  const wall = mesh(new THREE.PlaneGeometry(40, 14), solid(WALL, { roughness: 0.95, metalness: 0 }), { cast: false, receive: true });
+  // Unlit, so the backdrop stays paper-white whatever the lighting does.
+  const wall = mesh(new THREE.PlaneGeometry(40, 14), new THREE.MeshBasicMaterial({ color: WALL }), { cast: false, receive: false });
   wall.position.set(0, FLOOR_Y + 7, WALL_Z);
   scene.add(wall);
 
-  const molding = mesh(new THREE.ShapeGeometry(pointedArch(2.35, 3.4, 3.2, FLOOR_Y), 32), solid(0xcfc3a8, { roughness: 0.9 }), { cast: false, receive: true });
-  molding.position.z = WALL_Z + 0.005;
-  const niche = mesh(new THREE.ShapeGeometry(pointedArch(2.15, 3.4, 2.95, FLOOR_Y), 32), solid(NICHE, { roughness: 0.95 }), { cast: false, receive: true });
-  niche.position.z = WALL_Z + 0.01;
-  scene.add(molding, niche);
+  const stone = solid(STONE, { roughness: 0.9, metalness: 0 });
+  const pedestal = mesh(new THREE.BoxGeometry(5.0, 1.4, 2.3), stone, { receive: true });
+  pedestal.position.set(0, FLOOR_Y + 0.7, 0);
+  // A thin dark line along the plinth's top edge, like an ink outline.
+  const edge = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.BoxGeometry(5.0, 1.4, 2.3)),
+    new THREE.LineBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.55 }),
+  );
+  edge.position.copy(pedestal.position);
+  scene.add(pedestal, edge);
 
-  [-3.0, 3.0].forEach((x) => {
-    const shaft = mesh(new THREE.BoxGeometry(0.5, 9, 0.35), solid(STONE, { roughness: 0.9 }), { receive: true });
-    shaft.position.set(x, FLOOR_Y + 4.5, WALL_Z + 0.18);
-    const plinth = mesh(new THREE.BoxGeometry(0.7, 0.5, 0.5), solid(0xd6cdb8, { roughness: 0.9 }), { receive: true });
-    plinth.position.set(x, FLOOR_Y + 0.25, WALL_Z + 0.25);
-    scene.add(shaft, plinth);
-  });
-
-  const stone = solid(STONE, { roughness: 0.88, metalness: 0 });
-  const pedestal = mesh(new THREE.BoxGeometry(5.0, 1.32, 2.3), stone, { receive: true });
-  pedestal.position.set(0, FLOOR_Y + 0.14 + 0.66, 0);
-  const cap = mesh(new THREE.BoxGeometry(5.3, 0.1, 2.6), solid(0xebe4d4, { roughness: 0.8 }), { receive: true });
-  cap.position.set(0, -0.05, 0);
-  const foot = mesh(new THREE.BoxGeometry(5.3, 0.14, 2.6), solid(0xd3c9b3, { roughness: 0.9 }), { receive: true });
-  foot.position.set(0, FLOOR_Y + 0.07, 0);
-  scene.add(pedestal, cap, foot);
-
-  scene.add(new THREE.HemisphereLight(0xfff8ec, 0x8c7a5e, 1.0));
-  const key = new THREE.DirectionalLight(0xfff1dc, 2.4);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xd6d6d6, 1.7));
+  const key = new THREE.DirectionalLight(0xffffff, 2.2);
   key.position.set(2.5, 7, 4.5);
   key.castShadow = true;
   key.shadow.mapSize.set(2048, 2048);
@@ -865,7 +811,7 @@ function buildGallery(scene) {
   key.shadow.camera.bottom = -5;
   key.shadow.bias = -0.0005;
   key.shadow.normalBias = 0.02;
-  const fill = new THREE.DirectionalLight(0xdfe7ff, 0.6);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.55);
   fill.position.set(-4, 3, 3);
   scene.add(key, fill);
 }
@@ -879,8 +825,8 @@ function hangPhoto(scene, url) {
     let height = width / aspect;
     if (height > 1.55) { height = 1.55; width = height * aspect; }
     const group = new THREE.Group();
-    const frame = mesh(new THREE.BoxGeometry(width + 0.3, height + 0.3, 0.08), solid(0x3b2a1c, { roughness: 0.6 }));
-    const mat = mesh(new THREE.BoxGeometry(width + 0.14, height + 0.14, 0.085), solid(0xf3eee2, { roughness: 0.95 }), { cast: false });
+    const frame = mesh(new THREE.BoxGeometry(width + 0.22, height + 0.22, 0.05), solid(0x111111, { roughness: 0.6 }));
+    const mat = mesh(new THREE.BoxGeometry(width + 0.16, height + 0.16, 0.055), solid(0xffffff, { roughness: 0.95 }), { cast: false });
     const photo = mesh(new THREE.PlaneGeometry(width, height), new THREE.MeshStandardMaterial({ map: texture, roughness: 0.7 }), { cast: false });
     photo.position.z = 0.046;
     group.add(frame, mat, photo);
@@ -934,7 +880,7 @@ export function createViewer(container, { specimen, material, solutions, photoUr
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 1.3;
   renderer.setClearColor(WALL);
   const canvas = renderer.domElement;
   canvas.className = "v3d-canvas";
