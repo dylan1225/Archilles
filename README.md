@@ -1,8 +1,10 @@
 # Archilles
 
-The hackathon project lives in this file:
+The hackathon project lives in this file and includes 2 modes:
 - **[Postmortem](#postmortem)**: photograph a broken mechanical part and get back
   why it failed and what to change. Python app at the repository root.
+- **[Forecast](#forecast)**: photograph a place or an object and get back how it could fail
+  and what needs to be changed.
 
 ---
 
