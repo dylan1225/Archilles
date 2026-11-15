@@ -463,3 +463,39 @@ follows the official SDK documentation. Postmortem's contribution is the enginee
 workflow, specialist objectives, deterministic candidate checks and 3D integration.
 
 ---
+### How we used Cursor
+ 
+Cursor was the core coding agent for the repository.
+ 
+- **Changes across the stack.** Cursor handled work that crosses files, such as
+  the `specimen` and per-fix `visual` fields in the model output, the three.js
+  builders in `static/viewer3d.js` that consume them, and the tests covering
+  both.
+- **Tests as the gate.** An agent change was kept only when the offline suite
+  passed. The suite uses a fake model client, so it runs without keys or a
+  network connection and each change could be checked in seconds.
+- **Numbers from sources, not from the agent.** Engineering values come from
+  published references in `mechanics.py` and `knowledge/materials.csv`, and the
+  tests check that the working steps shown for each calculation equal the
+  reported number.
+- **Human review.** A team member read every change before it was committed.
+### How we used Grok Bot
+ 
+The Grok Bot automation ran as a separate step in our workflow, outside the
+application, and gave us a second reviewer that did not share the coding
+agent's context. It is the same idea as the skeptic agent in the interior
+review: an independent check is worth more than a confident first answer.
+ 
+- **Review against the project's rules.** It checked changes against the rules
+  in this README: evidence before a failure mode, no numbers calculated by a
+  model, and no claim the photo does not support.
+- **Edge cases for the tests.** It proposed awkward inputs, such as an intact
+  part, a blurred photo or out-of-range dimensions, which we turned into offline
+  tests where they exposed a gap.
+### Guardrails
+ 
+- API keys stay in the ignored `.env` and never appear in source.
+- The tools did not change what the project claims. The 3D model is still a
+  schematic and the interior review is still a screening, not an inspection
+  (see [What this is not](#what-this-is-not)).
+ 
