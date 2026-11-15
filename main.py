@@ -7,6 +7,7 @@ so the page can always show what went wrong.
 """
 
 import json
+import asyncio
 import logging
 from dataclasses import asdict
 from pathlib import Path
@@ -14,13 +15,14 @@ from typing import Any
 
 from fastapi import FastAPI, File, Form, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 import diagnose
 import interiors
 import house_inspections
+import materials
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 # CDN image URLs carry short-lived signatures; avoid HTTPX's full-URL info log.
@@ -63,6 +65,11 @@ def handle_diagnosis_error(_: Request, exc: diagnose.DiagnosisError) -> JSONResp
     return _error(exc.status_code, str(exc))
 
 
+@app.exception_handler(materials.MaterialError)
+def handle_material_error(_: Request, exc: materials.MaterialError) -> JSONResponse:
+    return _error(400, str(exc))
+
+
 @app.exception_handler(RequestValidationError)
 def handle_bad_request(_: Request, exc: RequestValidationError) -> JSONResponse:
     fields = ", ".join(str(error["loc"][-1]) for error in exc.errors())
@@ -87,13 +94,21 @@ def building_interiors() -> FileResponse:
 
 @app.post("/diagnose")
 def post_diagnose(
-    image: UploadFile = File(...), context: str | None = Form(None)
+    image: UploadFile = File(...),
+    context: str | None = Form(None),
+    material_id: str | None = Form(None),
 ) -> JSONResponse:
+    material = materials.get(material_id) if material_id else None  # 400 if unknown
     data = image.file.read(MAX_UPLOAD_BYTES + 1)
     if len(data) > MAX_UPLOAD_BYTES:
         limit_mb = MAX_UPLOAD_BYTES // (1024 * 1024)
         return _error(413, f"That photo is larger than {limit_mb} MB.")
-    result, meta, cached = diagnose.diagnose_cached(data, context)
+    note = (context or "").strip()
+    if material:
+        # A photo can't tell PLA from PETG; the user's word goes to the model too.
+        note = f"{note}\nMaterial, as stated by the user: {material.name}.".strip()
+    result, meta, cached = diagnose.diagnose_cached(data, note or None)
+    result = diagnose.with_material(result, material_id)
     return _diagnosis_response(
         result.model_dump(mode="json"),
         {**asdict(meta), "cached": cached, "source": "repeat" if cached else "live"},
@@ -116,9 +131,64 @@ def get_fillet(
     return JSONResponse(computed)
 
 
+@app.get("/mechanics/section")
+def get_section(
+    shape: str,
+    current_diameter_mm: float | None = None,
+    proposed_diameter_mm: float | None = None,
+    current_width_mm: float | None = None,
+    proposed_width_mm: float | None = None,
+    current_thickness_mm: float | None = None,
+    proposed_thickness_mm: float | None = None,
+    length_mm: float | None = None,
+    material_id: str | None = None,
+) -> JSONResponse:
+    """Recompute a thicker-section fix from measurements the user typed.
+
+    Ratios need only the two sections; grams also need a length and a material.
+    """
+    material = materials.get(material_id) if material_id else None
+    change = {
+        "shape": shape,
+        "current_diameter_mm": current_diameter_mm,
+        "proposed_diameter_mm": proposed_diameter_mm,
+        "current_width_mm": current_width_mm,
+        "proposed_width_mm": proposed_width_mm,
+        "current_thickness_mm": current_thickness_mm,
+        "proposed_thickness_mm": proposed_thickness_mm,
+        "length_mm": length_mm,
+        "dimensions_source": diagnose.USER_MEASURED,
+        "material_id": material.id if material else None,
+    }
+    computed = diagnose.section_computed(change, material.density_g_cm3 if material else None)
+    if "error" in computed:
+        return _error(400, computed["error"])
+    return JSONResponse(computed)
+
+
+GLOSSARY_PATH = PROJECT_DIR / "knowledge" / "glossary.json"
+
+
+@app.get("/glossary")
+def get_glossary() -> FileResponse:
+    """Hand-written term definitions for the hover pop-ups. Never generated."""
+    return FileResponse(GLOSSARY_PATH, media_type="application/json")
+
+
+@app.get("/materials")
+def get_materials() -> JSONResponse:
+    """The reference materials table, for the material picker and the cards."""
+    return JSONResponse([materials.facts(m) for m in materials.load_materials().values()])
+
+
 @app.get("/examples/{n}")
-def get_example(n: int) -> JSONResponse:
-    """Pre-computed diagnosis for bundled demo photo n. Needs no network."""
+def get_example(n: int, material_id: str | None = None) -> JSONResponse:
+    """Pre-computed diagnosis for bundled demo photo n. Needs no network.
+
+    material_id, when given, adds reference data for that material.
+    """
+    if material_id:
+        materials.get(material_id)  # 400 for an unknown id, before anything else
     if not 1 <= n <= EXAMPLE_COUNT:
         return _error(404, f"There is no example {n}. Examples are 1 to {EXAMPLE_COUNT}.")
     path = BUNDLED_EXAMPLES_DIR / f"{n}.json"
@@ -126,9 +196,82 @@ def get_example(n: int) -> JSONResponse:
         return _error(404, f"Example {n} has not been bundled yet ({path.name} is missing).")
     try:
         stored = json.loads(path.read_text(encoding="utf-8"))
-        result = diagnose.Diagnosis.model_validate(stored["diagnosis"])
+        result = diagnose.with_mode_info(diagnose.Diagnosis.model_validate(stored["diagnosis"]))
     except (OSError, ValueError, KeyError, ValidationError) as exc:
         logger.exception("Bundled example %d is unreadable", n)
         return _error(500, f"Bundled example {n} is corrupt: {type(exc).__name__}.")
+    result = diagnose.with_material(result, material_id)
     meta = {**stored.get("meta", {}), "cached": True, "source": "example"}
     return _diagnosis_response(result.model_dump(mode="json"), meta)
+
+
+# Optional Deep Agents endpoints. Gemini and saved examples do not require its packages.
+import redesign_agent
+
+
+class RedesignRequest(BaseModel):
+    diagnosis: diagnose.Diagnosis
+    constraints: redesign_agent.Constraints = Field(default_factory=redesign_agent.Constraints)
+
+
+@app.get("/agents/status")
+def agent_status():
+    return redesign_agent.status()
+
+
+def agent_stream(**kwargs):
+    async def generate():
+        queue = asyncio.Queue()
+        loop = asyncio.get_running_loop()
+
+        def emit(event):
+            loop.call_soon_threadsafe(queue.put_nowait, event)
+
+        async def run():
+            try:
+                result = await redesign_agent.workflow(**kwargs, emit=emit)
+                await queue.put({"type": "result", **result})
+            except redesign_agent.AgentError as exc:
+                await queue.put({"type": "error", "message": str(exc)})
+            finally:
+                await queue.put(None)
+
+        task = asyncio.create_task(run())
+        try:
+            while True:
+                event = await queue.get()
+                if event is None:
+                    break
+                yield json.dumps(event, ensure_ascii=False) + "\n"
+        finally:
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+
+    return StreamingResponse(generate(), media_type="application/x-ndjson",
+                             headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
+
+
+@app.post("/diagnose/deep")
+def post_deep_diagnose(image: UploadFile = File(...), context: str = Form(""),
+                       material_id: str | None = Form(None), constraints: str = Form("{}")):
+    if not redesign_agent.status()["available"]:
+        return _error(503, redesign_agent.status()["message"])
+    data = image.file.read(MAX_UPLOAD_BYTES + 1)
+    if len(data) > MAX_UPLOAD_BYTES:
+        return _error(413, "Photo exceeds the 25 MB upload limit.")
+    if material_id:
+        materials.get(material_id)
+    try:
+        parsed = redesign_agent.Constraints.model_validate_json(constraints)
+    except ValueError:
+        return _error(422, "Invalid redesign constraints.")
+    return agent_stream(image=data, context=context, material_id=material_id, constraints=parsed)
+
+
+@app.post("/redesign")
+def post_redesign(request: RedesignRequest):
+    if not redesign_agent.status()["available"]:
+        return _error(503, redesign_agent.status()["message"])
+    if request.diagnosis.insufficient_image:
+        return _error(422, "A clear fracture photo is needed before proposing a redesign.")
+    return agent_stream(diagnosis=request.diagnosis, constraints=request.constraints)

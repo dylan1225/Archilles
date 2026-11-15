@@ -1,0 +1,272 @@
+{
+  "_about": "Terms highlighted on the result page. Hover a coloured word to see its definition and explanation. Written for high-school robotics students. Status: draft until a team member or mentor has checked every entry.",
+  "status": "draft",
+  "terms": [
+    {
+      "id": "stress_concentration",
+      "term": "stress concentration",
+      "aliases": ["stress concentrations", "stress raiser", "stress raisers", "stress riser", "stress risers"],
+      "definition": "A spot where the stress in a part is much higher than in the rest of it.",
+      "explanation": "Force flows through a part like water through a pipe. At a sharp corner, hole or notch it has to squeeze around the feature, so the stress piles up there. That is why cracks almost always start at corners and holes."
+    },
+    {
+      "id": "kt",
+      "term": "Kt",
+      "aliases": ["stress concentration factor", "stress concentration factors"],
+      "definition": "How many times higher the stress is at a corner or notch than in the plain part.",
+      "explanation": "Kt = 1 means no concentration at all. Kt = 3 means the corner sees three times the stress of the rest of the part, so it breaks at a third of the load. A bigger fillet lowers Kt."
+    },
+    {
+      "id": "fillet",
+      "term": "fillet",
+      "aliases": ["fillets", "filleted", "fillet radius"],
+      "definition": "A rounded inside corner instead of a sharp one.",
+      "explanation": "A sharp inside corner is a stress concentration. Rounding it lets the force flow smoothly around the corner, lowering the peak stress. Bigger radius, smaller peak, up to a point."
+    },
+    {
+      "id": "radius",
+      "term": "radius",
+      "aliases": ["radii"],
+      "definition": "How rounded a corner is: the size of the circle that fits the curve.",
+      "explanation": "A radius of 0 is a perfectly sharp corner. In this tool, the corner radius r is compared with the section depth d, because what matters is how big the rounding is relative to the part."
+    },
+    {
+      "id": "r_over_d",
+      "term": "r/d",
+      "aliases": [],
+      "definition": "Corner radius divided by section depth.",
+      "explanation": "It tells you how big the rounding is compared with the part. The stress concentration charts are read using r/d: a larger r/d means a lower Kt."
+    },
+    {
+      "id": "section_depth",
+      "term": "section depth",
+      "aliases": ["depth of the section"],
+      "definition": "How tall the part is in the direction it bends, at the place being checked.",
+      "explanation": "For a bar bent up and down, it is the bar's height. A deeper section is much stronger in bending, because bending strength grows with the depth squared."
+    },
+    {
+      "id": "section",
+      "term": "cross-section",
+      "aliases": ["cross section", "cross-sections"],
+      "definition": "The shape you would see if you cut straight through the part.",
+      "explanation": "A round dowel has a circular cross-section; a printed bar has a rectangle, often with walls and infill inside. How much material sits in the cross-section, and where, decides the strength."
+    },
+    {
+      "id": "section_modulus",
+      "term": "section modulus",
+      "aliases": [],
+      "definition": "A number that says how well a cross-section resists bending.",
+      "explanation": "It depends only on the shape. For a round rod it grows with the diameter cubed; for a rectangle bent across its thickness, with width times thickness squared. Double the bending strength usually costs far less than double the material."
+    },
+    {
+      "id": "fatigue",
+      "term": "fatigue",
+      "aliases": ["fatigue crack", "fatigue cracks"],
+      "definition": "Breaking from a load repeated many times, each one too small to break the part alone.",
+      "explanation": "Every cycle grows a tiny crack a little further, usually from a sharp corner or scratch. After thousands of cycles the part snaps, often with no warning bend. Vibrating robot parts are prime candidates."
+    },
+    {
+      "id": "beach_marks",
+      "term": "beach marks",
+      "aliases": ["beach mark"],
+      "definition": "Curved lines on a fatigue fracture, like ripples left by waves on sand.",
+      "explanation": "Each line marks where the crack front stopped for a while. They curve around the point where the crack started, so they point you to the origin."
+    },
+    {
+      "id": "chevron_marks",
+      "term": "chevron marks",
+      "aliases": ["chevron mark", "chevrons"],
+      "definition": "V-shaped ridges on a brittle break that point back to where it started.",
+      "explanation": "Follow the point of the V's backwards and you find the origin of the crack, usually a notch, corner or flaw."
+    },
+    {
+      "id": "ductile",
+      "term": "ductile",
+      "aliases": ["ductility"],
+      "definition": "Able to bend and stretch a lot before breaking.",
+      "explanation": "Aluminium and mild steel are ductile: overload them and they bend first, which warns you. A ductile break looks dull and torn, often with visible stretching."
+    },
+    {
+      "id": "brittle",
+      "term": "brittle",
+      "aliases": ["brittleness"],
+      "definition": "Breaking suddenly with almost no bending first.",
+      "explanation": "Glass, acrylic, cast metal and PLA tend to be brittle. The pieces fit back together cleanly because almost nothing stretched. There is little warning before it goes."
+    },
+    {
+      "id": "necking",
+      "term": "necking",
+      "aliases": ["necked", "neck down"],
+      "definition": "A part thinning locally right before it tears, like pulled taffy.",
+      "explanation": "A sign of ductile overload in metal and tough plastics: the material yielded and flowed before it broke."
+    },
+    {
+      "id": "shear_lips",
+      "term": "shear lips",
+      "aliases": ["shear lip"],
+      "definition": "Angled bands along the edges of a metal break.",
+      "explanation": "They form where the last bit of metal tore at about 45 degrees. Large shear lips point to a ductile overload."
+    },
+    {
+      "id": "overload",
+      "term": "overload",
+      "aliases": ["overloaded", "overloading"],
+      "definition": "A single load bigger than the part could carry.",
+      "explanation": "One crash, jam or impact, rather than many small cycles. The fix is usually a stronger shape or a way to limit the load."
+    },
+    {
+      "id": "yield",
+      "term": "yield strength",
+      "aliases": ["yielded", "yielding"],
+      "definition": "The stress at which a material starts to bend permanently.",
+      "explanation": "Below it, a part springs back when unloaded. Above it, the part stays bent. Ductile materials yield a long way before they actually break."
+    },
+    {
+      "id": "tensile_strength",
+      "term": "tensile strength",
+      "aliases": ["tensile"],
+      "definition": "How much pulling stress a material can take before it breaks.",
+      "explanation": "Measured by pulling a test bar apart. It is quoted in MPa (megapascals): 1 MPa is about 1 kg of force on every square millimetre."
+    },
+    {
+      "id": "modulus_of_rupture",
+      "term": "modulus of rupture",
+      "aliases": [],
+      "definition": "The bending strength of wood: the stress at which a test beam breaks.",
+      "explanation": "Wood is usually tested by bending, not pulling, so its strength is quoted this way. It is not the same test as tensile strength, so the two numbers are not directly comparable."
+    },
+    {
+      "id": "modulus",
+      "term": "modulus",
+      "aliases": ["elastic modulus", "Young's modulus", "modulus of elasticity"],
+      "definition": "How stiff a material is: how hard it resists stretching or bending.",
+      "explanation": "Quoted in GPa. Aluminium (about 69 GPa) is roughly twenty times stiffer than PLA (about 3.5 GPa), so an aluminium arm bends far less under the same load."
+    },
+    {
+      "id": "stiffness",
+      "term": "stiffness",
+      "aliases": ["stiffer"],
+      "definition": "How little a part bends under load.",
+      "explanation": "Stiffness depends on both the material (its modulus) and the shape. A stiffer part is not always stronger: stiff brittle parts can still snap."
+    },
+    {
+      "id": "elongation",
+      "term": "elongation",
+      "aliases": ["stretch before breaking"],
+      "definition": "How far a material stretches before it breaks, as a percentage of its length.",
+      "explanation": "A high number means a tough, forgiving material that bends before it breaks. A low number means brittle: it snaps with little warning."
+    },
+    {
+      "id": "bending_moment",
+      "term": "bending moment",
+      "aliases": ["bending moments"],
+      "definition": "How hard a force is trying to bend a part at a given point.",
+      "explanation": "It equals force times distance. The same push on a longer arm makes a bigger bending moment, which is why parts often break where a long lever meets its support."
+    },
+    {
+      "id": "peak_stress",
+      "term": "peak stress",
+      "aliases": [],
+      "definition": "The highest stress anywhere in the part, usually at a corner or hole.",
+      "explanation": "Cracks start where the stress peaks. Peak stress = Kt × nominal stress, so lowering Kt lowers the peak even if the load stays the same."
+    },
+    {
+      "id": "nominal_stress",
+      "term": "nominal stress",
+      "aliases": [],
+      "definition": "The average stress in a part if it had no corners, holes or notches.",
+      "explanation": "It is what simple formulas give you. The real stress at a sharp feature is higher, by the factor Kt."
+    },
+    {
+      "id": "torsion",
+      "term": "torsion",
+      "aliases": ["torsional", "twisting"],
+      "definition": "Twisting a part around its own length.",
+      "explanation": "Drive shafts carry torsion. Their strength grows with the diameter cubed, so a slightly thicker shaft is much stronger in twist."
+    },
+    {
+      "id": "torque",
+      "term": "torque",
+      "aliases": [],
+      "definition": "A twisting force, like the one a motor puts on its shaft.",
+      "explanation": "Measured in newton-metres. A stalled or jammed motor can put its full torque into one part, which is a common cause of broken shafts and gears."
+    },
+    {
+      "id": "cantilever",
+      "term": "cantilever",
+      "aliases": ["cantilevered"],
+      "definition": "A beam held at one end only, like a diving board or a robot arm.",
+      "explanation": "The bending moment is largest at the fixed end, so that is where cantilevers usually break."
+    },
+    {
+      "id": "grain",
+      "term": "grain",
+      "aliases": ["along the grain", "across the grain", "grain direction"],
+      "definition": "The direction the wood fibres run.",
+      "explanation": "Wood is many times stronger along the grain than across it. Splits run along the grain; good parts keep the grain running along the main load."
+    },
+    {
+      "id": "delamination",
+      "term": "delamination",
+      "aliases": ["delaminate", "delaminated", "layer separation"],
+      "definition": "Printed layers peeling apart along one layer line.",
+      "explanation": "The bond between two layers is the weakest direction of a 3D print. It shows up as a flat break with the bead pattern still visible."
+    },
+    {
+      "id": "layer_lines",
+      "term": "layer lines",
+      "aliases": ["layer line", "print layers"],
+      "definition": "The thin stacked layers a 3D printer builds a part from.",
+      "explanation": "A print is strongest along its layers and weakest across them, so orientation on the print bed matters as much as the design."
+    },
+    {
+      "id": "infill",
+      "term": "infill",
+      "aliases": [],
+      "definition": "The pattern printed inside a 3D-printed part, between its walls.",
+      "explanation": "Usually a sparse grid, triangles or gyroid at 15–25% to save time and plastic. Raising it near a stressed spot makes that spot stronger."
+    },
+    {
+      "id": "perimeters",
+      "term": "perimeters",
+      "aliases": ["perimeter", "walls", "wall count", "wall loops"],
+      "definition": "The solid outer walls a slicer prints around every layer.",
+      "explanation": "Most of a print's strength is in its walls, not its infill. Going from 2 to 4–6 walls is often the cheapest way to make a printed part much stronger."
+    },
+    {
+      "id": "stress_whitening",
+      "term": "stress-whitening",
+      "aliases": ["stress whitening", "whitening"],
+      "definition": "Plastic turning pale and cloudy where it was strained hard.",
+      "explanation": "Tiny voids open up inside the plastic just before it breaks. A whitened zone shows where the part was stretched most."
+    },
+    {
+      "id": "tear_out",
+      "term": "tear-out",
+      "aliases": ["tearout", "tear out", "shear-out"],
+      "definition": "A fastener ripping out through the edge of the material.",
+      "explanation": "It happens when a hole is too close to an edge. A common guideline keeps at least two hole diameters from the hole's centre to the edge."
+    },
+    {
+      "id": "boss",
+      "term": "boss",
+      "aliases": ["bosses"],
+      "definition": "A raised ring of extra material around a hole.",
+      "explanation": "It puts back the strength the hole took away, without thickening the whole part."
+    },
+    {
+      "id": "shot_peening",
+      "term": "shot peening",
+      "aliases": ["shot peen", "shot-peen", "shot-peened"],
+      "definition": "Blasting a metal surface with small steel balls to harden it.",
+      "explanation": "The impacts squeeze the surface into compression, which makes it much harder for fatigue cracks to start. Common on springs and gears."
+    },
+    {
+      "id": "heat_set_insert",
+      "term": "heat-set insert",
+      "aliases": ["heat-set inserts", "heat set insert", "heat set inserts"],
+      "definition": "A small threaded brass sleeve melted into a printed hole with a soldering iron.",
+      "explanation": "It gives a printed part strong metal threads that don't strip, and spreads a bolt's load into more plastic."
+    }
+  ]
+}

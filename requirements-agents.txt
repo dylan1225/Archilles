@@ -1,0 +1,4 @@
+-r requirements.txt
+# Install this optional feature in the same venv as the app.
+deepagents>=0.5.4,<0.6
+langchain-openai>=1.0,<2
