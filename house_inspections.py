@@ -3,7 +3,8 @@
 A live review is a background job in this server process. When it completes,
 the report, the agents' activity log and the cited scan images are written to
 the local cache, and everything is served from there. A saved review therefore
-replays instantly, with no model or Matterport call.
+replays instantly, with no model or Matterport call. Bundled reviews are used
+when a building has no runtime review, including on a fresh deployment.
 """
 
 import asyncio
@@ -77,13 +78,21 @@ def review_dir(model_id: str) -> FilePath:
     return building_evidence.cache_dir() / "reviews" / model_id
 
 
+def saved_review_dir(model_id: str) -> FilePath:
+    """Prefer a runtime review; keep bundled reports and their evidence together."""
+    local = review_dir(model_id)  # Validates the identifier for both locations.
+    if (local / "review.json").is_file():
+        return local
+    return building_evidence.BUNDLED_INTERIORS_DIR / "reviews" / model_id
+
+
 def evidence_base(model_id: str) -> str:
     return f"/api/interiors/reviews/{model_id}/evidence"
 
 
 def has_saved_review(model_id: str) -> bool:
     try:
-        return (review_dir(model_id) / "review.json").is_file()
+        return (saved_review_dir(model_id) / "review.json").is_file()
     except ValueError:
         return False
 
@@ -112,7 +121,7 @@ def save_review(survey: building_evidence.Survey, report: dict, session: house_a
 def load_review(model_id: str) -> dict | None:
     """A saved review, rechecked against the report rules, or None."""
     try:
-        payload = json.loads((review_dir(model_id) / "review.json").read_text(encoding="utf-8"))
+        payload = json.loads((saved_review_dir(model_id) / "review.json").read_text(encoding="utf-8"))
         report = house_analysis.validate_report(payload["report"])
         if report["model_id"] != model_id:
             return None
@@ -260,7 +269,7 @@ def get_review(model_id: ModelID) -> JSONResponse:
 @router.get("/reviews/{model_id}/evidence/{view_id}")
 def get_evidence(model_id: ModelID, view_id: ViewID) -> Response:
     try:
-        data = (review_dir(model_id) / "evidence" / f"{view_id}.jpg").read_bytes()
+        data = (saved_review_dir(model_id) / "evidence" / f"{view_id}.jpg").read_bytes()
     except (OSError, ValueError):
         return JSONResponse({"error": "This scan image is not part of a saved review."}, status_code=404)
     return Response(data, media_type="image/jpeg", headers={"Cache-Control": "private, max-age=300", "X-Content-Type-Options": "nosniff"})
@@ -270,7 +279,7 @@ def get_evidence(model_id: ModelID, view_id: ViewID) -> Response:
 def get_mesh(model_id: ModelID) -> Response:
     """The building's interior mesh, cached when a review placed its findings."""
     try:
-        data = building_evidence.mesh_path(model_id).read_bytes()
+        data = building_evidence.read_mesh(model_id)
     except (OSError, interiors.MatterportError):
         return JSONResponse({"error": "No 3D mesh has been cached for this building. Run a review first."}, status_code=404)
     return Response(data, media_type="application/json", headers={"Cache-Control": "private, max-age=3600"})

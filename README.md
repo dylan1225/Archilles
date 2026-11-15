@@ -165,6 +165,15 @@ Selecting that building again replays the saved review instantly with no model
 or Matterport call, which is what makes a demo dependable. **Run a fresh live
 review** replaces it.
 
+The completed review for **1649 W 56th St, Los Angeles** (`nFKebdbTD5U`, House
+One) is also shipped in `bundled/interiors/`: its five confirmed findings,
+scenarios, repair plans, agent activity, cited images and interior mesh. These
+tracked files are included in a normal deployment, so selecting that building
+shows its analysis even with an empty runtime cache and no vision API key.
+A runtime review takes precedence over the bundled review; fresh reviews
+continue to be saved in `cache/` (or `POSTMORTEM_CACHE_DIR`). The building
+collection and embedded tour still use Matterport as described above.
+
 ### What this is not
 
 A **screening of scan images on their capture date**, not a home inspection,

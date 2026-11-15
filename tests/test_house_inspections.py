@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 import building_evidence
 import house_analysis
 import house_inspections as service
+import interiors
 import main
 from tests.test_house_analysis import confirmed_session
 
@@ -128,6 +129,67 @@ def test_cached_mesh_is_served(client):
     path.write_text('{"positions":[0,0,0,1,0,0,0,1,0],"indices":[0,1,2]}')
     response = client.get("/api/interiors/models/house123/mesh")
     assert response.status_code == 200 and response.json()["indices"] == [0, 1, 2]
+
+
+def test_house_one_replays_with_an_empty_cache_and_no_provider_keys(monkeypatch, tmp_path):
+    runtime_cache = tmp_path / "empty-cache"
+    monkeypatch.setenv("POSTMORTEM_CACHE_DIR", str(runtime_cache))
+    for key in ("OPENROUTER_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY", "MATTERPORT_API_KEY", "MATTERPORT_API_TOKEN"):
+        monkeypatch.setenv(key, "")  # Prevent .env reloading from restoring local credentials.
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("the bundled review must not call Matterport or a model")
+
+    monkeypatch.setattr(interiors, "_request_graphql", forbidden)
+    monkeypatch.setattr(building_evidence, "_download", forbidden)
+    monkeypatch.setattr(house_analysis, "run_assessment", forbidden)
+    model_id = "nFKebdbTD5U"
+    with TestClient(main.app) as client:
+        assert client.get("/api/interiors/analysis-config").json()["configured"] is False
+        saved = client.get(f"/api/interiors/reviews/{model_id}")
+        assert saved.status_code == 200, saved.text
+        body = saved.json()
+        report = body["report"]
+        assert report["model_id"] == model_id and report["model_name"] == "1649 W 56th St"
+        assert report["provenance"] == "agents" and len(report["findings"]) == 5
+        assert len(report["scenarios"]) == 5 and report["mesh_available"]
+        assert body["activity"] and body["saved_at"] and "session" not in body
+        assert service.has_saved_review(model_id)
+        for scenario in report["scenarios"]:
+            assert scenario["repair_plan"] and scenario["repair_cost"]
+        for view_id in report["evidence_ids"]:
+            image = client.get(f"{body['evidence_base']}/{view_id}")
+            assert image.status_code == 200, view_id
+            assert image.headers["content-type"] == "image/jpeg" and image.content[:2] == b"\xff\xd8"
+        mesh = client.get(f"/api/interiors/models/{model_id}/mesh")
+        assert mesh.status_code == 200 and mesh.json()["positions"] and mesh.json()["indices"]
+        assert building_evidence.load_cached_mesh(model_id) is not None
+        assert client.get(f"{body['evidence_base']}/R9-Z-ceiling").status_code == 404
+        assert client.get("/api/interiors/reviews/unknownHouse").status_code == 404
+    assert not runtime_cache.exists()  # Playback also works on a read-only deployment.
+
+
+def test_a_fresh_review_overrides_the_bundled_report_and_uses_its_own_evidence(client, survey):
+    model_id = "nFKebdbTD5U"
+    bundled = client.get(f"/api/interiors/reviews/{model_id}").json()
+    survey.model["id"] = model_id
+    job = client.get(f"/api/interiors/assessments/{start(client, model_id)}").json()
+    assert job["status"] == "completed"
+    saved = client.get(f"/api/interiors/reviews/{model_id}").json()
+    assert saved["report"] == job["report"] and len(saved["report"]["findings"]) == 1
+    view_id = saved["report"]["findings"][0]["view_id"]
+    image = client.get(f"{saved['evidence_base']}/{view_id}")
+    assert image.content == (service.review_dir(model_id) / "evidence" / f"{view_id}.jpg").read_bytes()
+    # Never mix an older bundled image into a newer review of the same building.
+    uncited = next(view_id for view_id in bundled["report"]["evidence_ids"] if view_id not in saved["report"]["evidence_ids"])
+    assert client.get(f"{saved['evidence_base']}/{uncited}").status_code == 404
+    path = building_evidence.mesh_path(model_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text('{"positions":[0,0,0,1,0,0,0,1,0],"indices":[0,1,2]}')
+    assert client.get(f"/api/interiors/models/{model_id}/mesh").json()["indices"] == [0, 1, 2]
+    # Running a review never changes the files shipped with the application.
+    original = json.loads((building_evidence.BUNDLED_INTERIORS_DIR / "reviews" / model_id / "review.json").read_text())
+    assert original["report"]["generated_at"] == bundled["report"]["generated_at"]
 
 
 def test_a_running_review_is_shared_and_capacity_is_bounded(client, monkeypatch):

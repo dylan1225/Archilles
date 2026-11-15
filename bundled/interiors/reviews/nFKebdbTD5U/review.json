@@ -1,0 +1,3722 @@
+{
+  "report": {
+    "model_id": "nFKebdbTD5U",
+    "model_name": "1649 W 56th St",
+    "address": "1649 W 56th St, Los Angeles, CA 90062",
+    "region": "los_angeles",
+    "generated_at": "2026-11-15T04:49:04.689284+00:00",
+    "headline": "Bedroom 1: a ceiling section shows early signs of failing",
+    "summary": "The review team opened 9 of 9 rooms, flagged 6 candidates, and an independent skeptic confirmed 5 and rejected 1. This is a screening of scan images, not an inspection.",
+    "findings": [
+      {
+        "id": "F2",
+        "title": "Rippled, raised ceiling finish with a lump beside the smoke alarm",
+        "category": "moisture",
+        "confidence": "high",
+        "room_id": "R2",
+        "room_name": "Bedroom 1",
+        "view_id": "R2-A-ceiling",
+        "view_label": "Bedroom 1, the ceiling, looking straight up (scan position R2-A)",
+        "sweep_id": "g8hiq6eegc6kthefr1md1zt8c",
+        "box": {
+          "left": 0.62,
+          "top": 0.13,
+          "right": 1.0,
+          "bottom": 0.82
+        },
+        "observation": "Across a broad area of the ceiling the finish shows raised ridges and rippling, with a distinct rounded lump beside the smoke alarm. Dark spots line the ceiling-wall joint nearby.",
+        "possible_consequence": "If water is reaching this ceiling from above, the raised finish could sag further and a section could come away.",
+        "verification": "Raised ridges and a distinct lump beside the smoke alarm are clearly visible across the boxed area, and dark spots line the ceiling joint nearby. The second scan position shows a blistered, peeling patch on the same ceiling.",
+        "second_view_id": "R2-B-ceiling",
+        "corroborated_by_note": true,
+        "placement": {
+          "surface": "ceiling",
+          "center": [
+            3.387,
+            2.871,
+            2.439
+          ],
+          "normal": [
+            -0.015,
+            -0.031,
+            -0.999
+          ],
+          "corners": [
+            [
+              3.512,
+              2.009,
+              2.464
+            ],
+            [
+              4.156,
+              2.507,
+              2.439
+            ],
+            [
+              3.269,
+              3.683,
+              2.415
+            ],
+            [
+              2.616,
+              3.236,
+              2.439
+            ]
+          ],
+          "area_m2": 1.201,
+          "height_above_floor_m": 2.477,
+          "approximate": false
+        }
+      },
+      {
+        "id": "F6",
+        "title": "Dark streaking on wall corner beside shower tile",
+        "category": "moisture",
+        "confidence": "high",
+        "room_id": "R8",
+        "room_name": "Bathroom",
+        "view_id": "R8-A-wall-4",
+        "view_label": "Bathroom, the view a quarter turn to the left of wall-1 (scan position R8-A)",
+        "sweep_id": "n96iay2zn0uhd2yt6i6f9853a",
+        "box": {
+          "left": 0.465,
+          "top": 0.03,
+          "right": 0.535,
+          "bottom": 0.285
+        },
+        "observation": "Dark vertical streaks and spotting run down the upper wall in the corner directly beside the tiled shower surround.",
+        "possible_consequence": "If this corner stays damp from the shower, the wall finish could deteriorate and the darkening could spread.",
+        "verification": "Dark vertical streaks and spotting are clearly visible on the wall corner beside the shower tile. This bathroom was scanned from one position, so there is no second angle.",
+        "second_view_id": null,
+        "corroborated_by_note": true,
+        "placement": {
+          "surface": "wall",
+          "center": [
+            1.773,
+            3.909,
+            1.968
+          ],
+          "normal": [
+            -0.998,
+            0.069,
+            0.002
+          ],
+          "corners": [
+            [
+              1.778,
+              3.981,
+              2.224
+            ],
+            [
+              1.766,
+              3.832,
+              2.142
+            ],
+            [
+              1.768,
+              3.843,
+              1.73
+            ],
+            [
+              1.779,
+              3.995,
+              1.769
+            ]
+          ],
+          "area_m2": 0.066,
+          "height_above_floor_m": 1.975,
+          "approximate": false
+        }
+      },
+      {
+        "id": "F5",
+        "title": "Open crack running from the ceiling light fixture",
+        "category": "structure",
+        "confidence": "medium",
+        "room_id": "R4",
+        "room_name": "Kitchen 1",
+        "view_id": "R4-B-ceiling",
+        "view_label": "Kitchen 1, the ceiling, looking straight up (scan position R4-B)",
+        "sweep_id": "zkkt7b7zhts68x0g4e62ahcub",
+        "box": {
+          "left": 0.59,
+          "top": 0.4,
+          "right": 0.9,
+          "bottom": 0.5
+        },
+        "observation": "A crack runs from the light fixture across the ceiling toward the wall, with a slight ridge along part of its length.",
+        "possible_consequence": "If the crack keeps opening, the ceiling finish along it could loosen.",
+        "verification": "A crack wider than a hairline runs from the light fixture, with a slight ridge along it. The second scan position's ceiling view does not frame this part of the ceiling clearly.",
+        "second_view_id": "R4-A-ceiling",
+        "corroborated_by_note": false,
+        "placement": {
+          "surface": "ceiling",
+          "center": [
+            5.717,
+            -0.164,
+            2.506
+          ],
+          "normal": [
+            0.008,
+            -0.02,
+            -1.0
+          ],
+          "corners": [
+            [
+              5.554,
+              0.141,
+              2.499
+            ],
+            [
+              5.671,
+              -0.501,
+              2.512
+            ],
+            [
+              5.879,
+              -0.467,
+              2.513
+            ],
+            [
+              5.764,
+              0.177,
+              2.499
+            ]
+          ],
+          "area_m2": 0.138,
+          "height_above_floor_m": 2.484,
+          "approximate": false
+        }
+      },
+      {
+        "id": "F3",
+        "title": "Brown drip trails running down wall from ceiling line",
+        "category": "moisture",
+        "confidence": "medium",
+        "room_id": "R2",
+        "room_name": "Bedroom 1",
+        "view_id": "R2-B-wall-4",
+        "view_label": "Bedroom 1, the view a quarter turn to the left of wall-1 (scan position R2-B)",
+        "sweep_id": "19dyt01hpddazfiwz7z0k401a",
+        "box": {
+          "left": 0.64,
+          "top": 0.27,
+          "right": 0.8,
+          "bottom": 0.48
+        },
+        "observation": "Brown vertical streaks run down the upper part of the right-hand wall, starting below the ceiling line.",
+        "possible_consequence": "If these trails come from water running down inside or over the wall, the finish and the ceiling junction above could be getting wet repeatedly.",
+        "verification": "Brown vertical streaks run down from the ceiling line in the boxed area, and lighting or decor does not explain them. The matching view from the other scan position does not show this stretch of wall, so the ruling rests on one angle.",
+        "second_view_id": "R2-A-wall-4",
+        "corroborated_by_note": true,
+        "placement": {
+          "surface": "wall",
+          "center": [
+            2.139,
+            3.436,
+            1.809
+          ],
+          "normal": [
+            1.0,
+            0.007,
+            -0.001
+          ],
+          "corners": [
+            [
+              2.142,
+              3.121,
+              2.294
+            ],
+            [
+              2.138,
+              3.688,
+              2.11
+            ],
+            [
+              2.137,
+              3.688,
+              1.422
+            ],
+            [
+              2.141,
+              3.128,
+              1.441
+            ]
+          ],
+          "area_m2": 0.434,
+          "height_above_floor_m": 1.905,
+          "approximate": false
+        }
+      },
+      {
+        "id": "F4",
+        "title": "Amber-brown stain on kitchen ceiling near wall",
+        "category": "moisture",
+        "confidence": "low",
+        "room_id": "R4",
+        "room_name": "Kitchen 1",
+        "view_id": "R4-A-ceiling",
+        "view_label": "Kitchen 1, the ceiling, looking straight up (scan position R4-A)",
+        "sweep_id": "aifuy223fnkyub759fkb80n1a",
+        "box": {
+          "left": 0.5,
+          "top": 0.13,
+          "right": 0.79,
+          "bottom": 0.33
+        },
+        "observation": "A soft-edged amber-brown discoloration with darker speckles spreads across the ceiling near the wall and the hatch.",
+        "possible_consequence": "If this stain marks water coming through from above, the ceiling finish here could be softening.",
+        "verification": "A soft-edged amber-brown discoloration is visible near the wall and hatch, and the second scan position shows the same staining near the hatch. In a kitchen, cooking residue could look similar, so confidence is low.",
+        "second_view_id": "R4-B-ceiling",
+        "corroborated_by_note": true,
+        "placement": {
+          "surface": "ceiling",
+          "center": [
+            4.758,
+            0.579,
+            2.484
+          ],
+          "normal": [
+            0.008,
+            -0.02,
+            -1.0
+          ],
+          "corners": [
+            [
+              4.393,
+              0.649,
+              2.479
+            ],
+            [
+              4.822,
+              0.219,
+              2.491
+            ],
+            [
+              5.123,
+              0.508,
+              2.488
+            ],
+            [
+              4.694,
+              0.943,
+              2.476
+            ]
+          ],
+          "area_m2": 0.255,
+          "height_above_floor_m": 2.478,
+          "approximate": false
+        }
+      }
+    ],
+    "rejected": [
+      {
+        "id": "F1",
+        "title": "Blotchy discoloured patches on wall beside hallway door",
+        "room_name": "Living Room",
+        "view_id": "R1-A-wall-2",
+        "reason": "The patches have sharp, flat edges and an even lighter tone, typical of filler or spackle repairs painted over unevenly. There is no tide line, darkening or drip pattern, so patching explains them better than water."
+      }
+    ],
+    "scenario": {
+      "mechanism": "ceiling_moisture_failure",
+      "surface": "ceiling",
+      "kind": "delamination",
+      "title": "A section of this ceiling could come down",
+      "premise": "If the moisture source above this ceiling is not found and fixed",
+      "finding_id": "F2",
+      "room_name": "Bedroom 1",
+      "why": "The finish here is rippled and raised over a broad area, with a lump beside the smoke alarm and dark spots along the nearby joint. If water is reaching this ceiling from above, the wetted finish could keep softening and lose its grip on the framing, and the raised area could sag further. A section that has lost its hold could come away.",
+      "early_warning_signs": [
+        "Brown stains or rings appearing on this ceiling",
+        "The raised area getting larger or hanging lower",
+        "New cracks around the edge of the rippled area",
+        "A musty smell or dark spots spreading along the ceiling joints"
+      ],
+      "recommended_action": "Have the space above this ceiling checked for an active leak and the finish tested for moisture before any repair.",
+      "who_to_call": "A licensed roofer or plumber to trace the water source, then a drywall or plaster contractor for the repair.",
+      "written_by_analyst": true,
+      "dry": false,
+      "zone": {
+        "surface": "ceiling",
+        "corners": [
+          [
+            3.512,
+            2.009,
+            2.464
+          ],
+          [
+            4.156,
+            2.507,
+            2.439
+          ],
+          [
+            3.269,
+            3.683,
+            2.415
+          ],
+          [
+            2.616,
+            3.236,
+            2.439
+          ]
+        ],
+        "center": [
+          3.387,
+          2.871,
+          2.439
+        ],
+        "normal": [
+          -0.015,
+          -0.031,
+          -0.999
+        ],
+        "widened": false,
+        "approximate": false,
+        "floor_z": -0.038
+      },
+      "projectors": [
+        {
+          "position_id": "R2-A",
+          "position": [
+            2.819108009338379,
+            2.5332231521606445,
+            1.348824381828308
+          ],
+          "quaternion": [
+            -0.0007281587459146976,
+            -0.0062657007947564125,
+            0.8904300928115845,
+            0.45507633686065674
+          ],
+          "faces": [
+            "R2-A-ceiling",
+            "R2-A-wall-1",
+            "R2-A-wall-2",
+            "R2-A-wall-3",
+            "R2-A-wall-4",
+            "R2-A-floor"
+          ]
+        },
+        {
+          "position_id": "R2-B",
+          "position": [
+            3.9772260189056396,
+            4.085920333862305,
+            1.2975680828094482
+          ],
+          "quaternion": [
+            0.012661652639508247,
+            0.009578440338373184,
+            0.9175697565078735,
+            0.3972577452659607
+          ],
+          "faces": [
+            "R2-B-ceiling",
+            "R2-B-wall-1",
+            "R2-B-wall-2",
+            "R2-B-wall-3",
+            "R2-B-wall-4",
+            "R2-B-floor"
+          ]
+        }
+      ],
+      "bounds": {
+        "min": [
+          1.866,
+          1.661,
+          -0.246
+        ],
+        "max": [
+          5.533,
+          5.16,
+          2.589
+        ]
+      },
+      "calc": {
+        "area_m2": 1.2,
+        "drop_height_m": 2.48,
+        "fall_time_s": 0.71,
+        "speed_at_floor_m_s": 7.0,
+        "landing_height_m": 0.5,
+        "speed_at_landing_m_s": 6.2,
+        "masses": [
+          {
+            "finish": "gypsum_board",
+            "label": "12.7 mm (1/2 in) gypsum board",
+            "kg_per_m2": 10.7,
+            "mass_kg": 12.9,
+            "energy_at_floor_j": 313
+          },
+          {
+            "finish": "plaster_on_lath",
+            "label": "plaster on wood lath",
+            "kg_per_m2": 39.1,
+            "mass_kg": 46.9,
+            "energy_at_floor_j": 1140
+          }
+        ],
+        "landing_label": "a bed",
+        "inputs": [
+          "Area 1.2 m²: the flagged image region projected onto the scanned ceiling.",
+          "Drop 2.48 m: ceiling to floor, measured in the scan's 3D model.",
+          "Mass per square metre: typical dry dead loads from the ASCE/SEI 7 commentary. Absorbed water adds weight that is not counted here."
+        ],
+        "finish_known": false,
+        "tiles": [
+          {
+            "value": 1.2,
+            "unit": " m²",
+            "label": "section that could detach",
+            "digits": 2
+          },
+          {
+            "value": 2.48,
+            "unit": " m",
+            "label": "ceiling to floor",
+            "digits": 2
+          },
+          {
+            "value": 0.71,
+            "unit": " s",
+            "label": "time to reach the floor",
+            "digits": 2
+          },
+          {
+            "value": 6.2,
+            "unit": " m/s",
+            "label": "speed reaching a bed",
+            "digits": 1
+          },
+          {
+            "value": 12.9,
+            "unit": " kg",
+            "label": "dry weight if 12.7 mm (1/2 in) gypsum board",
+            "digits": 1
+          },
+          {
+            "value": 46.9,
+            "unit": " kg",
+            "label": "dry weight if plaster on wood lath",
+            "digits": 1
+          }
+        ]
+      },
+      "repair_cost": {
+        "currency": "USD",
+        "heading": "WHAT THE REPAIR COSTS: NOW, OR AFTER IT FALLS",
+        "added_text": [
+          "Waiting until it falls adds ",
+          " to the bill, for the same leak and the same ceiling."
+        ],
+        "now": {
+          "label": "Repair now",
+          "low": 1650,
+          "high": 5030,
+          "items": [
+            {
+              "label": "Find and fix the moisture source",
+              "low": 1000,
+              "high": 4000,
+              "basis": "Roof leak repair averages $1,000; plumbing repairs run $1,000 to $4,000. Needed either way.",
+              "reference_id": "bobvila_water_damage",
+              "role": "source"
+            },
+            {
+              "label": "Cut out and patch the flagged ceiling section",
+              "low": 650,
+              "high": 1030,
+              "basis": "1.20 m² (13 sq ft) at $50 to $80 per sq ft, professional drywall repair.",
+              "reference_id": "inchcalculator_drywall",
+              "role": "surface"
+            }
+          ]
+        },
+        "after": {
+          "label": "Repair after the section falls",
+          "low": 2230,
+          "high": 9750,
+          "items": [
+            {
+              "label": "Find and fix the moisture source",
+              "low": 1000,
+              "high": 4000,
+              "basis": "Roof leak repair averages $1,000; plumbing repairs run $1,000 to $4,000. Needed either way.",
+              "reference_id": "bobvila_water_damage",
+              "role": "source"
+            },
+            {
+              "label": "Close the opening the fallen section leaves",
+              "low": 650,
+              "high": 1030,
+              "basis": "Priced at the flagged section's area, as now. A real collapse can take more ceiling with it.",
+              "reference_id": "inchcalculator_drywall",
+              "role": "surface"
+            },
+            {
+              "label": "Dry out and clean the room",
+              "low": 380,
+              "high": 820,
+              "basis": "The room's 11.7 m² (126 sq ft) floor at $3 to $6.50 per sq ft, clean to gray water.",
+              "reference_id": "bobvila_water_damage"
+            },
+            {
+              "label": "Restore the floor under the fall",
+              "low": 200,
+              "high": 500,
+              "basis": "Floor restoration after water damage, $200 to $500.",
+              "reference_id": "bobvila_water_damage"
+            },
+            {
+              "label": "Remove mould, if it has taken hold",
+              "low": 0,
+              "high": 3400,
+              "basis": "Mould removal costs $1,100 to $3,400 when it is needed; $0 if the room is dried in time.",
+              "reference_id": "bobvila_water_damage"
+            }
+          ]
+        },
+        "added_low": 580,
+        "added_high": 4720,
+        "context": {
+          "amount": 15400,
+          "statement": "For scale, the average insured US home water damage or freezing claim, 2019 to 2023:",
+          "reference_id": "iii_water_claims"
+        },
+        "notes": [
+          "Not priced: injury, damaged furniture and belongings, or living elsewhere during the work.",
+          "Rough ranges from US consumer cost guides, not a quote. Local labour rates, access and the ceiling's finish change the price."
+        ],
+        "reference_ids": [
+          "bobvila_water_damage",
+          "inchcalculator_drywall"
+        ]
+      },
+      "repair_plan": {
+        "kind": "delamination",
+        "cut_out": true,
+        "stages": [
+          {
+            "title": "As scanned",
+            "caption": "The flagged section as the scan recorded it."
+          },
+          {
+            "title": "Cut out the damaged section",
+            "caption": "The loose finish is cut back to sound material, squared off between framing members. This is the moment to look into the cavity for damp."
+          },
+          {
+            "title": "Fit a new board",
+            "caption": "A new piece of board is cut to the opening and screwed to the framing."
+          },
+          {
+            "title": "Tape, prime and paint",
+            "caption": "Joints are taped and skimmed with compound, sanded, sealed with primer and painted to match."
+          }
+        ],
+        "diy": {
+          "label": "Fix it yourself",
+          "difficulty": "Advanced",
+          "time": "A weekend, plus drying time between coats",
+          "materials": [
+            {
+              "name": "3M N95 sanding respirator, 2-pack",
+              "price_usd": 7.98,
+              "link_kind": "product",
+              "url": "https://www.homedepot.com/p/3M-N95-Paint-Sanding-Respirator-Mask-2-Pack-8210PP2-DC/100559558",
+              "quantity": 1,
+              "retailer": "The Home Depot",
+              "total_usd": 7.98
+            },
+            {
+              "name": "USG Sheetrock 1/2 in. x 2 ft. x 2 ft. drywall patch panel",
+              "price_usd": 7.85,
+              "link_kind": "category",
+              "url": "https://www.homedepot.com/b/Paint-Paint-Supplies-Patching-Repair-Drywall-Patches/Drywall-Repair-Panels/N-5yc1vZ2fkpczrZ1z18jvo",
+              "quantity": 4,
+              "retailer": "The Home Depot",
+              "total_usd": 31.4
+            },
+            {
+              "name": "USG Sheetrock All Purpose joint compound, 3.5 qt",
+              "price_usd": 12.34,
+              "link_kind": "category",
+              "url": "https://www.homedepot.com/b/Building-Materials-Drywall-Joint-Compound/USG-Sheetrock-Brand/N-5yc1vZard1Zomd",
+              "quantity": 1,
+              "retailer": "The Home Depot",
+              "total_usd": 12.34
+            },
+            {
+              "name": "FibaTape self-adhesive mesh joint tape, 1-7/8 in. x 150 ft.",
+              "price_usd": 6.98,
+              "link_kind": "category",
+              "url": "https://www.homedepot.com/b/Building-Materials-Drywall/Fiberglass-Mesh/N-5yc1vZar3dZ1z0qvc2",
+              "quantity": 1,
+              "retailer": "The Home Depot",
+              "total_usd": 6.98
+            },
+            {
+              "name": "KILZ Original stain-blocking primer, 1 qt",
+              "price_usd": 16.98,
+              "link_kind": "product",
+              "url": "https://www.homedepot.com/p/KILZ-Original-1-qt-White-Oil-Based-Interior-Primer-Sealer-and-Stain-Blocker-10902/100371322",
+              "quantity": 1,
+              "retailer": "The Home Depot",
+              "total_usd": 16.98
+            },
+            {
+              "name": "BEHR Premium Plus flat ceiling paint, 1 qt",
+              "price_usd": 16.48,
+              "link_kind": "product",
+              "url": "https://www.homedepot.com/p/BEHR-PREMIUM-PLUS-1-qt-Ultra-Pure-White-Ceiling-Flat-Interior-Paint-55804/100178852",
+              "quantity": 1,
+              "retailer": "The Home Depot",
+              "total_usd": 16.48
+            }
+          ],
+          "tools": [
+            {
+              "name": "Drywall jab saw",
+              "price_usd": null,
+              "link_kind": "search",
+              "url": "https://www.homedepot.com/s/drywall%20jab%20saw",
+              "quantity": 1,
+              "retailer": "The Home Depot",
+              "total_usd": null
+            },
+            {
+              "name": "1-1/4 in. drywall screws",
+              "price_usd": null,
+              "link_kind": "search",
+              "url": "https://www.homedepot.com/s/1-1/4%20in%20drywall%20screws",
+              "quantity": 1,
+              "retailer": "The Home Depot",
+              "total_usd": null
+            },
+            {
+              "name": "6 in. drywall taping knife",
+              "price_usd": null,
+              "link_kind": "search",
+              "url": "https://www.homedepot.com/s/6%20in%20drywall%20taping%20knife",
+              "quantity": 1,
+              "retailer": "The Home Depot",
+              "total_usd": null
+            },
+            {
+              "name": "Fine sanding sponge",
+              "price_usd": null,
+              "link_kind": "search",
+              "url": "https://www.homedepot.com/s/fine%20sanding%20sponge",
+              "quantity": 1,
+              "retailer": "The Home Depot",
+              "total_usd": null
+            },
+            {
+              "name": "Mini paint roller and tray",
+              "price_usd": null,
+              "link_kind": "search",
+              "url": "https://www.homedepot.com/s/mini%20paint%20roller%20tray%20kit",
+              "quantity": 1,
+              "retailer": "The Home Depot",
+              "total_usd": null
+            }
+          ],
+          "materials_total_usd": 92.16,
+          "unpriced": [],
+          "low": 1092,
+          "high": 4092,
+          "steps": [
+            "Fix the moisture source first, or the new patch will fail the same way.",
+            "Cut the loose finish back to sound material, squaring the opening so its edges land on framing.",
+            "Let the cavity dry, then screw a new board into the opening.",
+            "Tape the joints and apply two or three thin coats of compound, sanding lightly between coats.",
+            "Seal with stain-blocking primer, then paint to match."
+          ],
+          "cautions": [
+            "The scan does not say when this home was built. If it predates 1978 the paint may contain lead, and older plaster or textured finishes can contain asbestos. Have the finish tested before you cut, scrape or sand it.",
+            "This is overhead work from a ladder. Wear eye protection, and get help lifting board into place.",
+            "Do-it-yourself covers the visible surface only. Finding and fixing the moisture source is a professional's job, and is priced on both sides.",
+            "At 13 sq ft this is a large patch. Most people hire a section this size out."
+          ],
+          "prices_checked": "November 2026",
+          "price_note": "Approximate prices, as shown in search listings for The Home Depot in November 2026. They vary by store and date; each link shows today's price."
+        },
+        "professional": {
+          "label": "Hire a professional",
+          "low": 1650,
+          "high": 5030,
+          "items": [
+            {
+              "label": "Find and fix the moisture source",
+              "low": 1000,
+              "high": 4000,
+              "basis": "Roof leak repair averages $1,000; plumbing repairs run $1,000 to $4,000. Needed either way.",
+              "reference_id": "bobvila_water_damage",
+              "role": "source"
+            },
+            {
+              "label": "Cut out and patch the flagged ceiling section",
+              "low": 650,
+              "high": 1030,
+              "basis": "1.20 m² (13 sq ft) at $50 to $80 per sq ft, professional drywall repair.",
+              "reference_id": "inchcalculator_drywall",
+              "role": "surface"
+            }
+          ],
+          "links": [
+            {
+              "label": "Roof repair in Los Angeles · Thumbtack",
+              "url": "https://www.thumbtack.com/ca/los-angeles/roof-repair/"
+            },
+            {
+              "label": "Plumbers in Los Angeles · Thumbtack",
+              "url": "https://www.thumbtack.com/ca/los-angeles/plumbers/"
+            },
+            {
+              "label": "Drywall repair in Los Angeles · Thumbtack",
+              "url": "https://www.thumbtack.com/ca/los-angeles/drywall-repair/"
+            },
+            {
+              "label": "Check a contractor's licence · California CSLB",
+              "url": "https://www.cslb.ca.gov/OnlineServices/CheckLicenseII/CheckLicense.aspx"
+            }
+          ],
+          "link_note": "Directory and licence look-up links, not endorsements of any firm. Get more than one quote."
+        },
+        "surface_work": {
+          "diy_usd": 92.16,
+          "professional_low": 650,
+          "professional_high": 1030
+        },
+        "source_work": {
+          "low": 1000,
+          "high": 4000
+        },
+        "safety_links": [
+          {
+            "label": "US EPA · Lead in older homes",
+            "url": "https://www.epa.gov/lead/protect-your-family-sources-lead"
+          },
+          {
+            "label": "US EPA · Asbestos in the home",
+            "url": "https://www.epa.gov/asbestos/protect-your-family-exposures-asbestos"
+          },
+          {
+            "label": "US EPA · Mold cleanup in your home",
+            "url": "https://www.epa.gov/mold/mold-cleanup-your-home"
+          }
+        ]
+      },
+      "stages": [
+        {
+          "id": "as_scanned",
+          "title": "As scanned",
+          "caption": "The ceiling as the scan recorded it. The flagged region is outlined on the real surface."
+        },
+        {
+          "id": "saturation",
+          "title": "Repeated wetting",
+          "caption": "Water arriving from above spreads through the finish. Stains widen and the material softens and gains weight."
+        },
+        {
+          "id": "sag",
+          "title": "Sag",
+          "caption": "The softened section loses its hold on the framing and hangs lower. Cracks open around its edge."
+        },
+        {
+          "id": "detach",
+          "title": "Detachment",
+          "caption": "A section of about 1.2 m² lets go: roughly 12.9 to 46.9 kg of dry finish falling 2.48 m in 0.71 s, reaching a bed at 6.2 m/s."
+        },
+        {
+          "id": "aftermath",
+          "title": "Aftermath",
+          "caption": "Framing is exposed to the room, debris covers the floor below, and damp surfaces around the opening stay prone to mould."
+        }
+      ],
+      "disclaimer": "An illustration of a known failure mechanism at the flagged location. It is not a prediction that this will happen, or when."
+    },
+    "scenarios": [
+      {
+        "mechanism": "ceiling_moisture_failure",
+        "surface": "ceiling",
+        "kind": "delamination",
+        "title": "A section of this ceiling could come down",
+        "premise": "If the moisture source above this ceiling is not found and fixed",
+        "finding_id": "F2",
+        "room_name": "Bedroom 1",
+        "why": "The finish here is rippled and raised over a broad area, with a lump beside the smoke alarm and dark spots along the nearby joint. If water is reaching this ceiling from above, the wetted finish could keep softening and lose its grip on the framing, and the raised area could sag further. A section that has lost its hold could come away.",
+        "early_warning_signs": [
+          "Brown stains or rings appearing on this ceiling",
+          "The raised area getting larger or hanging lower",
+          "New cracks around the edge of the rippled area",
+          "A musty smell or dark spots spreading along the ceiling joints"
+        ],
+        "recommended_action": "Have the space above this ceiling checked for an active leak and the finish tested for moisture before any repair.",
+        "who_to_call": "A licensed roofer or plumber to trace the water source, then a drywall or plaster contractor for the repair.",
+        "written_by_analyst": true,
+        "dry": false,
+        "zone": {
+          "surface": "ceiling",
+          "corners": [
+            [
+              3.512,
+              2.009,
+              2.464
+            ],
+            [
+              4.156,
+              2.507,
+              2.439
+            ],
+            [
+              3.269,
+              3.683,
+              2.415
+            ],
+            [
+              2.616,
+              3.236,
+              2.439
+            ]
+          ],
+          "center": [
+            3.387,
+            2.871,
+            2.439
+          ],
+          "normal": [
+            -0.015,
+            -0.031,
+            -0.999
+          ],
+          "widened": false,
+          "approximate": false,
+          "floor_z": -0.038
+        },
+        "projectors": [
+          {
+            "position_id": "R2-A",
+            "position": [
+              2.819108009338379,
+              2.5332231521606445,
+              1.348824381828308
+            ],
+            "quaternion": [
+              -0.0007281587459146976,
+              -0.0062657007947564125,
+              0.8904300928115845,
+              0.45507633686065674
+            ],
+            "faces": [
+              "R2-A-ceiling",
+              "R2-A-wall-1",
+              "R2-A-wall-2",
+              "R2-A-wall-3",
+              "R2-A-wall-4",
+              "R2-A-floor"
+            ]
+          },
+          {
+            "position_id": "R2-B",
+            "position": [
+              3.9772260189056396,
+              4.085920333862305,
+              1.2975680828094482
+            ],
+            "quaternion": [
+              0.012661652639508247,
+              0.009578440338373184,
+              0.9175697565078735,
+              0.3972577452659607
+            ],
+            "faces": [
+              "R2-B-ceiling",
+              "R2-B-wall-1",
+              "R2-B-wall-2",
+              "R2-B-wall-3",
+              "R2-B-wall-4",
+              "R2-B-floor"
+            ]
+          }
+        ],
+        "bounds": {
+          "min": [
+            1.866,
+            1.661,
+            -0.246
+          ],
+          "max": [
+            5.533,
+            5.16,
+            2.589
+          ]
+        },
+        "calc": {
+          "area_m2": 1.2,
+          "drop_height_m": 2.48,
+          "fall_time_s": 0.71,
+          "speed_at_floor_m_s": 7.0,
+          "landing_height_m": 0.5,
+          "speed_at_landing_m_s": 6.2,
+          "masses": [
+            {
+              "finish": "gypsum_board",
+              "label": "12.7 mm (1/2 in) gypsum board",
+              "kg_per_m2": 10.7,
+              "mass_kg": 12.9,
+              "energy_at_floor_j": 313
+            },
+            {
+              "finish": "plaster_on_lath",
+              "label": "plaster on wood lath",
+              "kg_per_m2": 39.1,
+              "mass_kg": 46.9,
+              "energy_at_floor_j": 1140
+            }
+          ],
+          "landing_label": "a bed",
+          "inputs": [
+            "Area 1.2 m²: the flagged image region projected onto the scanned ceiling.",
+            "Drop 2.48 m: ceiling to floor, measured in the scan's 3D model.",
+            "Mass per square metre: typical dry dead loads from the ASCE/SEI 7 commentary. Absorbed water adds weight that is not counted here."
+          ],
+          "finish_known": false,
+          "tiles": [
+            {
+              "value": 1.2,
+              "unit": " m²",
+              "label": "section that could detach",
+              "digits": 2
+            },
+            {
+              "value": 2.48,
+              "unit": " m",
+              "label": "ceiling to floor",
+              "digits": 2
+            },
+            {
+              "value": 0.71,
+              "unit": " s",
+              "label": "time to reach the floor",
+              "digits": 2
+            },
+            {
+              "value": 6.2,
+              "unit": " m/s",
+              "label": "speed reaching a bed",
+              "digits": 1
+            },
+            {
+              "value": 12.9,
+              "unit": " kg",
+              "label": "dry weight if 12.7 mm (1/2 in) gypsum board",
+              "digits": 1
+            },
+            {
+              "value": 46.9,
+              "unit": " kg",
+              "label": "dry weight if plaster on wood lath",
+              "digits": 1
+            }
+          ]
+        },
+        "repair_cost": {
+          "currency": "USD",
+          "heading": "WHAT THE REPAIR COSTS: NOW, OR AFTER IT FALLS",
+          "added_text": [
+            "Waiting until it falls adds ",
+            " to the bill, for the same leak and the same ceiling."
+          ],
+          "now": {
+            "label": "Repair now",
+            "low": 1650,
+            "high": 5030,
+            "items": [
+              {
+                "label": "Find and fix the moisture source",
+                "low": 1000,
+                "high": 4000,
+                "basis": "Roof leak repair averages $1,000; plumbing repairs run $1,000 to $4,000. Needed either way.",
+                "reference_id": "bobvila_water_damage",
+                "role": "source"
+              },
+              {
+                "label": "Cut out and patch the flagged ceiling section",
+                "low": 650,
+                "high": 1030,
+                "basis": "1.20 m² (13 sq ft) at $50 to $80 per sq ft, professional drywall repair.",
+                "reference_id": "inchcalculator_drywall",
+                "role": "surface"
+              }
+            ]
+          },
+          "after": {
+            "label": "Repair after the section falls",
+            "low": 2230,
+            "high": 9750,
+            "items": [
+              {
+                "label": "Find and fix the moisture source",
+                "low": 1000,
+                "high": 4000,
+                "basis": "Roof leak repair averages $1,000; plumbing repairs run $1,000 to $4,000. Needed either way.",
+                "reference_id": "bobvila_water_damage",
+                "role": "source"
+              },
+              {
+                "label": "Close the opening the fallen section leaves",
+                "low": 650,
+                "high": 1030,
+                "basis": "Priced at the flagged section's area, as now. A real collapse can take more ceiling with it.",
+                "reference_id": "inchcalculator_drywall",
+                "role": "surface"
+              },
+              {
+                "label": "Dry out and clean the room",
+                "low": 380,
+                "high": 820,
+                "basis": "The room's 11.7 m² (126 sq ft) floor at $3 to $6.50 per sq ft, clean to gray water.",
+                "reference_id": "bobvila_water_damage"
+              },
+              {
+                "label": "Restore the floor under the fall",
+                "low": 200,
+                "high": 500,
+                "basis": "Floor restoration after water damage, $200 to $500.",
+                "reference_id": "bobvila_water_damage"
+              },
+              {
+                "label": "Remove mould, if it has taken hold",
+                "low": 0,
+                "high": 3400,
+                "basis": "Mould removal costs $1,100 to $3,400 when it is needed; $0 if the room is dried in time.",
+                "reference_id": "bobvila_water_damage"
+              }
+            ]
+          },
+          "added_low": 580,
+          "added_high": 4720,
+          "context": {
+            "amount": 15400,
+            "statement": "For scale, the average insured US home water damage or freezing claim, 2019 to 2023:",
+            "reference_id": "iii_water_claims"
+          },
+          "notes": [
+            "Not priced: injury, damaged furniture and belongings, or living elsewhere during the work.",
+            "Rough ranges from US consumer cost guides, not a quote. Local labour rates, access and the ceiling's finish change the price."
+          ],
+          "reference_ids": [
+            "bobvila_water_damage",
+            "inchcalculator_drywall"
+          ]
+        },
+        "repair_plan": {
+          "kind": "delamination",
+          "cut_out": true,
+          "stages": [
+            {
+              "title": "As scanned",
+              "caption": "The flagged section as the scan recorded it."
+            },
+            {
+              "title": "Cut out the damaged section",
+              "caption": "The loose finish is cut back to sound material, squared off between framing members. This is the moment to look into the cavity for damp."
+            },
+            {
+              "title": "Fit a new board",
+              "caption": "A new piece of board is cut to the opening and screwed to the framing."
+            },
+            {
+              "title": "Tape, prime and paint",
+              "caption": "Joints are taped and skimmed with compound, sanded, sealed with primer and painted to match."
+            }
+          ],
+          "diy": {
+            "label": "Fix it yourself",
+            "difficulty": "Advanced",
+            "time": "A weekend, plus drying time between coats",
+            "materials": [
+              {
+                "name": "3M N95 sanding respirator, 2-pack",
+                "price_usd": 7.98,
+                "link_kind": "product",
+                "url": "https://www.homedepot.com/p/3M-N95-Paint-Sanding-Respirator-Mask-2-Pack-8210PP2-DC/100559558",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": 7.98
+              },
+              {
+                "name": "USG Sheetrock 1/2 in. x 2 ft. x 2 ft. drywall patch panel",
+                "price_usd": 7.85,
+                "link_kind": "category",
+                "url": "https://www.homedepot.com/b/Paint-Paint-Supplies-Patching-Repair-Drywall-Patches/Drywall-Repair-Panels/N-5yc1vZ2fkpczrZ1z18jvo",
+                "quantity": 4,
+                "retailer": "The Home Depot",
+                "total_usd": 31.4
+              },
+              {
+                "name": "USG Sheetrock All Purpose joint compound, 3.5 qt",
+                "price_usd": 12.34,
+                "link_kind": "category",
+                "url": "https://www.homedepot.com/b/Building-Materials-Drywall-Joint-Compound/USG-Sheetrock-Brand/N-5yc1vZard1Zomd",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": 12.34
+              },
+              {
+                "name": "FibaTape self-adhesive mesh joint tape, 1-7/8 in. x 150 ft.",
+                "price_usd": 6.98,
+                "link_kind": "category",
+                "url": "https://www.homedepot.com/b/Building-Materials-Drywall/Fiberglass-Mesh/N-5yc1vZar3dZ1z0qvc2",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": 6.98
+              },
+              {
+                "name": "KILZ Original stain-blocking primer, 1 qt",
+                "price_usd": 16.98,
+                "link_kind": "product",
+                "url": "https://www.homedepot.com/p/KILZ-Original-1-qt-White-Oil-Based-Interior-Primer-Sealer-and-Stain-Blocker-10902/100371322",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": 16.98
+              },
+              {
+                "name": "BEHR Premium Plus flat ceiling paint, 1 qt",
+                "price_usd": 16.48,
+                "link_kind": "product",
+                "url": "https://www.homedepot.com/p/BEHR-PREMIUM-PLUS-1-qt-Ultra-Pure-White-Ceiling-Flat-Interior-Paint-55804/100178852",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": 16.48
+              }
+            ],
+            "tools": [
+              {
+                "name": "Drywall jab saw",
+                "price_usd": null,
+                "link_kind": "search",
+                "url": "https://www.homedepot.com/s/drywall%20jab%20saw",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": null
+              },
+              {
+                "name": "1-1/4 in. drywall screws",
+                "price_usd": null,
+                "link_kind": "search",
+                "url": "https://www.homedepot.com/s/1-1/4%20in%20drywall%20screws",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": null
+              },
+              {
+                "name": "6 in. drywall taping knife",
+                "price_usd": null,
+                "link_kind": "search",
+                "url": "https://www.homedepot.com/s/6%20in%20drywall%20taping%20knife",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": null
+              },
+              {
+                "name": "Fine sanding sponge",
+                "price_usd": null,
+                "link_kind": "search",
+                "url": "https://www.homedepot.com/s/fine%20sanding%20sponge",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": null
+              },
+              {
+                "name": "Mini paint roller and tray",
+                "price_usd": null,
+                "link_kind": "search",
+                "url": "https://www.homedepot.com/s/mini%20paint%20roller%20tray%20kit",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": null
+              }
+            ],
+            "materials_total_usd": 92.16,
+            "unpriced": [],
+            "low": 1092,
+            "high": 4092,
+            "steps": [
+              "Fix the moisture source first, or the new patch will fail the same way.",
+              "Cut the loose finish back to sound material, squaring the opening so its edges land on framing.",
+              "Let the cavity dry, then screw a new board into the opening.",
+              "Tape the joints and apply two or three thin coats of compound, sanding lightly between coats.",
+              "Seal with stain-blocking primer, then paint to match."
+            ],
+            "cautions": [
+              "The scan does not say when this home was built. If it predates 1978 the paint may contain lead, and older plaster or textured finishes can contain asbestos. Have the finish tested before you cut, scrape or sand it.",
+              "This is overhead work from a ladder. Wear eye protection, and get help lifting board into place.",
+              "Do-it-yourself covers the visible surface only. Finding and fixing the moisture source is a professional's job, and is priced on both sides.",
+              "At 13 sq ft this is a large patch. Most people hire a section this size out."
+            ],
+            "prices_checked": "November 2026",
+            "price_note": "Approximate prices, as shown in search listings for The Home Depot in November 2026. They vary by store and date; each link shows today's price."
+          },
+          "professional": {
+            "label": "Hire a professional",
+            "low": 1650,
+            "high": 5030,
+            "items": [
+              {
+                "label": "Find and fix the moisture source",
+                "low": 1000,
+                "high": 4000,
+                "basis": "Roof leak repair averages $1,000; plumbing repairs run $1,000 to $4,000. Needed either way.",
+                "reference_id": "bobvila_water_damage",
+                "role": "source"
+              },
+              {
+                "label": "Cut out and patch the flagged ceiling section",
+                "low": 650,
+                "high": 1030,
+                "basis": "1.20 m² (13 sq ft) at $50 to $80 per sq ft, professional drywall repair.",
+                "reference_id": "inchcalculator_drywall",
+                "role": "surface"
+              }
+            ],
+            "links": [
+              {
+                "label": "Roof repair in Los Angeles · Thumbtack",
+                "url": "https://www.thumbtack.com/ca/los-angeles/roof-repair/"
+              },
+              {
+                "label": "Plumbers in Los Angeles · Thumbtack",
+                "url": "https://www.thumbtack.com/ca/los-angeles/plumbers/"
+              },
+              {
+                "label": "Drywall repair in Los Angeles · Thumbtack",
+                "url": "https://www.thumbtack.com/ca/los-angeles/drywall-repair/"
+              },
+              {
+                "label": "Check a contractor's licence · California CSLB",
+                "url": "https://www.cslb.ca.gov/OnlineServices/CheckLicenseII/CheckLicense.aspx"
+              }
+            ],
+            "link_note": "Directory and licence look-up links, not endorsements of any firm. Get more than one quote."
+          },
+          "surface_work": {
+            "diy_usd": 92.16,
+            "professional_low": 650,
+            "professional_high": 1030
+          },
+          "source_work": {
+            "low": 1000,
+            "high": 4000
+          },
+          "safety_links": [
+            {
+              "label": "US EPA · Lead in older homes",
+              "url": "https://www.epa.gov/lead/protect-your-family-sources-lead"
+            },
+            {
+              "label": "US EPA · Asbestos in the home",
+              "url": "https://www.epa.gov/asbestos/protect-your-family-exposures-asbestos"
+            },
+            {
+              "label": "US EPA · Mold cleanup in your home",
+              "url": "https://www.epa.gov/mold/mold-cleanup-your-home"
+            }
+          ]
+        },
+        "stages": [
+          {
+            "id": "as_scanned",
+            "title": "As scanned",
+            "caption": "The ceiling as the scan recorded it. The flagged region is outlined on the real surface."
+          },
+          {
+            "id": "saturation",
+            "title": "Repeated wetting",
+            "caption": "Water arriving from above spreads through the finish. Stains widen and the material softens and gains weight."
+          },
+          {
+            "id": "sag",
+            "title": "Sag",
+            "caption": "The softened section loses its hold on the framing and hangs lower. Cracks open around its edge."
+          },
+          {
+            "id": "detach",
+            "title": "Detachment",
+            "caption": "A section of about 1.2 m² lets go: roughly 12.9 to 46.9 kg of dry finish falling 2.48 m in 0.71 s, reaching a bed at 6.2 m/s."
+          },
+          {
+            "id": "aftermath",
+            "title": "Aftermath",
+            "caption": "Framing is exposed to the room, debris covers the floor below, and damp surfaces around the opening stay prone to mould."
+          }
+        ],
+        "disclaimer": "An illustration of a known failure mechanism at the flagged location. It is not a prediction that this will happen, or when."
+      },
+      {
+        "mechanism": "wall_moisture_damage",
+        "surface": "wall",
+        "kind": "mould",
+        "title": "This damp could spread and take the wall finish with it",
+        "premise": "If this wall keeps getting wet",
+        "finding_id": "F6",
+        "room_name": "Bathroom",
+        "why": "Dark streaking beside a shower is consistent with a surface that stays damp. Images cannot confirm what it is. If it is mould and the surface stays damp, it could spread across the wall, and the finish behind it could soften, blister and come away from the wall.",
+        "early_warning_signs": [
+          "The dark area spreading or returning after cleaning",
+          "Paint blistering or peeling nearby",
+          "A musty smell that lingers in the room"
+        ],
+        "recommended_action": "Clean and dry the area, then watch whether it returns. If it does, the wall is being wetted from somewhere a wipe cannot reach.",
+        "who_to_call": "You, for a patch this size, following the US EPA guidance. A mould remediation contractor if it covers more than about 10 square feet or keeps coming back.",
+        "written_by_analyst": false,
+        "dry": false,
+        "zone": {
+          "surface": "wall",
+          "corners": [
+            [
+              1.8,
+              4.248,
+              2.371
+            ],
+            [
+              1.768,
+              3.855,
+              2.155
+            ],
+            [
+              1.748,
+              3.596,
+              1.594
+            ],
+            [
+              1.777,
+              3.966,
+              1.753
+            ]
+          ],
+          "center": [
+            1.773,
+            3.909,
+            1.968
+          ],
+          "normal": [
+            -0.998,
+            0.069,
+            0.002
+          ],
+          "widened": true,
+          "approximate": false,
+          "floor_z": -0.007
+        },
+        "projectors": [
+          {
+            "position_id": "R8-A",
+            "position": [
+              1.0095221996307373,
+              3.4450597763061523,
+              1.3946207761764526
+            ],
+            "quaternion": [
+              -0.007775592152029276,
+              0.017094604671001434,
+              -0.4835503399372101,
+              0.8751150965690613
+            ],
+            "faces": [
+              "R8-A-ceiling",
+              "R8-A-wall-1",
+              "R8-A-wall-2",
+              "R8-A-wall-3",
+              "R8-A-wall-4",
+              "R8-A-floor"
+            ]
+          }
+        ],
+        "bounds": {
+          "min": [
+            0.344,
+            1.66,
+            -0.157
+          ],
+          "max": [
+            1.904,
+            5.143,
+            2.604
+          ]
+        },
+        "calc": {
+          "area_m2": 0.07,
+          "drawn_area_m2": 0.17,
+          "area_sqft": 0.7,
+          "top_height_m": 2.38,
+          "bottom_height_m": 1.6,
+          "masses": [
+            {
+              "finish": "gypsum_board",
+              "label": "12.7 mm (1/2 in) gypsum board",
+              "kg_per_m2": 10.7,
+              "mass_kg": 1.9
+            },
+            {
+              "finish": "plaster_on_lath",
+              "label": "plaster on wood lath",
+              "kg_per_m2": 39.1,
+              "mass_kg": 6.8
+            }
+          ],
+          "finish_known": false,
+          "tiles": [
+            {
+              "value": 0.07,
+              "unit": " m²",
+              "label": "wall inside the flagged region",
+              "digits": 2
+            },
+            {
+              "value": 0.7,
+              "unit": " sq ft",
+              "label": "if it is mould: against the US EPA's do-it-yourself limit of about 10 sq ft",
+              "digits": 1
+            },
+            {
+              "value": 2.38,
+              "unit": " m",
+              "label": "top of the region above the floor",
+              "digits": 2
+            },
+            {
+              "value": 1.9,
+              "unit": " kg",
+              "label": "dry weight of the drawn section if 12.7 mm (1/2 in) gypsum board",
+              "digits": 1
+            },
+            {
+              "value": 6.8,
+              "unit": " kg",
+              "label": "dry weight of the drawn section if plaster on wood lath",
+              "digits": 1
+            }
+          ],
+          "inputs": [
+            "Area 0.07 m²: the flagged image region projected onto the scanned wall. The 3D view draws it 0.17 m², one 0.45 m stud bay wide, so it can be seen.",
+            "Heights are measured from the floor in the scan's 3D model: the region runs from 1.60 m to 2.38 m.",
+            "Mass per square metre: typical dry dead loads from the ASCE/SEI 7 commentary. Absorbed water adds weight that is not counted here."
+          ]
+        },
+        "repair_cost": {
+          "currency": "USD",
+          "heading": "WHAT THE REPAIR COSTS: NOW, OR AFTER IT SPREADS",
+          "added_text": [
+            "Waiting until it spreads adds ",
+            " to the bill for the same wall."
+          ],
+          "now": {
+            "label": "Repair now",
+            "low": 1100,
+            "high": 3400,
+            "items": [
+              {
+                "label": "Professional removal, if it is mould",
+                "low": 1100,
+                "high": 3400,
+                "basis": "Mould removal, $1,100 to $3,400. Images cannot confirm mould; a patch this small is within the US EPA's do-it-yourself range.",
+                "reference_id": "bobvila_water_damage",
+                "role": "surface"
+              }
+            ]
+          },
+          "after": {
+            "label": "Repair after it spreads",
+            "low": 1510,
+            "high": 4450,
+            "items": [
+              {
+                "label": "Professional removal, if it is mould",
+                "low": 1100,
+                "high": 3400,
+                "basis": "Mould removal, $1,100 to $3,400. Images cannot confirm mould; a patch this small is within the US EPA's do-it-yourself range.",
+                "reference_id": "bobvila_water_damage",
+                "role": "surface"
+              },
+              {
+                "label": "Replace the damaged wall section",
+                "low": 300,
+                "high": 800,
+                "basis": "Drywall repair after water damage, $300 to $800.",
+                "reference_id": "bobvila_water_damage",
+                "role": "surface"
+              },
+              {
+                "label": "Dry out and clean the room",
+                "low": 110,
+                "high": 250,
+                "basis": "The room's 3.5 m² (38 sq ft) floor at $3 to $6.50 per sq ft, clean to gray water.",
+                "reference_id": "bobvila_water_damage"
+              }
+            ]
+          },
+          "added_low": 410,
+          "added_high": 1050,
+          "context": {
+            "amount": 15400,
+            "statement": "For scale, the average insured US home water damage or freezing claim, 2019 to 2023:",
+            "reference_id": "iii_water_claims"
+          },
+          "notes": [
+            "Not priced: fixing what keeps this surface damp, such as ventilation, caulking or a leak. No guide price applies until the cause is known.",
+            "Not priced: injury, damaged furniture and belongings, or living elsewhere during the work.",
+            "Rough ranges from US consumer cost guides, not a quote. Local labour rates, access and the ceiling's finish change the price."
+          ],
+          "reference_ids": [
+            "bobvila_water_damage"
+          ]
+        },
+        "repair_plan": {
+          "kind": "mould",
+          "cut_out": false,
+          "stages": [
+            {
+              "title": "As scanned",
+              "caption": "The darkened area as the scan recorded it."
+            },
+            {
+              "title": "Scrub and dry",
+              "caption": "The surface is scrubbed with detergent and water and dried completely, as the US EPA advises for a small area of mould."
+            },
+            {
+              "title": "Seal with primer",
+              "caption": "Only once it is clean and dry: a stain-blocking primer over the cleaned area."
+            },
+            {
+              "title": "Repaint",
+              "caption": "The primed area is painted to match, and the room is kept ventilated."
+            }
+          ],
+          "diy": {
+            "label": "Fix it yourself",
+            "difficulty": "Beginner",
+            "time": "An hour of work, then a day to dry",
+            "materials": [
+              {
+                "name": "3M N95 sanding respirator, 2-pack",
+                "price_usd": 7.98,
+                "link_kind": "product",
+                "url": "https://www.homedepot.com/p/3M-N95-Paint-Sanding-Respirator-Mask-2-Pack-8210PP2-DC/100559558",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": 7.98
+              },
+              {
+                "name": "Concrobium Mold Control spray, 32 oz",
+                "price_usd": 13.97,
+                "link_kind": "product",
+                "url": "https://www.homedepot.com/p/Concrobium-32-oz-Mold-Control-25326CAL/310228466",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": 13.97
+              },
+              {
+                "name": "KILZ Original stain-blocking primer, 1 qt",
+                "price_usd": 16.98,
+                "link_kind": "product",
+                "url": "https://www.homedepot.com/p/KILZ-Original-1-qt-White-Oil-Based-Interior-Primer-Sealer-and-Stain-Blocker-10902/100371322",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": 16.98
+              },
+              {
+                "name": "Interior paint matched to the wall, 1 qt",
+                "price_usd": null,
+                "link_kind": "search",
+                "url": "https://www.homedepot.com/s/interior%20paint%20quart",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": null
+              }
+            ],
+            "tools": [
+              {
+                "name": "Safety goggles without vent holes",
+                "price_usd": null,
+                "link_kind": "search",
+                "url": "https://www.homedepot.com/s/non%20vented%20safety%20goggles",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": null
+              },
+              {
+                "name": "Long rubber gloves",
+                "price_usd": null,
+                "link_kind": "search",
+                "url": "https://www.homedepot.com/s/long%20rubber%20cleaning%20gloves",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": null
+              },
+              {
+                "name": "Scrub brush and household detergent",
+                "price_usd": null,
+                "link_kind": "search",
+                "url": "https://www.homedepot.com/s/scrub%20brush",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": null
+              },
+              {
+                "name": "Mini paint roller and tray",
+                "price_usd": null,
+                "link_kind": "search",
+                "url": "https://www.homedepot.com/s/mini%20paint%20roller%20tray%20kit",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": null
+              }
+            ],
+            "materials_total_usd": 38.93,
+            "unpriced": [
+              "Interior paint matched to the wall, 1 qt"
+            ],
+            "low": 39,
+            "high": 39,
+            "steps": [
+              "Wear an N95 respirator, goggles and long gloves, and ventilate the room.",
+              "Scrub the area with detergent and water, or a mould cleaner, and dry it completely.",
+              "Do not paint or caulk over mould: paint applied over a mouldy surface is likely to peel.",
+              "Once clean and dry, seal with primer and repaint.",
+              "Run the fan or open a window when showering, so the corner dries out between uses."
+            ],
+            "cautions": [
+              "Dark streaking is not proof of mould, and images cannot confirm it. These steps follow the US EPA's guidance for cleaning a small area that may be mould.",
+              "The scan does not say when this home was built. If it predates 1978 the paint may contain lead, and older plaster or textured finishes can contain asbestos. Have the finish tested before you cut, scrape or sand it.",
+              "US EPA guidance treats mould under about 10 square feet as a job most people can handle. This region is 0.7 sq ft. Beyond that, or if it follows a lot of water damage, hire a remediation contractor."
+            ],
+            "prices_checked": "November 2026",
+            "price_note": "Approximate prices, as shown in search listings for The Home Depot in November 2026. They vary by store and date; each link shows today's price. Not in the total: interior paint matched to the wall, 1 qt."
+          },
+          "professional": {
+            "label": "Hire a professional",
+            "low": 1100,
+            "high": 3400,
+            "items": [
+              {
+                "label": "Professional removal, if it is mould",
+                "low": 1100,
+                "high": 3400,
+                "basis": "Mould removal, $1,100 to $3,400. Images cannot confirm mould; a patch this small is within the US EPA's do-it-yourself range.",
+                "reference_id": "bobvila_water_damage",
+                "role": "surface"
+              }
+            ],
+            "links": [
+              {
+                "label": "Mould removal in Los Angeles · Thumbtack",
+                "url": "https://www.thumbtack.com/ca/los-angeles/mold-removal/"
+              },
+              {
+                "label": "Drywall repair in Los Angeles · Thumbtack",
+                "url": "https://www.thumbtack.com/ca/los-angeles/drywall-repair/"
+              },
+              {
+                "label": "Check a contractor's licence · California CSLB",
+                "url": "https://www.cslb.ca.gov/OnlineServices/CheckLicenseII/CheckLicense.aspx"
+              }
+            ],
+            "link_note": "Directory and licence look-up links, not endorsements of any firm. Get more than one quote."
+          },
+          "surface_work": {
+            "diy_usd": 38.93,
+            "professional_low": 1100,
+            "professional_high": 3400
+          },
+          "source_work": null,
+          "safety_links": [
+            {
+              "label": "US EPA · Lead in older homes",
+              "url": "https://www.epa.gov/lead/protect-your-family-sources-lead"
+            },
+            {
+              "label": "US EPA · Asbestos in the home",
+              "url": "https://www.epa.gov/asbestos/protect-your-family-exposures-asbestos"
+            },
+            {
+              "label": "US EPA · Mold cleanup in your home",
+              "url": "https://www.epa.gov/mold/mold-cleanup-your-home"
+            }
+          ]
+        },
+        "stages": [
+          {
+            "id": "as_scanned",
+            "title": "As scanned",
+            "caption": "The wall as the scan recorded it. The flagged region is outlined on the real surface."
+          },
+          {
+            "id": "saturation",
+            "title": "Damp spreads",
+            "caption": "Moisture keeps arriving. The darkened area widens across the wall."
+          },
+          {
+            "id": "sag",
+            "title": "Finish blisters",
+            "caption": "The wetted finish softens and lifts away from the wall behind it. Cracks open around the blister."
+          },
+          {
+            "id": "detach",
+            "title": "Finish sheds",
+            "caption": "Finish over about 0.17 m² comes away from the wall and drops from up to 2.38 m: roughly 1.9 to 6.8 kg of dry finish."
+          },
+          {
+            "id": "aftermath",
+            "title": "Aftermath",
+            "caption": "The wall's backing is exposed, debris lies at its foot, and damp surfaces around the opening stay prone to mould."
+          }
+        ],
+        "disclaimer": "An illustration of a known failure mechanism at the flagged location. It is not a prediction that this will happen, or when."
+      },
+      {
+        "mechanism": "ceiling_moisture_failure",
+        "surface": "ceiling",
+        "kind": "crack",
+        "title": "A section of this ceiling could come down",
+        "premise": "If whatever is opening this crack is not found and fixed",
+        "finding_id": "F5",
+        "room_name": "Kitchen 1",
+        "why": "A crack that is wider than a hairline shows the finish has already parted along that line. If whatever opened it keeps working, or if water finds its way into it, the finish beside the crack could loosen and a section could come away.",
+        "early_warning_signs": [
+          "The crack getting longer or wider",
+          "One side of the crack sitting lower than the other",
+          "Staining or dampness appearing along it"
+        ],
+        "recommended_action": "Mark and date both ends of the crack, and have the framing above checked if it grows or one side drops.",
+        "who_to_call": "A drywall or plaster contractor for the repair. A structural engineer if the crack keeps growing.",
+        "written_by_analyst": false,
+        "dry": true,
+        "zone": {
+          "surface": "ceiling",
+          "corners": [
+            [
+              5.434,
+              0.12,
+              2.499
+            ],
+            [
+              5.559,
+              -0.52,
+              2.512
+            ],
+            [
+              5.998,
+              -0.447,
+              2.513
+            ],
+            [
+              5.878,
+              0.197,
+              2.499
+            ]
+          ],
+          "center": [
+            5.717,
+            -0.164,
+            2.506
+          ],
+          "normal": [
+            0.008,
+            -0.02,
+            -1.0
+          ],
+          "widened": true,
+          "approximate": false,
+          "floor_z": 0.022
+        },
+        "projectors": [
+          {
+            "position_id": "R4-B",
+            "position": [
+              5.716015338897705,
+              0.325170636177063,
+              1.4245505332946777
+            ],
+            "quaternion": [
+              -0.018719397485256195,
+              0.008318360894918442,
+              0.08834198862314224,
+              0.9958795309066772
+            ],
+            "faces": [
+              "R4-B-ceiling",
+              "R4-B-wall-1",
+              "R4-B-wall-2",
+              "R4-B-wall-3",
+              "R4-B-wall-4",
+              "R4-B-floor"
+            ]
+          },
+          {
+            "position_id": "R4-A",
+            "position": [
+              4.961605072021484,
+              1.1526035070419312,
+              1.40701162815094
+            ],
+            "quaternion": [
+              -0.02006499096751213,
+              0.0035537516232579947,
+              0.3767859637737274,
+              0.9260761737823486
+            ],
+            "faces": [
+              "R4-A-ceiling",
+              "R4-A-wall-1",
+              "R4-A-wall-2",
+              "R4-A-wall-3",
+              "R4-A-wall-4",
+              "R4-A-floor"
+            ]
+          }
+        ],
+        "bounds": {
+          "min": [
+            3.482,
+            -1.131,
+            -0.144
+          ],
+          "max": [
+            7.115,
+            3.316,
+            2.656
+          ]
+        },
+        "calc": {
+          "area_m2": 0.29,
+          "drop_height_m": 2.48,
+          "fall_time_s": 0.71,
+          "speed_at_floor_m_s": 7.0,
+          "landing_height_m": 1.2,
+          "speed_at_landing_m_s": 5.0,
+          "masses": [
+            {
+              "finish": "gypsum_board",
+              "label": "12.7 mm (1/2 in) gypsum board",
+              "kg_per_m2": 10.7,
+              "mass_kg": 3.1,
+              "energy_at_floor_j": 77
+            },
+            {
+              "finish": "plaster_on_lath",
+              "label": "plaster on wood lath",
+              "kg_per_m2": 39.1,
+              "mass_kg": 11.4,
+              "energy_at_floor_j": 279
+            }
+          ],
+          "landing_label": "a seated person's head",
+          "inputs": [
+            "Area 0.29 m²: the flagged image region projected onto the scanned ceiling, widened to one 0.45 m framing bay.",
+            "Drop 2.48 m: ceiling to floor, measured in the scan's 3D model.",
+            "Mass per square metre: typical dry dead loads from the ASCE/SEI 7 commentary. Absorbed water adds weight that is not counted here."
+          ],
+          "finish_known": false,
+          "tiles": [
+            {
+              "value": 0.29,
+              "unit": " m²",
+              "label": "section that could detach",
+              "digits": 2
+            },
+            {
+              "value": 2.48,
+              "unit": " m",
+              "label": "ceiling to floor",
+              "digits": 2
+            },
+            {
+              "value": 0.71,
+              "unit": " s",
+              "label": "time to reach the floor",
+              "digits": 2
+            },
+            {
+              "value": 5.0,
+              "unit": " m/s",
+              "label": "speed reaching a seated person's head",
+              "digits": 1
+            },
+            {
+              "value": 3.1,
+              "unit": " kg",
+              "label": "dry weight if 12.7 mm (1/2 in) gypsum board",
+              "digits": 1
+            },
+            {
+              "value": 11.4,
+              "unit": " kg",
+              "label": "dry weight if plaster on wood lath",
+              "digits": 1
+            }
+          ]
+        },
+        "repair_cost": {
+          "currency": "USD",
+          "heading": "WHAT THE REPAIR COSTS: NOW, OR AFTER IT FALLS",
+          "added_text": [
+            "Waiting until it falls adds ",
+            " to the bill for the same ceiling."
+          ],
+          "now": {
+            "label": "Repair now",
+            "low": 60,
+            "high": 200,
+            "items": [
+              {
+                "label": "Retape and refinish the crack",
+                "low": 60,
+                "high": 200,
+                "basis": "Small patch job, $60 to $200: stress cracks, retaping and remudding, repainting.",
+                "reference_id": "inchcalculator_drywall",
+                "role": "surface"
+              }
+            ]
+          },
+          "after": {
+            "label": "Repair after the section falls",
+            "low": 350,
+            "high": 1250,
+            "items": [
+              {
+                "label": "Repair the ceiling after a section falls",
+                "low": 350,
+                "high": 1250,
+                "basis": "Ceiling repair, $350 to $1,250.",
+                "reference_id": "bobvila_water_damage",
+                "role": "surface"
+              }
+            ]
+          },
+          "added_low": 290,
+          "added_high": 1050,
+          "context": {
+            "amount": 15400,
+            "statement": "For scale, the average insured US home water damage or freezing claim, 2019 to 2023:",
+            "reference_id": "iii_water_claims"
+          },
+          "notes": [
+            "Not priced: finding what is opening the crack. No guide price applies until the cause is known.",
+            "Not priced: injury, damaged furniture and belongings, or living elsewhere during the work.",
+            "Rough ranges from US consumer cost guides, not a quote. Local labour rates, access and the ceiling's finish change the price."
+          ],
+          "reference_ids": [
+            "bobvila_water_damage",
+            "inchcalculator_drywall"
+          ]
+        },
+        "repair_plan": {
+          "kind": "crack",
+          "cut_out": false,
+          "stages": [
+            {
+              "title": "As scanned",
+              "caption": "The crack as the scan recorded it."
+            },
+            {
+              "title": "Open and tape the crack",
+              "caption": "Loose material is raked out and the crack is bridged with mesh tape."
+            },
+            {
+              "title": "Skim with compound",
+              "caption": "Two or three thin coats of joint compound, each wider than the last, feathered into the surface."
+            },
+            {
+              "title": "Prime and paint",
+              "caption": "The dry compound is sanded, primed and painted to match."
+            }
+          ],
+          "diy": {
+            "label": "Fix it yourself",
+            "difficulty": "Beginner",
+            "time": "An afternoon, plus drying time between coats",
+            "materials": [
+              {
+                "name": "3M N95 sanding respirator, 2-pack",
+                "price_usd": 7.98,
+                "link_kind": "product",
+                "url": "https://www.homedepot.com/p/3M-N95-Paint-Sanding-Respirator-Mask-2-Pack-8210PP2-DC/100559558",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": 7.98
+              },
+              {
+                "name": "FibaTape self-adhesive mesh joint tape, 1-7/8 in. x 150 ft.",
+                "price_usd": 6.98,
+                "link_kind": "category",
+                "url": "https://www.homedepot.com/b/Building-Materials-Drywall/Fiberglass-Mesh/N-5yc1vZar3dZ1z0qvc2",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": 6.98
+              },
+              {
+                "name": "USG Sheetrock All Purpose joint compound, 3.5 qt",
+                "price_usd": 12.34,
+                "link_kind": "category",
+                "url": "https://www.homedepot.com/b/Building-Materials-Drywall-Joint-Compound/USG-Sheetrock-Brand/N-5yc1vZard1Zomd",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": 12.34
+              },
+              {
+                "name": "KILZ Original stain-blocking primer, 1 qt",
+                "price_usd": 16.98,
+                "link_kind": "product",
+                "url": "https://www.homedepot.com/p/KILZ-Original-1-qt-White-Oil-Based-Interior-Primer-Sealer-and-Stain-Blocker-10902/100371322",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": 16.98
+              },
+              {
+                "name": "BEHR Premium Plus flat ceiling paint, 1 qt",
+                "price_usd": 16.48,
+                "link_kind": "product",
+                "url": "https://www.homedepot.com/p/BEHR-PREMIUM-PLUS-1-qt-Ultra-Pure-White-Ceiling-Flat-Interior-Paint-55804/100178852",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": 16.48
+              }
+            ],
+            "tools": [
+              {
+                "name": "6 in. drywall taping knife",
+                "price_usd": null,
+                "link_kind": "search",
+                "url": "https://www.homedepot.com/s/6%20in%20drywall%20taping%20knife",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": null
+              },
+              {
+                "name": "Fine sanding sponge",
+                "price_usd": null,
+                "link_kind": "search",
+                "url": "https://www.homedepot.com/s/fine%20sanding%20sponge",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": null
+              },
+              {
+                "name": "Mini paint roller and tray",
+                "price_usd": null,
+                "link_kind": "search",
+                "url": "https://www.homedepot.com/s/mini%20paint%20roller%20tray%20kit",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": null
+              }
+            ],
+            "materials_total_usd": 60.76,
+            "unpriced": [],
+            "low": 61,
+            "high": 61,
+            "steps": [
+              "Mark both ends of the crack with a pencil and date them, so you can tell if it grows.",
+              "Rake out loose material and bridge the crack with mesh tape.",
+              "Apply two or three thin coats of compound, each wider than the last, sanding lightly between coats.",
+              "Prime and paint to match."
+            ],
+            "cautions": [
+              "The scan does not say when this home was built. If it predates 1978 the paint may contain lead, and older plaster or textured finishes can contain asbestos. Have the finish tested before you cut, scrape or sand it.",
+              "This is overhead work from a ladder. Wear eye protection, and get help lifting board into place.",
+              "Filling a crack hides it. If it reopens or one side drops, stop patching and have the framing looked at."
+            ],
+            "prices_checked": "November 2026",
+            "price_note": "Approximate prices, as shown in search listings for The Home Depot in November 2026. They vary by store and date; each link shows today's price."
+          },
+          "professional": {
+            "label": "Hire a professional",
+            "low": 60,
+            "high": 200,
+            "items": [
+              {
+                "label": "Retape and refinish the crack",
+                "low": 60,
+                "high": 200,
+                "basis": "Small patch job, $60 to $200: stress cracks, retaping and remudding, repainting.",
+                "reference_id": "inchcalculator_drywall",
+                "role": "surface"
+              }
+            ],
+            "links": [
+              {
+                "label": "Drywall repair in Los Angeles · Thumbtack",
+                "url": "https://www.thumbtack.com/ca/los-angeles/drywall-repair/"
+              },
+              {
+                "label": "Handyman services in Los Angeles · Thumbtack",
+                "url": "https://www.thumbtack.com/ca/los-angeles/handyman/"
+              },
+              {
+                "label": "Check a contractor's licence · California CSLB",
+                "url": "https://www.cslb.ca.gov/OnlineServices/CheckLicenseII/CheckLicense.aspx"
+              }
+            ],
+            "link_note": "Directory and licence look-up links, not endorsements of any firm. Get more than one quote."
+          },
+          "surface_work": {
+            "diy_usd": 60.76,
+            "professional_low": 60,
+            "professional_high": 200
+          },
+          "source_work": null,
+          "safety_links": [
+            {
+              "label": "US EPA · Lead in older homes",
+              "url": "https://www.epa.gov/lead/protect-your-family-sources-lead"
+            },
+            {
+              "label": "US EPA · Asbestos in the home",
+              "url": "https://www.epa.gov/asbestos/protect-your-family-exposures-asbestos"
+            },
+            {
+              "label": "US EPA · Mold cleanup in your home",
+              "url": "https://www.epa.gov/mold/mold-cleanup-your-home"
+            }
+          ]
+        },
+        "stages": [
+          {
+            "id": "as_scanned",
+            "title": "As scanned",
+            "caption": "The ceiling as the scan recorded it. The flagged region is outlined on the real surface."
+          },
+          {
+            "id": "saturation",
+            "title": "The crack spreads",
+            "caption": "The crack lengthens and branches as whatever opened it keeps working."
+          },
+          {
+            "id": "sag",
+            "title": "Sag",
+            "caption": "The finish beside the crack loosens from the framing and hangs lower. The crack widens around it."
+          },
+          {
+            "id": "detach",
+            "title": "Detachment",
+            "caption": "A section of about 0.29 m² lets go: roughly 3.1 to 11.4 kg of dry finish falling 2.48 m in 0.71 s, reaching a seated person's head at 5.0 m/s."
+          },
+          {
+            "id": "aftermath",
+            "title": "Aftermath",
+            "caption": "Framing is exposed to the room and debris covers the floor below."
+          }
+        ],
+        "disclaimer": "An illustration of a known failure mechanism at the flagged location. It is not a prediction that this will happen, or when."
+      },
+      {
+        "mechanism": "wall_moisture_damage",
+        "surface": "wall",
+        "kind": "stain",
+        "title": "This wall's finish could blister and come away",
+        "premise": "If this wall keeps getting wet",
+        "finding_id": "F3",
+        "room_name": "Bedroom 1",
+        "why": "Trails like these can be left by water running down the wall from above. If water is still running, the wall finish could soften and blister where it runs, and mould could take hold on the damp surface.",
+        "early_warning_signs": [
+          "Fresh or darker trails after rain",
+          "The wall feeling damp or soft along the trails",
+          "Paint blistering or peeling, or dark spotting appearing"
+        ],
+        "recommended_action": "Check the wall and the ceiling above it with a moisture meter, and look at the same spot after the next rain.",
+        "who_to_call": "A licensed roofer or plumber to trace the water if it is damp, then a painter or drywall contractor for the surface.",
+        "written_by_analyst": false,
+        "dry": false,
+        "zone": {
+          "surface": "wall",
+          "corners": [
+            [
+              2.142,
+              3.121,
+              2.294
+            ],
+            [
+              2.138,
+              3.688,
+              2.11
+            ],
+            [
+              2.137,
+              3.688,
+              1.422
+            ],
+            [
+              2.141,
+              3.128,
+              1.441
+            ]
+          ],
+          "center": [
+            2.139,
+            3.436,
+            1.809
+          ],
+          "normal": [
+            1.0,
+            0.007,
+            -0.001
+          ],
+          "widened": false,
+          "approximate": false,
+          "floor_z": -0.096
+        },
+        "projectors": [
+          {
+            "position_id": "R2-B",
+            "position": [
+              3.9772260189056396,
+              4.085920333862305,
+              1.2975680828094482
+            ],
+            "quaternion": [
+              0.012661652639508247,
+              0.009578440338373184,
+              0.9175697565078735,
+              0.3972577452659607
+            ],
+            "faces": [
+              "R2-B-ceiling",
+              "R2-B-wall-1",
+              "R2-B-wall-2",
+              "R2-B-wall-3",
+              "R2-B-wall-4",
+              "R2-B-floor"
+            ]
+          },
+          {
+            "position_id": "R2-A",
+            "position": [
+              2.819108009338379,
+              2.5332231521606445,
+              1.348824381828308
+            ],
+            "quaternion": [
+              -0.0007281587459146976,
+              -0.0062657007947564125,
+              0.8904300928115845,
+              0.45507633686065674
+            ],
+            "faces": [
+              "R2-A-ceiling",
+              "R2-A-wall-1",
+              "R2-A-wall-2",
+              "R2-A-wall-3",
+              "R2-A-wall-4",
+              "R2-A-floor"
+            ]
+          }
+        ],
+        "bounds": {
+          "min": [
+            1.866,
+            1.661,
+            -0.246
+          ],
+          "max": [
+            5.533,
+            5.16,
+            2.542
+          ]
+        },
+        "calc": {
+          "area_m2": 0.43,
+          "drawn_area_m2": 0.43,
+          "area_sqft": 4.7,
+          "top_height_m": 2.39,
+          "bottom_height_m": 1.52,
+          "masses": [
+            {
+              "finish": "gypsum_board",
+              "label": "12.7 mm (1/2 in) gypsum board",
+              "kg_per_m2": 10.7,
+              "mass_kg": 4.7
+            },
+            {
+              "finish": "plaster_on_lath",
+              "label": "plaster on wood lath",
+              "kg_per_m2": 39.1,
+              "mass_kg": 16.9
+            }
+          ],
+          "finish_known": false,
+          "tiles": [
+            {
+              "value": 0.43,
+              "unit": " m²",
+              "label": "wall inside the flagged region",
+              "digits": 2
+            },
+            {
+              "value": 2.39,
+              "unit": " m",
+              "label": "top of the region above the floor",
+              "digits": 2
+            },
+            {
+              "value": 4.7,
+              "unit": " kg",
+              "label": "dry weight of the drawn section if 12.7 mm (1/2 in) gypsum board",
+              "digits": 1
+            },
+            {
+              "value": 16.9,
+              "unit": " kg",
+              "label": "dry weight of the drawn section if plaster on wood lath",
+              "digits": 1
+            }
+          ],
+          "inputs": [
+            "Area 0.43 m²: the flagged image region projected onto the scanned wall.",
+            "Heights are measured from the floor in the scan's 3D model: the region runs from 1.52 m to 2.39 m.",
+            "Mass per square metre: typical dry dead loads from the ASCE/SEI 7 commentary. Absorbed water adds weight that is not counted here."
+          ]
+        },
+        "repair_cost": {
+          "currency": "USD",
+          "heading": "WHAT THE REPAIR COSTS: NOW, OR AFTER IT SPREADS",
+          "added_text": [
+            "Waiting until it spreads adds ",
+            " to the bill for the same wall."
+          ],
+          "now": {
+            "label": "Repair now",
+            "low": 1150,
+            "high": 5000,
+            "items": [
+              {
+                "label": "Find and fix the moisture source",
+                "low": 1000,
+                "high": 4000,
+                "basis": "Roof leak repair averages $1,000; plumbing repairs run $1,000 to $4,000. Needed either way.",
+                "reference_id": "bobvila_water_damage",
+                "role": "source"
+              },
+              {
+                "label": "Seal the stain and repaint",
+                "low": 150,
+                "high": 1000,
+                "basis": "Cosmetic water damage repair, $150 to $1,000.",
+                "reference_id": "bobvila_water_damage",
+                "role": "surface"
+              }
+            ]
+          },
+          "after": {
+            "label": "Repair after it spreads",
+            "low": 1680,
+            "high": 9020,
+            "items": [
+              {
+                "label": "Find and fix the moisture source",
+                "low": 1000,
+                "high": 4000,
+                "basis": "Roof leak repair averages $1,000; plumbing repairs run $1,000 to $4,000. Needed either way.",
+                "reference_id": "bobvila_water_damage",
+                "role": "source"
+              },
+              {
+                "label": "Replace the damaged wall section",
+                "low": 300,
+                "high": 800,
+                "basis": "Drywall repair after water damage, $300 to $800.",
+                "reference_id": "bobvila_water_damage",
+                "role": "surface"
+              },
+              {
+                "label": "Dry out and clean the room",
+                "low": 380,
+                "high": 820,
+                "basis": "The room's 11.7 m² (126 sq ft) floor at $3 to $6.50 per sq ft, clean to gray water.",
+                "reference_id": "bobvila_water_damage"
+              },
+              {
+                "label": "Remove mould, if it has taken hold",
+                "low": 0,
+                "high": 3400,
+                "basis": "Mould removal costs $1,100 to $3,400 when it is needed; $0 if the room is dried in time.",
+                "reference_id": "bobvila_water_damage"
+              }
+            ]
+          },
+          "added_low": 530,
+          "added_high": 4020,
+          "context": {
+            "amount": 15400,
+            "statement": "For scale, the average insured US home water damage or freezing claim, 2019 to 2023:",
+            "reference_id": "iii_water_claims"
+          },
+          "notes": [
+            "Not priced: injury, damaged furniture and belongings, or living elsewhere during the work.",
+            "Rough ranges from US consumer cost guides, not a quote. Local labour rates, access and the ceiling's finish change the price."
+          ],
+          "reference_ids": [
+            "bobvila_water_damage"
+          ]
+        },
+        "repair_plan": {
+          "kind": "stain",
+          "cut_out": false,
+          "stages": [
+            {
+              "title": "As scanned",
+              "caption": "The stained area as the scan recorded it."
+            },
+            {
+              "title": "Confirm it is dry",
+              "caption": "Nothing is sealed until the source is fixed and the surface is dry. A moisture meter settles it."
+            },
+            {
+              "title": "Seal with stain-blocking primer",
+              "caption": "A stain-blocking primer stops the mark bleeding back through new paint."
+            },
+            {
+              "title": "Repaint",
+              "caption": "The sealed area is painted to match the surface around it."
+            }
+          ],
+          "diy": {
+            "label": "Fix it yourself",
+            "difficulty": "Beginner",
+            "time": "An afternoon, once the surface is dry",
+            "materials": [
+              {
+                "name": "KILZ Original stain-blocking primer, 1 qt",
+                "price_usd": 16.98,
+                "link_kind": "product",
+                "url": "https://www.homedepot.com/p/KILZ-Original-1-qt-White-Oil-Based-Interior-Primer-Sealer-and-Stain-Blocker-10902/100371322",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": 16.98
+              },
+              {
+                "name": "Interior paint matched to the wall, 1 qt",
+                "price_usd": null,
+                "link_kind": "search",
+                "url": "https://www.homedepot.com/s/interior%20paint%20quart",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": null
+              }
+            ],
+            "tools": [
+              {
+                "name": "Pin moisture meter",
+                "price_usd": null,
+                "link_kind": "search",
+                "url": "https://www.homedepot.com/s/pin%20moisture%20meter",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": null
+              },
+              {
+                "name": "Mini paint roller and tray",
+                "price_usd": null,
+                "link_kind": "search",
+                "url": "https://www.homedepot.com/s/mini%20paint%20roller%20tray%20kit",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": null
+              }
+            ],
+            "materials_total_usd": 16.98,
+            "unpriced": [
+              "Interior paint matched to the wall, 1 qt"
+            ],
+            "low": 1017,
+            "high": 4017,
+            "steps": [
+              "Fix the moisture source first. Sealing over an active leak hides the warning, not the problem.",
+              "Confirm the surface is dry. Press it gently: soft, crumbling or sagging finish means this is no longer a paint job.",
+              "Apply stain-blocking primer over the stain and a margin around it.",
+              "Paint to match once the primer is dry."
+            ],
+            "cautions": [
+              "The scan does not say when this home was built. If it predates 1978 the paint may contain lead, and older plaster or textured finishes can contain asbestos. Have the finish tested before you cut, scrape or sand it.",
+              "Do-it-yourself covers the visible surface only. Finding and fixing the moisture source is a professional's job, and is priced on both sides."
+            ],
+            "prices_checked": "November 2026",
+            "price_note": "Approximate prices, as shown in search listings for The Home Depot in November 2026. They vary by store and date; each link shows today's price. Not in the total: interior paint matched to the wall, 1 qt."
+          },
+          "professional": {
+            "label": "Hire a professional",
+            "low": 1150,
+            "high": 5000,
+            "items": [
+              {
+                "label": "Find and fix the moisture source",
+                "low": 1000,
+                "high": 4000,
+                "basis": "Roof leak repair averages $1,000; plumbing repairs run $1,000 to $4,000. Needed either way.",
+                "reference_id": "bobvila_water_damage",
+                "role": "source"
+              },
+              {
+                "label": "Seal the stain and repaint",
+                "low": 150,
+                "high": 1000,
+                "basis": "Cosmetic water damage repair, $150 to $1,000.",
+                "reference_id": "bobvila_water_damage",
+                "role": "surface"
+              }
+            ],
+            "links": [
+              {
+                "label": "Roof repair in Los Angeles · Thumbtack",
+                "url": "https://www.thumbtack.com/ca/los-angeles/roof-repair/"
+              },
+              {
+                "label": "Plumbers in Los Angeles · Thumbtack",
+                "url": "https://www.thumbtack.com/ca/los-angeles/plumbers/"
+              },
+              {
+                "label": "Interior painters in Los Angeles · Thumbtack",
+                "url": "https://www.thumbtack.com/ca/los-angeles/interior-painting/"
+              },
+              {
+                "label": "Check a contractor's licence · California CSLB",
+                "url": "https://www.cslb.ca.gov/OnlineServices/CheckLicenseII/CheckLicense.aspx"
+              }
+            ],
+            "link_note": "Directory and licence look-up links, not endorsements of any firm. Get more than one quote."
+          },
+          "surface_work": {
+            "diy_usd": 16.98,
+            "professional_low": 150,
+            "professional_high": 1000
+          },
+          "source_work": {
+            "low": 1000,
+            "high": 4000
+          },
+          "safety_links": [
+            {
+              "label": "US EPA · Lead in older homes",
+              "url": "https://www.epa.gov/lead/protect-your-family-sources-lead"
+            },
+            {
+              "label": "US EPA · Asbestos in the home",
+              "url": "https://www.epa.gov/asbestos/protect-your-family-exposures-asbestos"
+            },
+            {
+              "label": "US EPA · Mold cleanup in your home",
+              "url": "https://www.epa.gov/mold/mold-cleanup-your-home"
+            }
+          ]
+        },
+        "stages": [
+          {
+            "id": "as_scanned",
+            "title": "As scanned",
+            "caption": "The wall as the scan recorded it. The flagged region is outlined on the real surface."
+          },
+          {
+            "id": "saturation",
+            "title": "Damp spreads",
+            "caption": "Moisture keeps arriving. The darkened area widens across the wall."
+          },
+          {
+            "id": "sag",
+            "title": "Finish blisters",
+            "caption": "The wetted finish softens and lifts away from the wall behind it. Cracks open around the blister."
+          },
+          {
+            "id": "detach",
+            "title": "Finish sheds",
+            "caption": "Finish over about 0.43 m² comes away from the wall and drops from up to 2.39 m: roughly 4.7 to 16.9 kg of dry finish."
+          },
+          {
+            "id": "aftermath",
+            "title": "Aftermath",
+            "caption": "The wall's backing is exposed, debris lies at its foot, and damp surfaces around the opening stay prone to mould."
+          }
+        ],
+        "disclaimer": "An illustration of a known failure mechanism at the flagged location. It is not a prediction that this will happen, or when."
+      },
+      {
+        "mechanism": "ceiling_moisture_failure",
+        "surface": "ceiling",
+        "kind": "stain",
+        "title": "A section of this ceiling could come down",
+        "premise": "If this stain is water arriving from above, and its source is not found and fixed",
+        "finding_id": "F4",
+        "room_name": "Kitchen 1",
+        "why": "A stain like this can mark water arriving from above. If it is water and it keeps arriving, the finish under the stain could soften, sag and eventually let go. If it is surface residue instead, none of this applies, which is why the first step is to find out. The skeptic confirmed this at low confidence, so read what follows as a reason to check, not as a diagnosis.",
+        "early_warning_signs": [
+          "The stain growing, or its edge darkening after rain or after water is used above",
+          "The stained area feeling soft or damp to the touch",
+          "The finish starting to sag or blister"
+        ],
+        "recommended_action": "Press the stained area gently and check it with a moisture meter. A damp or soft reading means a leak to trace before any repainting.",
+        "who_to_call": "A licensed roofer or plumber if it is damp. A painter, or you, if it is dry and only stained.",
+        "written_by_analyst": false,
+        "dry": false,
+        "zone": {
+          "surface": "ceiling",
+          "corners": [
+            [
+              4.382,
+              0.639,
+              2.479
+            ],
+            [
+              4.812,
+              0.209,
+              2.491
+            ],
+            [
+              5.134,
+              0.518,
+              2.488
+            ],
+            [
+              4.704,
+              0.953,
+              2.476
+            ]
+          ],
+          "center": [
+            4.758,
+            0.579,
+            2.484
+          ],
+          "normal": [
+            0.008,
+            -0.02,
+            -1.0
+          ],
+          "widened": true,
+          "approximate": false,
+          "floor_z": 0.006
+        },
+        "projectors": [
+          {
+            "position_id": "R4-A",
+            "position": [
+              4.961605072021484,
+              1.1526035070419312,
+              1.40701162815094
+            ],
+            "quaternion": [
+              -0.02006499096751213,
+              0.0035537516232579947,
+              0.3767859637737274,
+              0.9260761737823486
+            ],
+            "faces": [
+              "R4-A-ceiling",
+              "R4-A-wall-1",
+              "R4-A-wall-2",
+              "R4-A-wall-3",
+              "R4-A-wall-4",
+              "R4-A-floor"
+            ]
+          },
+          {
+            "position_id": "R4-B",
+            "position": [
+              5.716015338897705,
+              0.325170636177063,
+              1.4245505332946777
+            ],
+            "quaternion": [
+              -0.018719397485256195,
+              0.008318360894918442,
+              0.08834198862314224,
+              0.9958795309066772
+            ],
+            "faces": [
+              "R4-B-ceiling",
+              "R4-B-wall-1",
+              "R4-B-wall-2",
+              "R4-B-wall-3",
+              "R4-B-wall-4",
+              "R4-B-floor"
+            ]
+          }
+        ],
+        "bounds": {
+          "min": [
+            3.482,
+            -1.131,
+            -0.144
+          ],
+          "max": [
+            7.115,
+            3.316,
+            2.634
+          ]
+        },
+        "calc": {
+          "area_m2": 0.27,
+          "drop_height_m": 2.48,
+          "fall_time_s": 0.71,
+          "speed_at_floor_m_s": 7.0,
+          "landing_height_m": 1.2,
+          "speed_at_landing_m_s": 5.0,
+          "masses": [
+            {
+              "finish": "gypsum_board",
+              "label": "12.7 mm (1/2 in) gypsum board",
+              "kg_per_m2": 10.7,
+              "mass_kg": 2.9,
+              "energy_at_floor_j": 71
+            },
+            {
+              "finish": "plaster_on_lath",
+              "label": "plaster on wood lath",
+              "kg_per_m2": 39.1,
+              "mass_kg": 10.7,
+              "energy_at_floor_j": 259
+            }
+          ],
+          "landing_label": "a seated person's head",
+          "inputs": [
+            "Area 0.27 m²: the flagged image region projected onto the scanned ceiling, widened to one 0.45 m framing bay.",
+            "Drop 2.48 m: ceiling to floor, measured in the scan's 3D model.",
+            "Mass per square metre: typical dry dead loads from the ASCE/SEI 7 commentary. Absorbed water adds weight that is not counted here."
+          ],
+          "finish_known": false,
+          "tiles": [
+            {
+              "value": 0.27,
+              "unit": " m²",
+              "label": "section that could detach",
+              "digits": 2
+            },
+            {
+              "value": 2.48,
+              "unit": " m",
+              "label": "ceiling to floor",
+              "digits": 2
+            },
+            {
+              "value": 0.71,
+              "unit": " s",
+              "label": "time to reach the floor",
+              "digits": 2
+            },
+            {
+              "value": 5.0,
+              "unit": " m/s",
+              "label": "speed reaching a seated person's head",
+              "digits": 1
+            },
+            {
+              "value": 2.9,
+              "unit": " kg",
+              "label": "dry weight if 12.7 mm (1/2 in) gypsum board",
+              "digits": 1
+            },
+            {
+              "value": 10.7,
+              "unit": " kg",
+              "label": "dry weight if plaster on wood lath",
+              "digits": 1
+            }
+          ]
+        },
+        "repair_cost": {
+          "currency": "USD",
+          "heading": "WHAT THE REPAIR COSTS: NOW, OR AFTER IT FALLS",
+          "added_text": [
+            "Waiting until it falls adds ",
+            " to the bill, for the same leak and the same ceiling."
+          ],
+          "now": {
+            "label": "Repair now",
+            "low": 1150,
+            "high": 5000,
+            "items": [
+              {
+                "label": "Find and fix the moisture source",
+                "low": 1000,
+                "high": 4000,
+                "basis": "Roof leak repair averages $1,000; plumbing repairs run $1,000 to $4,000. Needed either way.",
+                "reference_id": "bobvila_water_damage",
+                "role": "source"
+              },
+              {
+                "label": "Seal the stain and repaint",
+                "low": 150,
+                "high": 1000,
+                "basis": "Cosmetic water damage repair, $150 to $1,000.",
+                "reference_id": "bobvila_water_damage",
+                "role": "surface"
+              }
+            ]
+          },
+          "after": {
+            "label": "Repair after the section falls",
+            "low": 1580,
+            "high": 8650,
+            "items": [
+              {
+                "label": "Find and fix the moisture source",
+                "low": 1000,
+                "high": 4000,
+                "basis": "Roof leak repair averages $1,000; plumbing repairs run $1,000 to $4,000. Needed either way.",
+                "reference_id": "bobvila_water_damage",
+                "role": "source"
+              },
+              {
+                "label": "Close the opening the fallen section leaves",
+                "low": 150,
+                "high": 240,
+                "basis": "Priced at the flagged section's area, as now. A real collapse can take more ceiling with it.",
+                "reference_id": "inchcalculator_drywall",
+                "role": "surface"
+              },
+              {
+                "label": "Dry out and clean the room",
+                "low": 230,
+                "high": 510,
+                "basis": "The room's 7.3 m² (78 sq ft) floor at $3 to $6.50 per sq ft, clean to gray water.",
+                "reference_id": "bobvila_water_damage"
+              },
+              {
+                "label": "Restore the floor under the fall",
+                "low": 200,
+                "high": 500,
+                "basis": "Floor restoration after water damage, $200 to $500.",
+                "reference_id": "bobvila_water_damage"
+              },
+              {
+                "label": "Remove mould, if it has taken hold",
+                "low": 0,
+                "high": 3400,
+                "basis": "Mould removal costs $1,100 to $3,400 when it is needed; $0 if the room is dried in time.",
+                "reference_id": "bobvila_water_damage"
+              }
+            ]
+          },
+          "added_low": 430,
+          "added_high": 3650,
+          "context": {
+            "amount": 15400,
+            "statement": "For scale, the average insured US home water damage or freezing claim, 2019 to 2023:",
+            "reference_id": "iii_water_claims"
+          },
+          "notes": [
+            "Not priced: injury, damaged furniture and belongings, or living elsewhere during the work.",
+            "Rough ranges from US consumer cost guides, not a quote. Local labour rates, access and the ceiling's finish change the price."
+          ],
+          "reference_ids": [
+            "bobvila_water_damage",
+            "inchcalculator_drywall"
+          ]
+        },
+        "repair_plan": {
+          "kind": "stain",
+          "cut_out": false,
+          "stages": [
+            {
+              "title": "As scanned",
+              "caption": "The stained area as the scan recorded it."
+            },
+            {
+              "title": "Confirm it is dry",
+              "caption": "Nothing is sealed until the source is fixed and the surface is dry. A moisture meter settles it."
+            },
+            {
+              "title": "Seal with stain-blocking primer",
+              "caption": "A stain-blocking primer stops the mark bleeding back through new paint."
+            },
+            {
+              "title": "Repaint",
+              "caption": "The sealed area is painted to match the surface around it."
+            }
+          ],
+          "diy": {
+            "label": "Fix it yourself",
+            "difficulty": "Beginner",
+            "time": "An afternoon, once the surface is dry",
+            "materials": [
+              {
+                "name": "KILZ Original stain-blocking primer, 1 qt",
+                "price_usd": 16.98,
+                "link_kind": "product",
+                "url": "https://www.homedepot.com/p/KILZ-Original-1-qt-White-Oil-Based-Interior-Primer-Sealer-and-Stain-Blocker-10902/100371322",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": 16.98
+              },
+              {
+                "name": "BEHR Premium Plus flat ceiling paint, 1 qt",
+                "price_usd": 16.48,
+                "link_kind": "product",
+                "url": "https://www.homedepot.com/p/BEHR-PREMIUM-PLUS-1-qt-Ultra-Pure-White-Ceiling-Flat-Interior-Paint-55804/100178852",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": 16.48
+              }
+            ],
+            "tools": [
+              {
+                "name": "Pin moisture meter",
+                "price_usd": null,
+                "link_kind": "search",
+                "url": "https://www.homedepot.com/s/pin%20moisture%20meter",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": null
+              },
+              {
+                "name": "Mini paint roller and tray",
+                "price_usd": null,
+                "link_kind": "search",
+                "url": "https://www.homedepot.com/s/mini%20paint%20roller%20tray%20kit",
+                "quantity": 1,
+                "retailer": "The Home Depot",
+                "total_usd": null
+              }
+            ],
+            "materials_total_usd": 33.46,
+            "unpriced": [],
+            "low": 1033,
+            "high": 4033,
+            "steps": [
+              "Fix the moisture source first. Sealing over an active leak hides the warning, not the problem.",
+              "Confirm the surface is dry. Press it gently: soft, crumbling or sagging finish means this is no longer a paint job.",
+              "Apply stain-blocking primer over the stain and a margin around it.",
+              "Paint to match once the primer is dry."
+            ],
+            "cautions": [
+              "The scan does not say when this home was built. If it predates 1978 the paint may contain lead, and older plaster or textured finishes can contain asbestos. Have the finish tested before you cut, scrape or sand it.",
+              "This is overhead work from a ladder. Wear eye protection, and get help lifting board into place.",
+              "Do-it-yourself covers the visible surface only. Finding and fixing the moisture source is a professional's job, and is priced on both sides."
+            ],
+            "prices_checked": "November 2026",
+            "price_note": "Approximate prices, as shown in search listings for The Home Depot in November 2026. They vary by store and date; each link shows today's price."
+          },
+          "professional": {
+            "label": "Hire a professional",
+            "low": 1150,
+            "high": 5000,
+            "items": [
+              {
+                "label": "Find and fix the moisture source",
+                "low": 1000,
+                "high": 4000,
+                "basis": "Roof leak repair averages $1,000; plumbing repairs run $1,000 to $4,000. Needed either way.",
+                "reference_id": "bobvila_water_damage",
+                "role": "source"
+              },
+              {
+                "label": "Seal the stain and repaint",
+                "low": 150,
+                "high": 1000,
+                "basis": "Cosmetic water damage repair, $150 to $1,000.",
+                "reference_id": "bobvila_water_damage",
+                "role": "surface"
+              }
+            ],
+            "links": [
+              {
+                "label": "Roof repair in Los Angeles · Thumbtack",
+                "url": "https://www.thumbtack.com/ca/los-angeles/roof-repair/"
+              },
+              {
+                "label": "Plumbers in Los Angeles · Thumbtack",
+                "url": "https://www.thumbtack.com/ca/los-angeles/plumbers/"
+              },
+              {
+                "label": "Interior painters in Los Angeles · Thumbtack",
+                "url": "https://www.thumbtack.com/ca/los-angeles/interior-painting/"
+              },
+              {
+                "label": "Check a contractor's licence · California CSLB",
+                "url": "https://www.cslb.ca.gov/OnlineServices/CheckLicenseII/CheckLicense.aspx"
+              }
+            ],
+            "link_note": "Directory and licence look-up links, not endorsements of any firm. Get more than one quote."
+          },
+          "surface_work": {
+            "diy_usd": 33.46,
+            "professional_low": 150,
+            "professional_high": 1000
+          },
+          "source_work": {
+            "low": 1000,
+            "high": 4000
+          },
+          "safety_links": [
+            {
+              "label": "US EPA · Lead in older homes",
+              "url": "https://www.epa.gov/lead/protect-your-family-sources-lead"
+            },
+            {
+              "label": "US EPA · Asbestos in the home",
+              "url": "https://www.epa.gov/asbestos/protect-your-family-exposures-asbestos"
+            },
+            {
+              "label": "US EPA · Mold cleanup in your home",
+              "url": "https://www.epa.gov/mold/mold-cleanup-your-home"
+            }
+          ]
+        },
+        "stages": [
+          {
+            "id": "as_scanned",
+            "title": "As scanned",
+            "caption": "The ceiling as the scan recorded it. The flagged region is outlined on the real surface."
+          },
+          {
+            "id": "saturation",
+            "title": "Repeated wetting",
+            "caption": "Water arriving from above spreads through the finish. Stains widen and the material softens and gains weight."
+          },
+          {
+            "id": "sag",
+            "title": "Sag",
+            "caption": "The softened section loses its hold on the framing and hangs lower. Cracks open around its edge."
+          },
+          {
+            "id": "detach",
+            "title": "Detachment",
+            "caption": "A section of about 0.27 m² lets go: roughly 2.9 to 10.7 kg of dry finish falling 2.48 m in 0.71 s, reaching a seated person's head at 5.0 m/s."
+          },
+          {
+            "id": "aftermath",
+            "title": "Aftermath",
+            "caption": "Framing is exposed to the room, debris covers the floor below, and damp surfaces around the opening stay prone to mould."
+          }
+        ],
+        "disclaimer": "An illustration of a known failure mechanism at the flagged location. It is not a prediction that this will happen, or when."
+      }
+    ],
+    "field_note": {
+      "excerpt": "4BR, 2BA - 1,448SF: no room for notes ; back door doesnt open, on and off rain no gs, doors open because house smells horrible, mold, water damage, lights dont work, closet broke, cupboards dont close.",
+      "signals": [
+        "water damage",
+        "mold",
+        "odour",
+        "lights not working"
+      ],
+      "agreement": "The person who scanned this building wrote this note. The agents never saw it, and independently confirmed moisture findings from the images."
+    },
+    "prevalence": {
+      "statement": "Water is the everyday way interiors fail: about 1 in 60 insured US homes files a water damage or freezing claim each year.",
+      "basis": "Insurance Information Institute, 2018 to 2022 claims data.",
+      "reference_id": "iii_water_claims"
+    },
+    "rooms": [
+      {
+        "id": "R1",
+        "name": "Living Room",
+        "area_m2": 28.88,
+        "height_m": 2.46,
+        "scan_positions_used": 3,
+        "scan_positions_available": 8,
+        "views_zoomed": 5,
+        "surveyed": true
+      },
+      {
+        "id": "R2",
+        "name": "Bedroom 1",
+        "area_m2": 11.73,
+        "height_m": 2.48,
+        "scan_positions_used": 2,
+        "scan_positions_available": 2,
+        "views_zoomed": 4,
+        "surveyed": true
+      },
+      {
+        "id": "R3",
+        "name": "Bedroom 2",
+        "area_m2": 11.54,
+        "height_m": 2.48,
+        "scan_positions_used": 3,
+        "scan_positions_available": 3,
+        "views_zoomed": 3,
+        "surveyed": true
+      },
+      {
+        "id": "R4",
+        "name": "Kitchen 1",
+        "area_m2": 7.27,
+        "height_m": null,
+        "scan_positions_used": 3,
+        "scan_positions_available": 3,
+        "views_zoomed": 4,
+        "surveyed": true
+      },
+      {
+        "id": "R5",
+        "name": "Bedroom 3",
+        "area_m2": 5.24,
+        "height_m": 2.49,
+        "scan_positions_used": 2,
+        "scan_positions_available": 2,
+        "views_zoomed": 2,
+        "surveyed": true
+      },
+      {
+        "id": "R6",
+        "name": "Laundry",
+        "area_m2": 3.75,
+        "height_m": null,
+        "scan_positions_used": 1,
+        "scan_positions_available": 1,
+        "views_zoomed": 2,
+        "surveyed": true
+      },
+      {
+        "id": "R7",
+        "name": "Kitchen 2",
+        "area_m2": 3.72,
+        "height_m": null,
+        "scan_positions_used": 1,
+        "scan_positions_available": 1,
+        "views_zoomed": 1,
+        "surveyed": true
+      },
+      {
+        "id": "R8",
+        "name": "Bathroom",
+        "area_m2": 3.55,
+        "height_m": null,
+        "scan_positions_used": 1,
+        "scan_positions_available": 1,
+        "views_zoomed": 3,
+        "surveyed": true
+      },
+      {
+        "id": "R9",
+        "name": "Hallway",
+        "area_m2": 2.64,
+        "height_m": 2.49,
+        "scan_positions_used": 3,
+        "scan_positions_available": 3,
+        "views_zoomed": 3,
+        "surveyed": true
+      }
+    ],
+    "not_surveyed": [],
+    "limitations": [
+      "This is a visual screening of scan images, not a home inspection, engineering assessment or safety certificate.",
+      "The scan shows the building on its capture date, which this integration does not supply. Conditions may have changed or been repaired since.",
+      "Nothing inside a ceiling, wall or floor was seen. Causes, moisture levels, material strength and mould cannot be confirmed from images.",
+      "The 3D scenario illustrates a known failure mechanism at the flagged location. It is not a prediction that it will happen, or when.",
+      "Rooms and surfaces the agents did not open remain unassessed. No finding in a room does not establish that it is sound."
+    ],
+    "sources": [
+      {
+        "id": "asce7_dead_loads",
+        "title": "ASCE/SEI 7 · Minimum Design Loads, commentary table of minimum design dead loads",
+        "url": "https://www.asce.org/publications-and-news/asce-7"
+      },
+      {
+        "id": "bobvila_water_damage",
+        "title": "Bob Vila · How Much Does Water Damage Restoration Cost?",
+        "url": "https://www.bobvila.com/articles/water-damage-restoration-cost/"
+      },
+      {
+        "id": "epa_moisture",
+        "title": "US EPA · A Brief Guide to Mold, Moisture and Your Home",
+        "url": "https://www.epa.gov/mold/brief-guide-mold-moisture-and-your-home"
+      },
+      {
+        "id": "iii_water_claims",
+        "title": "Insurance Information Institute · Facts + Statistics: Homeowners and renters insurance",
+        "url": "https://www.iii.org/fact-statistic/facts-statistics-homeowners-and-renters-insurance"
+      },
+      {
+        "id": "inchcalculator_drywall",
+        "title": "Inch Calculator · Cost to Repair Drywall Damage, 2026 price guide",
+        "url": "https://www.inchcalculator.com/drywall-ceiling-repair-cost-guide/"
+      },
+      {
+        "id": "nps_plaster",
+        "title": "US National Park Service · Preservation Brief 21: Repairing Historic Flat Plaster Walls and Ceilings",
+        "url": "https://www.nps.gov/orgs/1739/upload/preservation-brief-21-flat-plaster.pdf"
+      }
+    ],
+    "evidence_ids": [
+      "R1-A-wall-2",
+      "R2-A-ceiling",
+      "R2-A-floor",
+      "R2-A-wall-1",
+      "R2-A-wall-2",
+      "R2-A-wall-3",
+      "R2-A-wall-4",
+      "R2-B-ceiling",
+      "R2-B-floor",
+      "R2-B-wall-1",
+      "R2-B-wall-2",
+      "R2-B-wall-3",
+      "R2-B-wall-4",
+      "R4-A-ceiling",
+      "R4-A-floor",
+      "R4-A-wall-1",
+      "R4-A-wall-2",
+      "R4-A-wall-3",
+      "R4-A-wall-4",
+      "R4-B-ceiling",
+      "R4-B-floor",
+      "R4-B-wall-1",
+      "R4-B-wall-2",
+      "R4-B-wall-3",
+      "R4-B-wall-4",
+      "R8-A-ceiling",
+      "R8-A-floor",
+      "R8-A-wall-1",
+      "R8-A-wall-2",
+      "R8-A-wall-3",
+      "R8-A-wall-4"
+    ],
+    "mesh_available": true,
+    "provenance": "agents",
+    "provenance_note": "",
+    "engine": "Deep Agents · a lead agent with room-surveyor, skeptic and failure-analyst subagents"
+  },
+  "activity": [
+    {
+      "t": 0.0,
+      "agent": "system",
+      "text": "review started · 9 rooms · 19 scan positions"
+    },
+    {
+      "t": 4.1,
+      "agent": "surveyor",
+      "text": "opened Living Room · 3 scan positions",
+      "room_id": "R1"
+    },
+    {
+      "t": 4.1,
+      "agent": "surveyor",
+      "text": "zoomed in on Living Room, the ceiling, looking straight up (scan position R1-A)",
+      "view_id": "R1-A-ceiling"
+    },
+    {
+      "t": 4.1,
+      "agent": "surveyor",
+      "text": "zoomed in on Living Room, the ceiling, looking straight up (scan position R1-B)",
+      "view_id": "R1-B-ceiling"
+    },
+    {
+      "t": 4.1,
+      "agent": "surveyor",
+      "text": "zoomed in on Living Room, the ceiling, looking straight up (scan position R1-C)",
+      "view_id": "R1-C-ceiling"
+    },
+    {
+      "t": 4.1,
+      "agent": "surveyor",
+      "text": "zoomed in on Living Room, the view a quarter turn to the right of wall-1 (scan position R1-A)",
+      "view_id": "R1-A-wall-2"
+    },
+    {
+      "t": 4.1,
+      "agent": "surveyor",
+      "text": "zoomed in on Living Room, the view a quarter turn to the left of wall-1 (scan position R1-A)",
+      "view_id": "R1-A-wall-4"
+    },
+    {
+      "t": 4.1,
+      "agent": "surveyor",
+      "text": "flagged in Living Room: Blotchy discoloured patches on wall beside hallway door",
+      "finding_id": "F1",
+      "view_id": "R1-A-wall-2"
+    },
+    {
+      "t": 4.1,
+      "agent": "surveyor",
+      "text": "finished Living Room · flagged F1",
+      "room_id": "R1"
+    },
+    {
+      "t": 6.7,
+      "agent": "surveyor",
+      "text": "opened Bedroom 1 · 2 scan positions",
+      "room_id": "R2"
+    },
+    {
+      "t": 6.7,
+      "agent": "surveyor",
+      "text": "zoomed in on Bedroom 1, the ceiling, looking straight up (scan position R2-A)",
+      "view_id": "R2-A-ceiling"
+    },
+    {
+      "t": 6.7,
+      "agent": "surveyor",
+      "text": "zoomed in on Bedroom 1, the ceiling, looking straight up (scan position R2-B)",
+      "view_id": "R2-B-ceiling"
+    },
+    {
+      "t": 6.7,
+      "agent": "surveyor",
+      "text": "zoomed in on Bedroom 1, the first horizontal view (scan position R2-A)",
+      "view_id": "R2-A-wall-1"
+    },
+    {
+      "t": 6.7,
+      "agent": "surveyor",
+      "text": "zoomed in on Bedroom 1, the view a quarter turn to the left of wall-1 (scan position R2-B)",
+      "view_id": "R2-B-wall-4"
+    },
+    {
+      "t": 6.7,
+      "agent": "surveyor",
+      "text": "flagged in Bedroom 1: Rippled, raised ceiling finish with a lump beside the smoke alarm",
+      "finding_id": "F2",
+      "view_id": "R2-A-ceiling"
+    },
+    {
+      "t": 6.7,
+      "agent": "surveyor",
+      "text": "flagged in Bedroom 1: Brown drip trails running down wall from ceiling line",
+      "finding_id": "F3",
+      "view_id": "R2-B-wall-4"
+    },
+    {
+      "t": 6.7,
+      "agent": "surveyor",
+      "text": "finished Bedroom 1 · flagged F2, F3",
+      "room_id": "R2"
+    },
+    {
+      "t": 10.3,
+      "agent": "surveyor",
+      "text": "opened Bedroom 2 · 3 scan positions",
+      "room_id": "R3"
+    },
+    {
+      "t": 10.3,
+      "agent": "surveyor",
+      "text": "zoomed in on Bedroom 2, the ceiling, looking straight up (scan position R3-A)",
+      "view_id": "R3-A-ceiling"
+    },
+    {
+      "t": 10.3,
+      "agent": "surveyor",
+      "text": "zoomed in on Bedroom 2, the ceiling, looking straight up (scan position R3-B)",
+      "view_id": "R3-B-ceiling"
+    },
+    {
+      "t": 10.3,
+      "agent": "surveyor",
+      "text": "zoomed in on Bedroom 2, the ceiling, looking straight up (scan position R3-C)",
+      "view_id": "R3-C-ceiling"
+    },
+    {
+      "t": 10.3,
+      "agent": "surveyor",
+      "text": "finished Bedroom 2 · nothing flagged",
+      "room_id": "R3"
+    },
+    {
+      "t": 14.2,
+      "agent": "surveyor",
+      "text": "opened Kitchen 1 · 3 scan positions",
+      "room_id": "R4"
+    },
+    {
+      "t": 14.2,
+      "agent": "surveyor",
+      "text": "zoomed in on Kitchen 1, the ceiling, looking straight up (scan position R4-A)",
+      "view_id": "R4-A-ceiling"
+    },
+    {
+      "t": 14.2,
+      "agent": "surveyor",
+      "text": "zoomed in on Kitchen 1, the ceiling, looking straight up (scan position R4-B)",
+      "view_id": "R4-B-ceiling"
+    },
+    {
+      "t": 14.2,
+      "agent": "surveyor",
+      "text": "zoomed in on Kitchen 1, the ceiling, looking straight up (scan position R4-C)",
+      "view_id": "R4-C-ceiling"
+    },
+    {
+      "t": 14.2,
+      "agent": "surveyor",
+      "text": "zoomed in on Kitchen 1, the view opposite wall-1 (scan position R4-C)",
+      "view_id": "R4-C-wall-3"
+    },
+    {
+      "t": 14.2,
+      "agent": "surveyor",
+      "text": "flagged in Kitchen 1: Amber-brown stain on kitchen ceiling near wall",
+      "finding_id": "F4",
+      "view_id": "R4-A-ceiling"
+    },
+    {
+      "t": 14.2,
+      "agent": "surveyor",
+      "text": "flagged in Kitchen 1: Open crack running from the ceiling light fixture",
+      "finding_id": "F5",
+      "view_id": "R4-B-ceiling"
+    },
+    {
+      "t": 14.2,
+      "agent": "surveyor",
+      "text": "finished Kitchen 1 · flagged F4, F5",
+      "room_id": "R4"
+    },
+    {
+      "t": 16.7,
+      "agent": "surveyor",
+      "text": "opened Bedroom 3 · 2 scan positions",
+      "room_id": "R5"
+    },
+    {
+      "t": 16.7,
+      "agent": "surveyor",
+      "text": "zoomed in on Bedroom 3, the ceiling, looking straight up (scan position R5-A)",
+      "view_id": "R5-A-ceiling"
+    },
+    {
+      "t": 16.7,
+      "agent": "surveyor",
+      "text": "zoomed in on Bedroom 3, the ceiling, looking straight up (scan position R5-B)",
+      "view_id": "R5-B-ceiling"
+    },
+    {
+      "t": 16.7,
+      "agent": "surveyor",
+      "text": "finished Bedroom 3 · nothing flagged",
+      "room_id": "R5"
+    },
+    {
+      "t": 17.8,
+      "agent": "surveyor",
+      "text": "opened Laundry · 1 scan position",
+      "room_id": "R6"
+    },
+    {
+      "t": 17.8,
+      "agent": "surveyor",
+      "text": "zoomed in on Laundry, the ceiling, looking straight up (scan position R6-A)",
+      "view_id": "R6-A-ceiling"
+    },
+    {
+      "t": 17.8,
+      "agent": "surveyor",
+      "text": "zoomed in on Laundry, the view a quarter turn to the right of wall-1 (scan position R6-A)",
+      "view_id": "R6-A-wall-2"
+    },
+    {
+      "t": 17.8,
+      "agent": "surveyor",
+      "text": "finished Laundry · nothing flagged",
+      "room_id": "R6"
+    },
+    {
+      "t": 19.0,
+      "agent": "surveyor",
+      "text": "opened Kitchen 2 · 1 scan position",
+      "room_id": "R7"
+    },
+    {
+      "t": 19.0,
+      "agent": "surveyor",
+      "text": "zoomed in on Kitchen 2, the ceiling, looking straight up (scan position R7-A)",
+      "view_id": "R7-A-ceiling"
+    },
+    {
+      "t": 19.0,
+      "agent": "surveyor",
+      "text": "finished Kitchen 2 · nothing flagged",
+      "room_id": "R7"
+    },
+    {
+      "t": 20.3,
+      "agent": "surveyor",
+      "text": "opened Bathroom · 1 scan position",
+      "room_id": "R8"
+    },
+    {
+      "t": 20.3,
+      "agent": "surveyor",
+      "text": "zoomed in on Bathroom, the ceiling, looking straight up (scan position R8-A)",
+      "view_id": "R8-A-ceiling"
+    },
+    {
+      "t": 20.3,
+      "agent": "surveyor",
+      "text": "zoomed in on Bathroom, the first horizontal view (scan position R8-A)",
+      "view_id": "R8-A-wall-1"
+    },
+    {
+      "t": 20.3,
+      "agent": "surveyor",
+      "text": "zoomed in on Bathroom, the view a quarter turn to the left of wall-1 (scan position R8-A)",
+      "view_id": "R8-A-wall-4"
+    },
+    {
+      "t": 20.3,
+      "agent": "surveyor",
+      "text": "flagged in Bathroom: Dark streaking on wall corner beside shower tile",
+      "finding_id": "F6",
+      "view_id": "R8-A-wall-4"
+    },
+    {
+      "t": 20.3,
+      "agent": "surveyor",
+      "text": "finished Bathroom · flagged F6",
+      "room_id": "R8"
+    },
+    {
+      "t": 24.1,
+      "agent": "surveyor",
+      "text": "opened Hallway · 3 scan positions",
+      "room_id": "R9"
+    },
+    {
+      "t": 24.1,
+      "agent": "surveyor",
+      "text": "zoomed in on Hallway, the ceiling, looking straight up (scan position R9-A)",
+      "view_id": "R9-A-ceiling"
+    },
+    {
+      "t": 24.1,
+      "agent": "surveyor",
+      "text": "zoomed in on Hallway, the ceiling, looking straight up (scan position R9-B)",
+      "view_id": "R9-B-ceiling"
+    },
+    {
+      "t": 24.1,
+      "agent": "surveyor",
+      "text": "zoomed in on Hallway, the ceiling, looking straight up (scan position R9-C)",
+      "view_id": "R9-C-ceiling"
+    },
+    {
+      "t": 24.1,
+      "agent": "surveyor",
+      "text": "finished Hallway · nothing flagged",
+      "room_id": "R9"
+    },
+    {
+      "t": 24.1,
+      "agent": "skeptic",
+      "text": "zoomed in on Living Room, the view a quarter turn to the right of wall-1 (scan position R1-A)",
+      "view_id": "R1-A-wall-2"
+    },
+    {
+      "t": 24.1,
+      "agent": "skeptic",
+      "text": "cross-checked F1 from a second scan position",
+      "finding_id": "F1",
+      "view_id": "R1-B-wall-2"
+    },
+    {
+      "t": 24.1,
+      "agent": "skeptic",
+      "text": "rejected F1: Blotchy discoloured patches on wall beside hallway door",
+      "finding_id": "F1",
+      "verdict": "rejected"
+    },
+    {
+      "t": 24.1,
+      "agent": "skeptic",
+      "text": "zoomed in on Bedroom 1, the ceiling, looking straight up (scan position R2-A)",
+      "view_id": "R2-A-ceiling"
+    },
+    {
+      "t": 24.1,
+      "agent": "skeptic",
+      "text": "cross-checked F2 from a second scan position",
+      "finding_id": "F2",
+      "view_id": "R2-B-ceiling"
+    },
+    {
+      "t": 24.1,
+      "agent": "skeptic",
+      "text": "confirmed F2: Rippled, raised ceiling finish with a lump beside the smoke alarm",
+      "finding_id": "F2",
+      "verdict": "confirmed"
+    },
+    {
+      "t": 24.1,
+      "agent": "skeptic",
+      "text": "zoomed in on Bedroom 1, the view a quarter turn to the left of wall-1 (scan position R2-B)",
+      "view_id": "R2-B-wall-4"
+    },
+    {
+      "t": 24.1,
+      "agent": "skeptic",
+      "text": "cross-checked F3 from a second scan position",
+      "finding_id": "F3",
+      "view_id": "R2-A-wall-4"
+    },
+    {
+      "t": 24.2,
+      "agent": "skeptic",
+      "text": "confirmed F3: Brown drip trails running down wall from ceiling line",
+      "finding_id": "F3",
+      "verdict": "confirmed"
+    },
+    {
+      "t": 24.2,
+      "agent": "skeptic",
+      "text": "zoomed in on Kitchen 1, the ceiling, looking straight up (scan position R4-A)",
+      "view_id": "R4-A-ceiling"
+    },
+    {
+      "t": 24.2,
+      "agent": "skeptic",
+      "text": "cross-checked F4 from a second scan position",
+      "finding_id": "F4",
+      "view_id": "R4-B-ceiling"
+    },
+    {
+      "t": 24.2,
+      "agent": "skeptic",
+      "text": "confirmed F4: Amber-brown stain on kitchen ceiling near wall",
+      "finding_id": "F4",
+      "verdict": "confirmed"
+    },
+    {
+      "t": 24.2,
+      "agent": "skeptic",
+      "text": "cross-checked F5 from a second scan position",
+      "finding_id": "F5",
+      "view_id": "R4-A-ceiling"
+    },
+    {
+      "t": 24.2,
+      "agent": "skeptic",
+      "text": "confirmed F5: Open crack running from the ceiling light fixture",
+      "finding_id": "F5",
+      "verdict": "confirmed"
+    },
+    {
+      "t": 24.2,
+      "agent": "skeptic",
+      "text": "zoomed in on Bathroom, the view a quarter turn to the left of wall-1 (scan position R8-A)",
+      "view_id": "R8-A-wall-4"
+    },
+    {
+      "t": 24.2,
+      "agent": "skeptic",
+      "text": "confirmed F6: Dark streaking on wall corner beside shower tile",
+      "finding_id": "F6",
+      "verdict": "confirmed"
+    },
+    {
+      "t": 24.2,
+      "agent": "analyst",
+      "text": "zoomed in on Bedroom 1, the ceiling, looking straight up (scan position R2-A)",
+      "view_id": "R2-A-ceiling"
+    },
+    {
+      "t": 24.2,
+      "agent": "analyst",
+      "text": "modelled what could happen at F2: Rippled, raised ceiling finish with a lump beside the smoke alarm",
+      "finding_id": "F2"
+    },
+    {
+      "t": 24.5,
+      "agent": "system",
+      "text": "report assembled from the recorded findings"
+    }
+  ],
+  "saved_at": "2026-11-15T04:49:10.639414+00:00"
+}

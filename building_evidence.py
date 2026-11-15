@@ -40,6 +40,7 @@ MAX_ROOMS = 10
 MAX_POSITIONS_PER_ROOM = 3
 ASSET_HOST = re.compile(r"cdn-[0-9]+\.matterport\.com\Z", re.IGNORECASE)
 MODEL_ID = re.compile(r"[a-zA-Z0-9]{1,64}\Z")
+BUNDLED_INTERIORS_DIR = Path(__file__).resolve().parent / "bundled" / "interiors"
 NON_ROOM_LABELS = {"void"}
 VIEW_TITLES = {
     "ceiling": "the ceiling, looking straight up",
@@ -305,14 +306,25 @@ def mesh_path(model_id: str) -> Path:
     return cache_dir() / "meshes" / f"{model_id}.json"
 
 
+def read_mesh(model_id: str) -> bytes:
+    """Read a runtime mesh or the bundled mesh shipped with a saved review."""
+    local = mesh_path(model_id)  # Validate the identifier before building either path.
+    for path in (local, BUNDLED_INTERIORS_DIR / "meshes" / local.name):
+        try:
+            return path.read_bytes()
+        except FileNotFoundError:
+            continue
+    raise EvidenceError("No 3D mesh has been cached for this building. Run a review first.", 404)
+
+
 def load_cached_mesh(model_id: str) -> scan_geometry.Mesh | None:
     try:
-        payload = json.loads(mesh_path(model_id).read_text(encoding="utf-8"))
+        payload = json.loads(read_mesh(model_id))
         flat, indices = payload["positions"], payload["indices"]
         vertices = [(flat[i], flat[i + 1], flat[i + 2]) for i in range(0, len(flat), 3)]
         faces = [(indices[i], indices[i + 1], indices[i + 2]) for i in range(0, len(indices), 3)]
         return scan_geometry.Mesh(vertices, faces) if vertices and faces else None
-    except (OSError, ValueError, KeyError, IndexError, TypeError):
+    except (OSError, ValueError, KeyError, IndexError, TypeError, EvidenceError):
         return None
 
 
