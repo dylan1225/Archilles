@@ -215,7 +215,8 @@ photo + note ─► diagnose.py   one Gemini call with the knowledge base, a str
 |---|---|
 | `main.py` | FastAPI app: `/`, `POST /diagnose`, `GET /examples/{n}`, `GET /mechanics/fillet` (recompute from typed measurements). Errors are always JSON. |
 | `diagnose.py` | Image prep (HEIC/EXIF), prompt, Gemini call with a time limit, validation, cache. |
-| `mechanics.py` | Stress concentration lookup, fillet improvement, FDM wall check. No model calls. |
+| `mechanics.py` | Stress concentration lookup, fillet improvement, section weight/strength ratios, FDM wall check. No model calls. |
+| `materials.py` + `knowledge/materials.csv` | Reference material properties with sources; material comparisons. |
 | `knowledge/failure_modes.md` | Failure-mode knowledge base, inserted into the prompt verbatim. |
 | `knowledge/examples/` | Optional few-shot photos with `.json` labels. |
 | `static/index.html` | The single-page UI. |
@@ -243,11 +244,67 @@ venv/bin/python -m pytest
 venv/bin/python eval/run_eval.py
 ```
 
-117 offline tests with a fake model client cover the mechanics tables, schema and
+322 offline tests with a fake model client cover the mechanics tables, schema and
 rule enforcement, retries and timeouts, the cache, the 3D fields and the bundled
 examples. The eval needs `eval/labels.csv` and `eval/images/`.
 
 ### Update log
+
+#### 2026-11-15 — UI version 2.0: Archilles theme with the newer simulation
+- `main`'s Archilles page is kept as it was: intro gate, 3D hero, the two
+  modes, the photo bench with the collection, Method and footer, all in its
+  pastel-blue theme (`theme.css`, `postmortem.css`).
+- The results area is the newer one from the redesign branch, restyled to
+  match (`static/results.css`): the summary strip with a one-sentence verdict,
+  the 3D simulation (now a pale-blue studio; the change in Archilles blue, loads
+  in coral), the fix list, and Details as drop-down rows with a + / −.
+- A selected fix is now **highlighted** (filled in blue), not underlined, so it
+  is clear which fix is applied to the model. Hovering tints a fix.
+- Material picker and the Deep Agents options sit in step 02 of the bench.
+- The three bundled examples were re-run through the current pipeline, whose
+  prompt bans vague size words, so their pros and cons now carry numbers with
+  units and the new section, span and material calculations.
+
+#### 2026-11-15 — Drawing-room redesign and supported numbers
+- (The drawing-room look was not carried into `main`; UI version 2.0 above
+  keeps its results features in the Archilles theme.)
+- New look: white page, one grotesque typeface (Helvetica Neue stack), pencil
+  rules, monochrome throughout. The landing page is an original pencil-sketch
+  drawing board; click it and it lifts to invite an upload, a camera photo or
+  one of the collection pieces.
+- Results: verdict, then the 3D simulation in a white studio, then a plain list
+  of suggested fixes that underline on hover and apply to the model on click.
+  Details sit at the bottom as headers with a + that opens each one.
+- Every calculated number shows its working on hover, focus or tap: formula,
+  values substituted, result and source (`working` steps from `mechanics.py`
+  and `materials.py`; tests check the steps equal the reported numbers).
+- New numbers: grams for a material swap (part volume × the two densities) and
+  a span calculation for fixes that add a support (`mechanics.span_change`,
+  `GET /mechanics/span`).
+
+#### 2026-11-14 — Readability redesign
+- Results lead with a **verdict card**: the failure mode, a one-sentence summary
+  (new `summary` field), confidence and material.
+- Everything else sits in **drop-down rows** that open in place, each showing a
+  count or preview while closed: what the photo shows, why it broke, other causes,
+  also considered, reference, analysis details.
+- **Glossary**: 38 hand-written terms in `knowledge/glossary.json`. Terms in the
+  results are coloured; hover (or tap, or keyboard focus) shows a definition and
+  a short explanation.
+- One type scale, base 16 px, nothing smaller than 13 px.
+- Fix buttons are labelled ("1 · Add support") and scroll sideways on phones.
+- The left column folds away once a result is showing.
+
+#### 2026-11-14 — Knowledge base and materials
+- All 11 failure modes written, each with a cited source; the page shows the
+  mode's name and a Reference line. Every block is marked draft until checked.
+- `knowledge/materials.csv`: 12 common robotics materials (printed plastics,
+  plastic sheet, aluminium, steel, four woods), each value with its source.
+- Optional **Material** picker in step 2; a **Reference data** card shows the
+  chosen material, and "switch material" fixes get a side-by-side comparison.
+- "Thicker section" fixes get a Calculated card with exact weight, bending
+  strength and stiffness ratios (e.g. a 12 → 16 mm dowel is ×1.78 heavier and
+  ×2.37 stronger), plus grams when the material and length are known.
 
 #### 2026-11-14 — Uncertainty handling
 Defences against a confident failure story the photo does not support
@@ -322,5 +379,78 @@ Defences against a confident failure story the photo does not support
 - `mechanics.py`: stress concentration, fillet improvement, wall check.
 - `diagnose.py`: evidence-first vision diagnosis with schema and rule checks.
 - FastAPI app and single-file UI.
+
+## Optional Deep Agents redesign workflow
+
+Uses **LangChain Deep Agents** with OpenRouter's
+`nvidia/nemotron-3.5-super-vl:free`. The existing Gemini pipeline and bundled
+examples remain available without these optional packages.
+
+```bash
+# Run in your own terminal: this editing session could not write Git metadata.
+git switch -c deep-agent-implementation
+venv/bin/pip install -r requirements-agents.txt
+# OPENROUTER_API_KEY belongs in the ignored .env, never in source code.
+venv/bin/python -m uvicorn main:app --port 8010
+```
+
+Stop the previous server before starting the updated one on the same port.
+Use **Design constraints & analysis mode** to select the pipeline. Deep Agents
+becomes selectable only when dependencies and the key are configured.
+
+- **New photo:** Nemotron performs a concise structured evidence extraction,
+  followed by a Deep Agent coordinator and two compiled specialist subagents.
+- **Existing result:** **Explore designs with Deep Agents** skips photo analysis.
+  **Refine these fixes** carries forward the current diagnosis, proposed fixes and
+  retained constraint controls. Edit the constraint note when changing a requirement;
+  there is no hidden long-term conversational memory.
+- **Minimal-change specialist:** load placement, supports, assembly and print orientation.
+- **Geometry/material specialist:** section changes, local reinforcement and permitted
+  material changes. Both must actually submit candidates before a result is accepted.
+- **Tools:** material-reference lookup and candidate evaluation. Python computes
+  section ratios, flags unverified assumptions and rejects explicit constraint violations.
+  Free-text constraints are reviewed by the models and explicitly marked as not
+  deterministically verified. Draft reference data retains its draft status.
+- **Coordinator:** receives tool results and selects registered candidate IDs. Unknown,
+  duplicate or explicitly rejected IDs are blocked in code. Conditional candidates
+  are proposals for testing, not verified designs.
+- **3D:** reuses the existing schematic builders, not CAD reconstruction or FEA.
+  Arbitrary fillet calculations are intentionally omitted from agent candidates.
+- **Progress:** newline-delimited JSON from `/diagnose/deep` or `/redesign` displays
+  actual observation, delegation and tool events. A failed redesign keeps the last result.
+
+The coordinator is instructed to call both specialist tasks in one response;
+`max_concurrency=2` allows their tools/tasks to overlap. The model still controls
+its delegation, so parallel execution must be confirmed in a live trace. Calls
+use a small output budget, disabled reasoning, no SDK retries, an 18-step graph
+limit and a 90-second whole-workflow timeout. The backend makes no automatic paid
+fallback call. Free endpoints can rate-limit multi-call runs.
+
+### Timing and verification
+
+```bash
+venv/bin/python -m pytest -q
+# Real API calls, bypassing caches; do this after installing dependencies.
+venv/bin/python eval/benchmark_agents.py static/examples/1.jpg --runs 3 \
+  --context "Wooden rod. Use the actual measured dimensions here."
+```
+
+The benchmark alternates the two pipelines, reports success counts, wall times and
+median speedup only when all runs succeed, and saves actual outputs in ignored
+`cache/agent-benchmark.json`. Review evidence accuracy, tool calls and usefulness
+alongside timing. An existing-result redesign cannot be compared fairly with a
+fresh full Gemini photo analysis.
+
+**Current verification:** offline tests only; SDK installation, real model tool
+calling, provider support and speedup could not be verified in the restricted
+editing session. No claim that this workflow is faster has been established.
+
+References: [Deep Agents documentation](https://docs.langchain.com/oss/python/deepagents/quickstart),
+[compiled subagents](https://docs.langchain.com/oss/python/deepagents/subagents),
+[OpenRouter model](https://openrouter.ai/nvidia/nemotron-3.5-super-vl:free),
+[HackPrinceton workshop repository](https://github.com/langchain-samples/hack-princeton-intro-to-deep-agents).
+The workshop repository could not be retrieved in this session; implementation
+follows the official SDK documentation. Postmortem's contribution is the engineering
+workflow, specialist objectives, deterministic candidate checks and 3D integration.
 
 ---

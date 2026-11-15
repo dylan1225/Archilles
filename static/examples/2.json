@@ -1,120 +1,236 @@
 {
  "diagnosis": {
   "material": "fdm_print",
-  "primary_mode": "other",
-  "confidence": "medium",
+  "primary_mode": "cross_layer_fracture_fdm",
+  "confidence": "low",
   "visual_evidence": [
-   "Top-right standing piece: red plastic rectangular bar with its upward-facing fracture surface showing a thin outer perimeter shell and a hollow interior crossed by sparse internal infill ribs.",
-   "Top-right standing piece: jagged, uneven fracture rim around the perimeter with raised corner peaks and slight whitish stress-whitening along the torn edges, rather than a flat single-layer plane.",
-   "Top-left piece: mating red rectangular bar lying flat with a semicircular hole or cutout directly at the broken right end and a stepped fracture face.",
-   "Bottom-left and bottom-right pieces: two matching red rectangular pieces with smooth, flat 45-degree angled faces pointing toward each other and no visible rough fracture texture on those angled faces."
+   "Four red satin-finish rectangular plastic pieces lying on a wooden table, with the top two pieces showing fractured ends",
+   "Jagged, stepped fracture surface on the top end of the upright piece (top-right) cutting unevenly across the cross-section",
+   "Exposed FDM internal structure inside the upright piece (top-right): a thin outer perimeter wall ring enclosing sparse crossing infill ribs and large empty voids",
+   "Pale, slightly whitened torn plastic edges at the raised corner peaks of the upright piece's broken top (top-right)",
+   "Semicircular hole or notch cutout at the angled, stepped fracture end of the horizontal piece (top-left)",
+   "Two additional red pieces in the lower half of the frame with smooth 45-degree angled ends facing each other"
   ],
-  "probable_cause": "Cross-layer overload fracture through the perimeters and sparse infill of an FDM-printed part, initiating at the stress concentration and reduced cross-section of the hole at the break. Unlike pure single-layer delamination, the fracture surface is jagged and exposes the cross-section of the outer perimeter walls and internal sparse infill ribs.",
+  "probable_cause": "A single bending or impact load exceeded what the sparse hollow cross-section could carry, starting at the hole or notch at the break and tearing across the thin outer perimeter walls and infill.",
   "alternative_modes": [
    [
-    "layer_delamination_fdm",
-    "The exposed fracture on the standing piece is jagged with raised perimeter corner peaks and exposes the cross-section of sparse internal infill ribs rather than separating cleanly along a single flat layer boundary with intact rounded bead tops."
+    "bolt_hole_tearout",
+    "Although a semicircular cutout sits at the broken end of the top-left piece, the upright piece shows a complete fracture across the entire rectangular cross-section rather than local tear-out from a hole to the nearest edge."
    ]
   ],
   "solutions": [
    {
-    "title": "Increase perimeter walls and infill density around the hole",
-    "description": "Increase perimeter wall loops from the thin shell visible to 5-6 walls and raise infill density to 50-100% locally (using modifier meshes in the slicer) around the hole so the reduced cross-section is solid rather than hollow.",
+    "title": "Add perimeter walls and local infill",
+    "description": "Increase the perimeter count from ~2 walls (~0.8 mm) to 5 or 6 walls (~2.0 to 2.4 mm) and use a slicer modifier mesh to raise infill from ~15% to 60–80% around the hole and midsection.",
     "pros": [
-     "Eliminates the hollow interior voids seen at the break",
-     "Directly reinforces the thin walls around the hole without changing external dimensions",
-     "Requires only slicer setting changes with no CAD rework"
+     "Requires no CAD changes or modifications to mating parts",
+     "Uses 5 to 6 perimeters (~2.4 mm wall) and 60% to 80% local infill instead of ~15%"
     ],
     "cons": [
-     "Increases print time and filament usage",
-     "Slightly increases part weight"
+     "Adds ~10 to 15 minutes of print time per bar",
+     "Requires configuring a slicer modifier mesh before reprinting"
     ],
     "effort": "trivial",
     "addresses_root_cause": true,
     "computed": null,
     "visual": {
      "kind": "densify_infill",
-     "label": "Increase wall count and infill density"
-    }
+     "label": "Add walls and infill"
+    },
+    "geometry": null,
+    "section_change": null,
+    "section_computed": null,
+    "span_change": null,
+    "span_computed": null,
+    "proposed_material_id": null,
+    "material_comparison": null
    },
    {
-    "title": "Reinforce or relocate the hole away from peak stress",
-    "description": "Move the hole out of the highest-load section or widen the bar / add a local boss around the hole so the net cross-section matches the rest of the bar.",
+    "title": "Relocate the hole away from the loaded midsection",
+    "description": "Move the mounting hole out of the highest-bending section toward a supported end, or add a solid boss with extra perimeters around the hole.",
     "pros": [
-     "Removes the geometric weak point where the fracture initiated",
-     "Provides continuous load paths around the cutout"
+     "Removes the ~4 mm hole cutout from the critical fracture zone",
+     "Requires no extra print time if the hole is simply moved"
     ],
     "cons": [
-     "Requires modifying the CAD model and checking clearance with mating parts",
-     "Adds slight bulk if a local boss is added"
+     "Requires shifting the mating fastener location by ~15 to 20 mm",
+     "Requires editing the CAD model"
     ],
     "effort": "moderate",
     "addresses_root_cause": true,
     "computed": null,
     "visual": {
-     "kind": "reinforce_feature",
-     "label": "Reinforce or relocate the hole"
-    }
+     "kind": "relocate_feature",
+     "label": "Relocate hole from load"
+    },
+    "geometry": null,
+    "section_change": null,
+    "section_computed": null,
+    "span_change": null,
+    "span_computed": null,
+    "proposed_material_id": null,
+    "material_comparison": null
    },
    {
-    "title": "Optimize print orientation and layer bonding",
-    "description": "Orient the bar on the build plate so continuous perimeter extrusions run uninterrupted along the primary load direction and around the hole, and raise nozzle temperature by 5 to 10 C with reduced cooling fan.",
+    "title": "Switch filament from PLA to PETG",
+    "description": "Reprint the part in PETG instead of rigid PLA so the bar yields and absorbs impact energy before snapping.",
     "pros": [
-     "Aligns continuous filament strands with the tensile load path",
-     "Improves fusion between perimeters and infill walls"
+     "Deforms further before snapping than standard PLA",
+     "Prints on standard FDM machines at ~235 to 245 °C nozzle and ~75 to 80 °C bed"
     ],
     "cons": [
-     "May require support material depending on other part features",
-     "Higher nozzle temperature with lower cooling can slightly reduce overhang crispness"
+     "Requires drying filament if stored humidly and tuning retraction to limit stringing",
+     "Costs ~5 to 10 USD more per 1 kg spool than standard PLA"
     ],
     "effort": "trivial",
-    "addresses_root_cause": true,
+    "addresses_root_cause": false,
     "computed": null,
     "visual": {
-     "kind": "reorient_layers",
-     "label": "Orient continuous perimeters along length"
-    }
+     "kind": "change_material",
+     "label": "Switch to PETG"
+    },
+    "geometry": null,
+    "section_change": null,
+    "section_computed": null,
+    "span_change": null,
+    "span_computed": null,
+    "proposed_material_id": "petg",
+    "material_comparison": null
    },
    {
-    "title": "Switch to a tougher filament such as PETG or Nylon",
-    "description": "Print the part in a higher-toughness, more ductile polymer (such as PETG, ABS, or PA/Nylon) instead of rigid PLA to tolerate stress concentrations at holes without sudden brittle cracking.",
+    "title": "Thicken the bar cross-section",
+    "description": "Increase the bar depth in the bending direction from ~12 mm to ~18 mm and width from ~14 mm to ~16 mm while keeping the ~80 mm overall length.",
     "pros": [
-     "Higher impact resistance and elongation before break",
-     "Better energy absorption around notches and holes"
+     "Keeps the same ~80 mm span and existing slicer wall settings",
+     "Increases cross-section from ~14 x 12 mm to ~16 x 18 mm"
     ],
     "cons": [
-     "Higher filament cost and potential need for filament drying or an enclosure",
-     "Slightly lower stiffness than PLA"
+     "Requires ~6 mm extra clearance on mating parts in the thickness direction",
+     "Adds ~12 to 18 minutes of print time per part"
     ],
     "effort": "moderate",
     "addresses_root_cause": false,
     "computed": null,
     "visual": {
-     "kind": "change_material",
-     "label": "Switch to tougher PETG filament"
-    }
+     "kind": "thicken_section",
+     "label": "Thicken bar section"
+    },
+    "geometry": null,
+    "section_change": {
+     "shape": "rectangular",
+     "current_diameter_mm": null,
+     "proposed_diameter_mm": null,
+     "current_width_mm": 14.0,
+     "proposed_width_mm": 16.0,
+     "current_thickness_mm": 12.0,
+     "proposed_thickness_mm": 18.0,
+     "length_mm": 80.0,
+     "dimensions_source": "estimated_from_image"
+    },
+    "section_computed": {
+     "type": "section_change",
+     "calculated_by": "mechanics.py",
+     "inputs": {
+      "shape": "rectangular",
+      "current_diameter_mm": null,
+      "proposed_diameter_mm": null,
+      "current_width_mm": 14.0,
+      "proposed_width_mm": 16.0,
+      "current_thickness_mm": 12.0,
+      "proposed_thickness_mm": 18.0,
+      "length_mm": 80.0,
+      "dimensions_source": "estimated_from_image"
+     },
+     "weight_ratio": 1.71,
+     "strength_ratio": 2.57,
+     "stiffness_ratio": 3.86,
+     "area_mm2": [
+      168.0,
+      288.0
+     ],
+     "basis": "Same material, length and load. Weight scales with cross-section area. Bending strength scales with the section modulus (diameter cubed for a round section; width x thickness squared for a rectangle bent across its thickness). Stiffness scales with the second moment of area (diameter to the fourth; width x thickness cubed). These are ratios for the same load, not stress-concentration values: holes, notches and sharp corners are not included.",
+     "working": [
+      {
+       "label": "Weight ratio",
+       "formula": "(b₂·h₂) / (b₁·h₁)  (area b·h)",
+       "substituted": "(16·18) / (14·12)",
+       "result": "×1.71",
+       "value": 1.71,
+       "source": null
+      },
+      {
+       "label": "Bending strength ratio",
+       "formula": "(b₂·h₂²) / (b₁·h₁²)  (section modulus b·h²/6)",
+       "substituted": "(16·18²) / (14·12²)",
+       "result": "×2.57",
+       "value": 2.57,
+       "source": null
+      },
+      {
+       "label": "Stiffness ratio",
+       "formula": "(b₂·h₂³) / (b₁·h₁³)  (second moment b·h³/12)",
+       "substituted": "(16·18³) / (14·12³)",
+       "result": "×3.86",
+       "value": 3.86,
+       "source": null
+      }
+     ]
+    },
+    "span_change": null,
+    "span_computed": null,
+    "proposed_material_id": null,
+    "material_comparison": null
    }
   ],
   "insufficient_image": false,
   "insufficient_reason": null,
   "specimen": {
    "shape": "rect_bar",
-   "length_mm": 70.0,
-   "width_mm": 12.0,
+   "length_mm": 80.0,
+   "width_mm": 14.0,
    "thickness_mm": 12.0,
-   "break_position": 0.52,
+   "break_position": 0.5,
    "feature": "hole",
    "load_case": "unknown",
    "dimensions_source": "estimated_from_image"
-  }
+  },
+  "is_failure_analysis_applicable": true,
+  "not_applicable_reason": null,
+  "geometric_features": [
+   "Semicircular hole or notch cutout directly at the broken right end of the top-left horizontal piece",
+   "Sharp external corners along the rectangular bar cross-section"
+  ],
+  "rejected_alternative": {
+   "mode": "layer_delamination_fdm",
+   "visual_feature": "Jagged, stepped fracture surface and unevenly torn outer walls on the top end of the upright piece (top-right)",
+   "reason": "Layer delamination separates cleanly along a single flat layer boundary with intact rounded extrusion bead tops; here the outer perimeter walls are torn into uneven stepped peaks at different heights with pale edge whitening across layers."
+  },
+  "consistency": {
+   "runs": 1,
+   "agreement": 1.0,
+   "modes_seen": {
+    "cross_layer_fracture_fdm": 1
+   },
+   "consistent": false,
+   "failed_runs": 2
+  },
+  "warnings": [
+   "Only 1 of 3 runs completed, so consistency could not be checked. Confidence lowered to low."
+  ],
+  "mode_name": "Cross-layer fracture",
+  "mode_source": "Ahn, Montero, Odell, Roundy & Wright, \"Anisotropic material properties of fused deposition modeling ABS\", Rapid Prototyping Journal 8(4), 2002",
+  "mode_status": "draft",
+  "summary": "A 3D-printed bar snapped across its layers at a hole because thin outer walls and sparse infill could not carry the load.",
+  "material_id": null,
+  "material_facts": null
  },
  "meta": {
   "model": "gemini-4-hydrogen",
-  "latency_s": 43.45,
+  "latency_s": 120.01,
   "attempts": 1,
-  "input_tokens": 5461,
-  "output_tokens": 1305,
-  "thinking_tokens": 5260,
-  "cost_usd": 0.057429
+  "input_tokens": 11272,
+  "output_tokens": 1782,
+  "thinking_tokens": 6494,
+  "cost_usd": 0.078978
  }
 }
