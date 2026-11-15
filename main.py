@@ -19,8 +19,12 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
 import diagnose
+import interiors
+import house_inspections
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+# CDN image URLs carry short-lived signatures; avoid HTTPX's full-URL info log.
+logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger("postmortem.main")
 
 PROJECT_DIR = Path(__file__).resolve().parent
@@ -36,6 +40,8 @@ META_HEADER = "X-Postmortem-Meta"
 
 app = FastAPI(title="Postmortem")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+app.include_router(interiors.router)
+app.include_router(house_inspections.router)
 
 
 def _error(status_code: int, message: str) -> JSONResponse:
@@ -44,6 +50,11 @@ def _error(status_code: int, message: str) -> JSONResponse:
 
 def _diagnosis_response(diagnosis: dict[str, Any], meta: dict[str, Any]) -> JSONResponse:
     return JSONResponse(diagnosis, headers={META_HEADER: json.dumps(meta)})
+
+
+@app.exception_handler(interiors.MatterportError)
+def handle_matterport_error(_: Request, exc: interiors.MatterportError) -> JSONResponse:
+    return _error(exc.status_code, str(exc))
 
 
 @app.exception_handler(diagnose.DiagnosisError)
@@ -67,6 +78,11 @@ def handle_unexpected(_: Request, exc: Exception) -> JSONResponse:
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(INDEX_PATH)
+
+
+@app.get("/interiors")
+def building_interiors() -> FileResponse:
+    return FileResponse(STATIC_DIR / "interiors.html")
 
 
 @app.post("/diagnose")

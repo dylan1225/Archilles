@@ -34,6 +34,13 @@
     background: #141210; color: #f3eee3; border-bottom: 3px solid var(--orange); }
   .wordmark { font: 600 20px/1 var(--serif); letter-spacing: .26em; }
   .tagline { color: #bdb3a1; font: italic 14px/1.2 var(--serif); }
+  .interiors-link { margin-left: auto; color: #d9d0be; font-size: 12px; text-underline-offset: 4px; white-space: nowrap; }
+  .interiors-link + .status { margin-left: 0; }
+  @media (max-width: 560px) {
+    header.site { flex-wrap: wrap; gap: 10px 16px; }
+    .interiors-link { order: 3; flex-basis: 100%; margin-left: 0; }
+    .interiors-link + .status { margin-left: auto; }
+  }
   .status { margin-left: auto; font: 600 11px/1 var(--mono); letter-spacing: .1em; padding: 6px 10px;
     border: 1px solid #4a443b; border-radius: 2px; color: #bdb3a1; }
   .status[data-state="busy"] { color: #f2b25c; border-color: #f2b25c; }
@@ -261,6 +268,7 @@
 <header class="site">
   <span class="wordmark">POSTMORTEM</span>
   <span class="tagline">Fracture surface analysis</span>
+  <a class="interiors-link" href="/interiors">Explore building interiors ↗</a>
   <span class="status" id="status" data-state="idle" role="status">READY</span>
 </header>
 
